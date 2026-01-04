@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Clash Arena</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta content=" Fun multiplayer fighting gme with abilities and more">
+    
+    <style>
+    
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            background-color: #1f2937; 
+            margin: 0;
+            overflow: hidden; 
+        }
+
+        /* MODIFIED: Define the infinite scrolling animation to move LEFT */
+        @keyframes tileScroll {
+            from {
+                background-position: 0 0;
+            }
+            to {
+                background-position: -40px 0; /* Causes the background to scroll left */
+            }
+        }
+        
+        #menu-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #2dad66e2; 
+            background-image:
+              linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px), 
+              linear-gradient(90deg, rgba(0,0,0,0.15) 1px, transparent 1px);
+
+            /* UPDATE: Increase Tile Size */
+            background-size: 40px 40px; 
+            color: #000; 
+            display: flex; flex-direction: column; 
+            justify-content: center; 
+            align-items: center; /* REVERTED: Center alignment for menu content */
+            /* Removed padding-left: 4rem; */
+            z-index: 100;
+
+            /* APPLIED: Apply the infinite moving animation */
+            animation: tileScroll 2s linear infinite; 
+        }
+        #name-input {
+            background-color: #ffffff; color: #000;
+            border: 2px solid #000; font-weight: normal;
+            /* UPDATE: Smaller input font and padding */
+            padding: 12px; font-size: 1.125rem; 
+        }
+        /* MODIFIED: Change to white text with black outline */
+        #menu-screen h1 { color: #ffffff; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; font-size: 3rem; }
+        #start-button {
+            /* OLD STYLE - Kept for reference but class is updated below */
+            background-color: #22c55e; border: 2px solid #000; color: #000;
+            width: 100%; transition: background-color 0.1s;
+            font-weight: bold; text-transform: uppercase;
+            /* UPDATE: Smaller start button */
+            padding-top: 1rem; padding-bottom: 1rem; font-size: 1.5rem; margin-bottom: 1.5rem;
+        }
+        #start-button:hover { background-color: #4ade80; }
+        /* UPDATE: Shrink Top Buttons */
+        .menu-top-btn {
+            background-color: #fff; border: 1px solid #000; color: #000;
+            padding: 6px 10px; font-weight: bold; cursor: pointer;
+            transition: background-color 0.2s; text-decoration: none; 
+            display: inline-block; font-size: 0.8rem;
+        }
+        .menu-top-btn:hover { background-color: #e5e7eb; }
+        /* UPDATE: Shrink Auth Button */
+        #sign-in-btn, #auth-display-btn {
+            background-color: #fcd34d; border: 2px solid #000; color: #000;
+            padding: 6px 12px; font-weight: bold; transition: background-color 0.1s;
+        }
+        #sign-in-btn:hover, #auth-display-btn:hover { background-color: #fbbf24; }
+        #game-screen-wrapper {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #111827;
+        }
+        #game-canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+        #hotbar-container {
+            position: absolute; bottom: 20px; left: 50%;
+            transform: translateX(-50%); display: flex; gap: 10px; padding: 10px;
+            background-color: rgba(0, 0, 0, 0.6); border-radius: 8px; z-index: 40; 
+        }
+        .hotbar-slot {
+            width: 60px; height: 60px; background-color: #374151;
+            border: 3px solid #6b7280; border-radius: 4px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            cursor: pointer; position: relative; transition: all 0.1s; overflow: hidden; 
+        }
+        .hotbar-slot.selected { border-color: #fcd34d; box-shadow: 0 0 10px #fcd34d; }
+        .hotbar-cooldown {
+            position: absolute; top: 0; left: 0; width: 100%;
+            background-color: rgba(0, 0, 0, 0.7); z-index: 10; transition: height 0.05s linear;
+        }
+        .hotbar-icon { z-index: 20; color: white; font-size: 1.5rem; line-height: 1.5rem; }
+        /* MODIFIED: Reduce gap and adjust margin for loadout */
+        #menu-loadout { justify-content: center; gap: 12px; margin-top: 10px; margin-bottom: 0px; }
+        /* MODIFIED: Increase size of loadout slots (60px x 60px) and rounded edges (8px) */
+        .menu-loadout-slot {
+            width: 60px; height: 60px; background-color: #fff; 
+            border: 2px solid #000; border-radius: 8px; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            cursor: pointer; position: relative; transition: all 0.1s;
+        }
+        .menu-loadout-slot:hover { background-color: #f3f4f6; }
+        .menu-loadout-slot.selected { border-color: #000; background-color: #fcd34d; }
+        /* MODIFIED: Adjust icon size for smaller slot (2rem) */
+        .menu-loadout-slot .text-4xl { font-size: 2rem; }
+        .menu-loadout-slot-ability { display: none; }
+        /* MODIFIED: Hide the number label as requested */
+        .menu-loadout-slot-number {
+            position: absolute; top: 2px; left: 5px;
+            font-weight: bold; color: #000; font-size: 0.9rem;
+            display: none; /* HIDE THE NUMBER */
+        }
+        /* MODIFIED: Gap adjustment for ability list */
+        #ability-list { grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        /* MODIFIED: Ability Card Styling (Smaller & Rounded Edges) */
+        #ability-modal .p-4 { padding: 8px; text-align: center; }
+        .ability-card {
+            background-color: #6b7280; border: 2px solid #4b5563; border-radius: 8px;
+            cursor: pointer; transition: all 0.1s; display: flex;
+            flex-direction: column; justify-content: center; align-items: center; height: 60px; 
+        }
+        .ability-card:hover { background-color: #4b5563; }
+        /* MODIFIED: Smaller icon size for the 60px height (1.75rem) */
+        .ability-card .text-3xl { font-size: 1.75rem; line-height: 1; }
+        .ability-card .font-bold, .ability-card .text-sm { display: none; }
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.8); display: flex;
+            justify-content: center; align-items: center; z-index: 150;
+        }
+        .hidden { display: none !important; }
+        .menu-content {
+            /* UPDATE: Smaller overall content width */
+            width: 100%; max-width: 400px; background: transparent; 
+            padding: 2rem; 
+            text-align: center; /* REVERTED: Center alignment */
+            display: flex;
+            flex-direction: column; 
+            align-items: center; /* REVERTED: Center alignment */
+            /* MODIFIED: Add space at bottom to move loadout down */
+            min-height: 70vh; 
+            justify-content: space-between; 
+        }
+        /* MODIFIED: Move loadout label to be above the loadout slots */
+        .loadout-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* REVERTED: Center alignment */
+            margin-top: auto; /* Push to the bottom */
+            margin-bottom: 2rem; /* Add some space from the bottom */
+        }
+        /* UPDATE: Smaller Labels */
+        .menu-label {
+            color: #000; font-weight: bold; 
+            font-size: 1.25rem;
+            margin-bottom: 8px; display: block;
+        }
+        .auth-form-input {
+            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;
+        }
+        .auth-form-btn {
+            width: 100%; padding: 12px; font-weight: bold; border-radius: 4px; transition: background-color 0.1s;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-screen-wrapper" class="hidden">
+        <div id="game-info" class="w-full flex justify-between items-center text-white text-xl p-2 z-40 absolute top-0">
+             <button id="leave-game-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl text-sm absolute top-4 left-4 z-50">Leave Game</button>
+            <div id="status-display" class="font-bold absolute top-4 right-4 text-sm bg-gray-800 p-3 rounded z-50">Waiting for another player...</div>
+        </div>
+        <canvas id="game-canvas"></canvas>
+        <div id="hotbar-container"></div>
+    </div>
+
+    <div id="menu-screen">
+        <div class="absolute top-6 left-6 flex gap-4 z-50">
+            <button id="updates-btn" class="menu-top-btn">Updates</button>
+            <a href="https://discord.gg/Kz3Nv7mgTu" target="_blank" class="menu-top-btn">Discord</a>
+        </div>
+        <div class="absolute top-6 right-6 z-50">
+            <button id="auth-display-btn" class="rounded">Sign In / Register</button>
+        </div>
+        <div class="menu-content">
+            <div>
+                <h1 class="text-6xl font-black mb-12 tracking-tight">Clash.io</h1>
+                <div class="w-full mb-8">
+                    <label for="name-input" class="menu-label">PLAYER NAME (For Anonymous Play)</label>
+                    <input type="text" id="name-input" maxlength="12" class="w-full p-4 text-xl text-center focus:outline-none transition-all" value="Challenger">
+                </div>
+                <button id="start-button" class="w-48 px-8 py-2 text-xl font-bold text-white transition-colors duration-200 bg-transparent border-4 border-white rounded-lg hover:bg-white hover:text-green-600 shadow-xl">
+                 1v1
+                </button>
+            </div>
+            
+            <div class="loadout-wrapper">
+                <div id="menu-loadout" class="flex justify-center"></div> </div>
+        </div>
+    </div>
+
+    <div id="ability-modal" class="modal hidden">
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-3xl border-4 border-black relative text-white">
+            <h3 class="text-3xl font-bold mb-4 text-white text-center">Select Ability for Slot <span id="modal-slot-number">1</span></h3>
+            <div id="ability-list" class="grid gap-4"></div>
+            <button id="close-ability-modal" class="absolute top-0 right-0 p-2 bg-red-600 hover:bg-red-700 text-white font-black text-lg border-2 border-black w-10 h-10 flex items-center justify-center">X</button>
+        </div>
+    </div>
+
+    <div id="updates-modal" class="modal hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg border-4 border-black">
+            <h3 class="text-3xl font-bold mb-6 text-black text-center">Game Updates</h3>
+            <div class="overflow-y-auto max-h-60 text-left space-y-4 text-gray-700">
+                 <div>
+                    <h4 class="font-bold text-lg">Latest Version (v1.6)</h4>
+                    <ul class="list-disc pl-5">
+                        <li><strong>Smaller Players:</strong> Reduced size for better maneuverability.</li>
+                        <li><strong>New Effects:</strong> Dash now extends hands (Superman style!), Impulse has a purple gravity effect.</li>
+                        <li><strong>Cleaner UI:</strong> Removed name bars, simplified landmine visuals.</li>
+                    </ul>
+                </div>
+            </div>
+            <button id="close-updates-modal" class="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow border-2 border-black">Close</button>
+        </div>
+    </div>
+
+    <div id="message-modal" class="modal hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm text-center border-4 border-blue-500">
+            <h3 id="modal-title" class="text-2xl font-bold mb-4 text-gray-800"></h3>
+            <p id="modal-text" class="mb-6 text-gray-600"></p>
+            <button id="modal-close-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg">OK</button>
+        </div>
+    </div>
+
+    <div id="auth-modal" class="modal hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm text-center border-4 border-black">
+            <h3 class="text-2xl font-bold mb-4 text-gray-800" id="auth-modal-title">Sign In</h3>
+            <form id="auth-form" class="text-left">
+                <input type="text" id="auth-username" class="auth-form-input" placeholder="Username" required>
+                <input type="password" id="auth-password" class="auth-form-input" placeholder="Password" required>
+                <p id="auth-message" class="text-sm text-red-600 mb-3 hidden">Error: Invalid credentials</p>
+                <button type="submit" id="auth-submit-btn" class="auth-form-btn bg-green-500 hover:bg-green-600 text-white">Sign In</button>
+            </form>
+            <button id="toggle-auth-mode-btn" class="mt-4 text-sm text-blue-600 hover:text-blue-800">New Player? Register Here</button>
+            <button id="close-auth-modal" class="mt-4 w-full bg-red-400 hover:bg-red-500 text-white font-bold py-3 rounded-lg">Close</button>
+        </div>
+    </div>
+
+<script>
+/* =========================
+   Core UI / Elements
+   ========================= */
+const menuScreen = document.getElementById('menu-screen');
+const gameScreenWrapper = document.getElementById('game-screen-wrapper');
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+const nameInput = document.getElementById('name-input');
+const startButton = document.getElementById('start-button');
+const leaveGameBtn = document.getElementById('leave-game-btn');
+const statusDisplay = document.getElementById('status-display');
+const abilityModal = document.getElementById('ability-modal');
+const closeAbilityModal = document.getElementById('close-ability-modal');
+const modalSlotNumber = document.getElementById('modal-slot-number');
+const abilityList = document.getElementById('ability-list');
+const updatesModal = document.getElementById('updates-modal');
+const updatesBtn = document.getElementById('updates-btn');
+const closeUpdatesModal = document.getElementById('close-updates-modal');
+const messageModal = document.getElementById('message-modal');
+const modalTitle = document.getElementById('modal-title');
+const modalText = document.getElementById('modal-text');
+const modalCloseBtn = document.getElementById('modal-close-btn');
+const authDisplayBtn = document.getElementById('auth-display-btn');
+const authModal = document.getElementById('auth-modal');
+const authModalTitle = document.getElementById('auth-modal-title');
+const authForm = document.getElementById('auth-form');
+const authUsernameInput = document.getElementById('auth-username');
+const authPasswordInput = document.getElementById('auth-password');
+const authSubmitBtn = document.getElementById('auth-submit-btn');
+const authMessage = document.getElementById('auth-message');
+const toggleAuthModeBtn = document.getElementById('toggle-auth-mode-btn');
+const closeAuthModal = document.getElementById('close-auth-modal');
+
+let isIntentionalDisconnect = false;
+
+const SERVER_URL = 'https://paperdevelopment_prog.github.io';
+/* Around line 238 in index.html */
+/* Around line 238 in index.html */
+/* Around line 238 in index.html */
+const TILE_SIZE = 40; // Increased to 40 to match menu background-size
+const TILES_X = 10;   // Halved to 10 (10 * 40 = 400px width)
+const TILES_Y = 15;   // Halved to 15 (15 * 40 = 600px height)
+
+const FULL_MAP_HEIGHT = TILES_Y * TILE_SIZE; // Remains 600
+const GAME_WORLD_WIDTH = TILES_X * TILE_SIZE; // Remains 400   // Decreased from 30 (15 * 40 = 600)
+
+
+
+const PLAYER_SIZE = 10;
+const MAX_HEALTH = 100;
+const PROJECTILE_RADIUS = 5; // Base/default radius for projectiles (fallback)
+const ABILITY_COOLDOWN = 800;
+const MOVEMENT_DEADZONE_SQ = 10 * 10;
+
+
+    /* --- index.html --- */
+const MAP_BARRIERS = [
+    // format: [gridX, gridY, widthInTiles, heightInTiles]
+    [0, 0, 10, 0.25],          // Top Barrier (10 tiles wide)
+    [0, 14.75, 10, 0.25],      // Bottom Barrier
+    [0, 0, 0.25, 15],          // Left Side Barrier (15 tiles high)
+    [9.75, 0, 0.25, 15]        // Right Side Barrier
+];
+
+
+const ALL_ABILITIES = {
+    'whiteBall': { name: 'White Ball', icon: '⚪', description: 'Basic direct shot (10 Damage).' },
+    'fireBall': { name: 'Fire Ball', icon: '🔥', description: 'Heavy direct shot (25 Damage).' }, 
+    'knockback': { name: 'Knockback', icon: '💥', description: 'Pushes opponent away instantly.' },
+    'impulse': { name: 'Impulse', icon: '💫', description: 'Pulls opponent towards you instantly.' },
+    'snowball': { name: 'Snowball', icon: '❄️', description: 'Stuns opponent for 1.5s.' }, 
+    'landmine': { name: 'Landmine', icon: '💣', description: 'Places a proximity mine (30 Damage).' },
+    'dash': { name: 'Dash', icon: '💨', description: 'Quickly dashes in your current direction.' },
+    'heal': { name: 'Heal Zone', icon: '💚', description: `Creates a 5s healing zone that gives 15 Health.` },
+    'reflection': { name: 'Reflection', icon: '🔄', description: 'Reflects projectiles for 1s.' },
+    'target': { name: 'Target (Premium)', icon: '🎯', description: 'Fires a homing projectile. (In-game purchase required)' }
+};
+
+let gameState = {
+    status: 'menu',
+    allPlayers: new Map(),
+    projectiles: [],
+    mines: [],
+    healingFields: [],
+    keys: {},
+    hotbarSelection: 0,
+    loadout: ['whiteBall', 'fireBall', 'knockback', 'dash', 'heal'],
+    isAuthenticated: false,
+    authenticatedUser: null,
+    eliminatedBy: null,
+    continueButtonArea: null,
+};
+
+let socket = null;
+let myPlayerId = null;
+let authMode = 'login';
+let viewScale = 1;
+let viewHeightInGameUnits = 480;
+let mouseX = 0;
+let mouseY = 0;
+
+/* =========================
+   Resize & Canvas helpers
+   ========================= */
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    viewScale = window.innerWidth / GAME_WORLD_WIDTH;
+    viewHeightInGameUnits = window.innerHeight / viewScale;
+    if (gameState.status !== 'menu') draw();
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* =========================
+   Basic UI wiring
+   ========================= */
+startButton.addEventListener('click', startGame);
+leaveGameBtn.addEventListener('click', () => leaveGame(true));
+updatesBtn.addEventListener('click', () => updatesModal.classList.remove('hidden'));
+closeUpdatesModal.addEventListener('click', () => updatesModal.classList.add('hidden'));
+closeAbilityModal.addEventListener('click', () => abilityModal.classList.add('hidden'));
+authDisplayBtn.addEventListener('click', showAuthModal);
+closeAuthModal.addEventListener('click', () => authModal.classList.add('hidden'));
+toggleAuthModeBtn.addEventListener('click', toggleAuthMode);
+authForm.addEventListener('submit', handleAuth);
+
+/* =========================
+   Server connection & messaging
+   ========================= */
+function connectToServer() {
+    return new Promise((resolve, reject) => {
+        socket = new WebSocket(SERVER_URL);
+        socket.onopen = () => { console.log('Connected to server.'); resolve(); };
+        socket.onerror = (error) => {
+            console.error('WebSocket Error:', error);
+            showModal('Connection Error', 'Could not connect to the game server. Ensure server.js is running.', () => reject(error));
+        };
+        socket.onclose = () => {
+            if (gameState.status !== 'menu' && gameState.status !== 'death_screen' && gameState.status !== 'win_screen') {
+                showModal('Disconnected', 'Connection lost or terminated. The match has ended.', handleCleanupAndMenuTransition);
+            }
+            isIntentionalDisconnect = false;
+        };
+        socket.onmessage = handleServerMessage;
+    });
+}
+
+function handleServerMessage(event) {
+    const message = JSON.parse(event.data);
+    switch (message.type) {
+        case 'init':
+            myPlayerId = message.id;
+            break;
+        case 'authSuccess':
+            gameState.isAuthenticated = true;
+            gameState.authenticatedUser = message.name;
+            gameState.loadout = message.loadout;
+            authModal.classList.add('hidden');
+            updateAuthDisplay(message.name);
+            nameInput.value = message.name;
+            nameInput.disabled = true;
+            renderMenuLoadoutSlots();
+            showModal('Success!', `Welcome back, ${message.name}. Your progress has been loaded.`, () => {});
+            break;
+        case 'authFailure':
+            authMessage.textContent = message.message;
+            authMessage.classList.remove('hidden');
+            authSubmitBtn.disabled = false;
+            break;
+        case 'error': // NEW: Handle server-side errors (like validation failure)
+            showModal('Server Error', message.message, () => {});
+            break;
+
+        case 'playerEliminated':
+            // NEW: Immediately show the death screen with killer name
+            gameState.eliminatedBy = message.killerUsername;
+            gameState.status = 'death_screen';
+            statusDisplay.textContent = `GAME OVER!`;
+            draw();
+            break;
+
+        case 'status': // NEW: Handle countdown status messages
+            statusDisplay.textContent = message.message;
+            break;
+
+        case 'matchStart':
+            gameState.status = 'playing';
+            statusDisplay.textContent = 'FIGHT!';
+            gameState.eliminatedBy = null;
+            break;
+
+        case 'state':
+            updateGameStateFromBroadcast(message);
+            break;
+
+        case 'elimination':
+            statusDisplay.textContent = message.message;
+            const match = message.message.match(/eliminated by (.+)\.?/i);
+            if (match) gameState.eliminatedBy = gameState.eliminatedBy || match[1];
+            break;
+
+        case 'gameOver':
+            const localPlayerName = gameState.isAuthenticated ? gameState.authenticatedUser : (nameInput.value.trim() || 'Challenger');
+            if (message.winnerName === localPlayerName) {
+                gameState.status = 'win_screen';
+                statusDisplay.textContent = `YOU WON!`;
+                draw();
+            } else {
+                gameState.status = 'death_screen';
+                statusDisplay.textContent = `GAME OVER! ${message.winnerName} Wins!`;
+                gameState.eliminatedBy = gameState.eliminatedBy || message.winnerName;
+                draw();
+            }
+            break;
+
+        case 'afkKick':
+            gameState.status = 'finished';
+            isIntentionalDisconnect = true;
+            gameState.eliminatedBy = null;
+            showModal('Inactive Disconnect', message.message, handleCleanupAndMenuTransition);
+            break;
+    }
+}
+
+/* =========================
+   State update from server
+   ========================= */
+function updateGameStateFromBroadcast(message) {
+    gameState.projectiles = message.projectiles || [];
+    gameState.mines = message.mines || [];
+    gameState.healingFields = message.healingFields || [];
+
+    const localPlayerBeforeUpdate = gameState.allPlayers.get(myPlayerId);
+
+    gameState.allPlayers.clear();
+    (message.players || []).forEach(pData => {
+        const isLocal = pData.id === myPlayerId;
+        const playerObj = {
+            id: pData.id,
+            name: pData.name,
+            x: pData.x,
+            y: pData.y,
+            facingAngle: pData.facingAngle,
+            health: pData.health,
+            color: pData.color,
+            isProtected: pData.isReflecting,
+            isReflecting: pData.isReflecting,
+            isDashing: pData.isDashing,
+            isStunned: pData.isStunned,
+            isImpulsed: pData.isImpulsed,
+            lastAbilityTime: pData.lastAbilityTime || Array(gameState.loadout.length).fill(0),
+            dx: isLocal ? (gameState.allPlayers.get(myPlayerId)?.dx || 0) : (pData.dx || 0),
+            dy: isLocal ? (gameState.allPlayers.get(myPlayerId)?.dy || 0) : (pData.dy || 0),
+        };
+        gameState.allPlayers.set(pData.id, playerObj);
+    });
+
+    const localPlayerAfterUpdate = gameState.allPlayers.get(myPlayerId);
+
+    // If while playing we no longer see our player, go to death screen
+    if (gameState.status === 'playing' && localPlayerBeforeUpdate && !localPlayerAfterUpdate) {
+        gameState.status = 'death_screen';
+    }
+
+    // MODIFIED: Status changes are now primarily driven by server messages (e.g., 'status', 'matchStart')
+    if (message.status === 'starting') gameState.status = 'starting';
+    if (message.status === 'playing' && gameState.status === 'starting') gameState.status = 'playing';
+}
+
+/* =========================
+   Game loop & input
+   ========================= */
+function gameLoop(timestamp) {
+    updateMovementAndAim();
+    updateHotbarVisuals();
+
+    if (gameState.status !== 'menu') {
+        draw();
+    }
+
+    if (gameState.status !== 'finished' && gameState.status !== 'menu') {
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+/* =========================
+   Cleanup & transitions
+   ========================= */
+function handleCleanupAndMenuTransition() {
+    gameState.status = 'menu';
+    gameState.allPlayers.clear();
+    myPlayerId = null;
+    startButton.disabled = false;
+    startButton.textContent = '1V1';
+    gameState.eliminatedBy = null;
+    gameState.continueButtonArea = null;
+    switchToMenuScreen();
+}
+
+/* =========================
+   Join / Leave
+   ========================= */
+async function startGame() {
+    let playerName = gameState.isAuthenticated ? gameState.authenticatedUser : (nameInput.value.trim() || 'Challenger');
+    let playerLoadout = gameState.loadout;
+
+    if (playerName.length > 12) {
+        showModal('Error', 'Name must be 12 characters or less.');
+        return;
+    }
+    
+    // Validate loadout integrity before sending
+    if (playerLoadout.length !== 5 || playerLoadout.some(a => !ALL_ABILITIES[a])) {
+         showModal('Error', 'Invalid loadout configuration.');
+         return;
+    }
+
+    try {
+        startButton.disabled = true;
+        startButton.textContent = 'Connecting...';
+        if (!socket || socket.readyState !== WebSocket.OPEN) await connectToServer();
+        
+        socket.send(JSON.stringify({ 
+            type: 'joinGame', 
+            name: playerName, 
+            loadout: playerLoadout,
+            isAuth: gameState.isAuthenticated // Send auth status
+        }));
+        
+        switchToGameScreen();
+        gameState.status = 'starting';
+        statusDisplay.textContent = 'Waiting for another player...';
+        requestAnimationFrame(gameLoop);
+    } catch (err) {
+        console.error('Failed to start game:', err);
+        startButton.disabled = false;
+        startButton.textContent = '1V1';
+    }
+}
+
+// notify server unless notifying would be wrong for end screens
+function leaveGame(notifyServer = true) {
+    if (gameState.status === 'death_screen' || gameState.status === 'win_screen') {
+        notifyServer = false;
+        isIntentionalDisconnect = true;
+    }
+
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        if (notifyServer) {
+            if (gameState.isAuthenticated) socket.send(JSON.stringify({ type: 'saveLoadout', username: gameState.authenticatedUser, loadout: gameState.loadout }));
+            socket.send(JSON.stringify({ type: 'leaveGame' }));
+        }
+        socket.close();
+    } else {
+        handleCleanupAndMenuTransition();
+    }
+}
+
+/* =========================
+   Movement / Aim / Abilities
+   ========================= */
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY - rect.top;
+});
+
+function updateMovementAndAim() {
+    const localPlayer = gameState.allPlayers.get(myPlayerId);
+    // MODIFIED: Allow execution if status is 'playing' OR 'starting'
+    if (!localPlayer || (gameState.status !== 'playing' && gameState.status !== 'starting')) { 
+        if (localPlayer) localPlayer.dx = localPlayer.dy = 0;
+        return;
+    }
+
+    let camY = Math.max(0, Math.min(localPlayer.y - viewHeightInGameUnits / 2, FULL_MAP_HEIGHT - viewHeightInGameUnits));
+    const gameMouseX = mouseX / viewScale;
+    const gameMouseY = (mouseY / viewScale) + camY;
+    
+    // The original logic calculates a normalized movement vector (dx/dy)
+    let dx = gameMouseX - localPlayer.x;
+    let dy = gameMouseY - localPlayer.y;
+
+    if (dx * dx + dy * dy < MOVEMENT_DEADZONE_SQ) { dx = 0; dy = 0; } 
+    else { const mag = Math.sqrt(dx * dx + dy * dy); dx /= mag; dy /= mag; }
+    
+    // NEW LOGIC: If the game is in the 'starting' phase, explicitly prevent movement
+    // by overriding dx/dy to 0, but allow the facingAngle to be calculated and sent.
+    if (gameState.status === 'starting') {
+        dx = 0;
+        dy = 0;
+    }
+
+    // Calculate and set aiming angle (uses the cursor position)
+    const facingAngle = Math.atan2(gameMouseY - localPlayer.y, gameMouseX - localPlayer.x);
+
+    // Client-side local update (will be overwritten by server state, but feels responsive)
+    localPlayer.dx = dx;
+    localPlayer.dy = dy;
+    localPlayer.facingAngle = facingAngle;
+    
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        // Send raw floats for dx/dy/angle
+        socket.send(JSON.stringify({ type: 'movement', dx: dx, dy: dy, facingAngle: localPlayer.facingAngle }));
+    }
+}
+
+function useAbility(slotIndex) {
+    const localPlayer = gameState.allPlayers.get(myPlayerId);
+    // This check is sufficient to block abilities during 'starting' phase.
+    if (!localPlayer || gameState.status !== 'playing') return;
+    if (!Array.isArray(localPlayer.lastAbilityTime)) return;
+
+    if (Date.now() < (localPlayer.lastAbilityTime[slotIndex] || 0) + ABILITY_COOLDOWN) return;
+
+    let camY = Math.max(0, Math.min(localPlayer.y - viewHeightInGameUnits / 2, FULL_MAP_HEIGHT - viewHeightInGameUnits));
+    const gameMouseX = mouseX / viewScale;
+    const gameMouseY = (mouseY / viewScale) + camY;
+    const aimAngle = Math.atan2(gameMouseY - localPlayer.y, gameMouseX - localPlayer.x);
+
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'ability', slotIndex: slotIndex, aimAngle: aimAngle }));
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.repeat) return;
+    const key = e.key.toLowerCase();
+    if (key >= '1' && key <= '5') {
+        const slotIndex = parseInt(key) - 1;
+        useAbility(slotIndex);
+        gameState.hotbarSelection = slotIndex;
+        renderHotbar();
+    }
+});
+
+// click handling, abilities + continue button
+canvas.addEventListener('click', (e) => {
+    const localPlayer = gameState.allPlayers.get(myPlayerId);
+    if (localPlayer && gameState.status === 'playing') {
+        if (!localPlayer.isStunned) {
+            useAbility(0);
+        }
+    }
+
+    if (gameState.status === 'death_screen' || gameState.status === 'win_screen') {
+        if (!gameState.continueButtonArea) return;
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        const btn = gameState.continueButtonArea;
+
+        if (clickX >= btn.x && clickX <= btn.x + btn.width &&
+            clickY >= btn.y && clickY <= btn.y + btn.height) {
+            leaveGame(false);
+        }
+    }
+});
+
+/* =========================
+   Drawing routines
+   ========================= */
+function drawTiledBackground() {
+    // 1. Fill the entire map area with the base green color
+    ctx.fillStyle = '#22c55e'; 
+    ctx.fillRect(0, 0, GAME_WORLD_WIDTH, FULL_MAP_HEIGHT);
+    
+    // 2. Draw the 40px grid pattern (matching the menu)
+    ctx.strokeStyle = 'rgba(0,0,0,0.05)'; 
+    ctx.lineWidth = 1; 
+    
+    const MENU_TILE_SIZE = 40; // The size of the grid pattern from the menu CSS
+
+    ctx.beginPath();
+    // Draw vertical lines every 40 units across the map width
+    for (let x = 0; x <= GAME_WORLD_WIDTH; x += MENU_TILE_SIZE) { 
+        ctx.moveTo(x, 0); 
+        ctx.lineTo(x, FULL_MAP_HEIGHT); 
+    }
+    // Draw horizontal lines every 40 units down the map height
+    for (let y = 0; y <= FULL_MAP_HEIGHT; y += MENU_TILE_SIZE) { 
+        ctx.moveTo(0, y); 
+        ctx.lineTo(GAME_WORLD_WIDTH, y); 
+    }
+    ctx.stroke();
+}
+
+function drawBarriers() {
+    ctx.fillStyle = '#064e3b'; ctx.strokeStyle = '#042f2e'; ctx.lineWidth = 1;
+    MAP_BARRIERS.forEach(b => {
+        for (let i = 0; i < b[2]; i++) {
+            for (let j = 0; j < b[3]; j++) {
+                const tileX = (b[0] + i) * TILE_SIZE;
+                const tileY = (b[1] + j) * TILE_SIZE;
+                ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
+                ctx.strokeRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
+            }
+        }
+    });
+}
+
+function drawPlayer(player, isLocal) {
+    const x = player.x;
+    const y = player.y;
+    const size = PLAYER_SIZE;
+
+    if (player.isImpulsed) {
+        ctx.beginPath();
+    
+        ctx.arc(x, y, size * 2.5, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(147, 51, 234, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x, y, size * 1.8, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(147, 51, 234, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+    if (player.isProtected) {
+        const shieldColor = player.isReflecting ? 'rgba(252, 211, 77, 0.5)' : 'rgba(59, 130, 246, 0.5)';
+        ctx.beginPath(); ctx.arc(x, y, size + 5, 0, Math.PI * 2); ctx.fillStyle = shieldColor; ctx.fill();
+    }
+    if (player.isStunned) {
+        ctx.globalAlpha = 0.5; ctx.fillStyle = 'gray'; ctx.fillRect(x - size, y - size, size * 2, size * 2); ctx.globalAlpha = 1.0;
+    }
+
+    ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fillStyle = player.color; ctx.fill();
+    ctx.strokeStyle = 'black'; ctx.lineWidth = 2; ctx.stroke();
+
+    if (isLocal) { ctx.strokeStyle = '#fcd34d'; ctx.lineWidth = 3; ctx.stroke(); }
+
+    const fistSize = size * 0.4;
+    const armLength = player.isDashing ? size * 2.5 : size * 1.3;
+    let angle = player.facingAngle || 0;
+    const TILT_ANGLE = Math.PI / 3.5;
+
+    ctx.beginPath(); ctx.arc(x + armLength * Math.cos(angle + TILT_ANGLE), y + armLength * Math.sin(angle + TILT_ANGLE), fistSize, 0, Math.PI * 2);
+    ctx.fillStyle = 'white'; ctx.fill(); ctx.strokeStyle = 'black'; ctx.lineWidth = 1; ctx.stroke();
+
+    ctx.beginPath(); ctx.arc(x + armLength * Math.cos(angle - TILT_ANGLE), y + armLength * Math.sin(angle - TILT_ANGLE), fistSize, 0, Math.PI * 2);
+    ctx.fillStyle = 'white'; ctx.fill(); ctx.strokeStyle = 'black'; ctx.lineWidth = 1; ctx.stroke();
+
+    const healthWidth = size * 2.5;
+    const healthHeight = 4;
+    const healthX = x - size * 1.25;
+    const healthY = y - size - 8;
+    ctx.fillStyle = '#ef4444'; ctx.fillRect(healthX, healthY, healthWidth, healthHeight);
+    ctx.fillStyle = '#10b981'; ctx.fillRect(healthX, healthY, (player.health / MAX_HEALTH) * healthWidth, healthHeight);
+}
+
+function drawProjectiles() {
+    gameState.projectiles.forEach(p => {
+        const radius = p.radius || PROJECTILE_RADIUS; 
+        
+        // 1. Draw projectile trails/effects based on abilityType
+        if (p.abilityType === 'fireBall') {
+            // Draw fire trail (series of small, fading circles behind the projectile)
+            const trailLength = 4;
+            for (let i = 1; i <= trailLength; i++) {
+                // Calculate trail position: opposite direction of movement
+                const trailX = p.x - p.dx * (i * 3);
+                const trailY = p.y - p.dy * (i * 3);
+                
+                // Fire colors: Red, Orange, Yellow
+                const colors = ['#f87171', '#fb923c', '#fcd34d']; 
+                const colorIndex = i % colors.length;
+                
+                ctx.beginPath(); 
+                ctx.arc(trailX, trailY, radius * (1 - i / (trailLength + 1)), 0, Math.PI * 2); 
+                ctx.fillStyle = colors[colorIndex];
+                ctx.globalAlpha = 0.5 - (i * 0.1); // Fade the trail
+                ctx.fill();
+            }
+        } else if (p.abilityType === 'snowball') {
+            // Draw a slight blue halo for a "cold" effect
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, radius + 2, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(147, 197, 253, 0.4)'; // Light blue
+            ctx.fill();
+        }
+
+        // Reset opacity before drawing the main ball
+        ctx.globalAlpha = 1.0; 
+
+        // 2. Draw the main projectile ball
+        ctx.beginPath(); 
+        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2); 
+        ctx.fillStyle = p.color; // Base color from server (white for whiteBall/snowball, red for fireBall)
+        ctx.fill();
+        
+        // Add a highlight/border for definition
+        if (p.abilityType === 'snowball') {
+             ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+             ctx.lineWidth = 1; 
+             ctx.stroke();
+        } else {
+             ctx.strokeStyle = 'black'; 
+             ctx.lineWidth = 1; 
+             ctx.stroke();
+        }
+
+        // Old tracking logic (no change)
+        if (p.isTracking) {
+            ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.dx * 10, p.y - p.dy * 10);
+            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2; ctx.stroke();
+        }
+    });
+}
+
+function drawMines() {
+    gameState.mines.forEach(m => {
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        ctx.fill();
+    });
+}
+
+function drawHealingFields() {
+    gameState.healingFields.forEach(f => {
+        ctx.beginPath(); ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(52, 211, 153, 0.4)'; ctx.fill();
+        ctx.strokeStyle = '#34d399'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.font = 'bold 16px sans-serif'; ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.fillText('💚', f.x, f.y + 6);
+    });
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const localPlayer = gameState.allPlayers.get(myPlayerId);
+
+    let camY = 0;
+    if (localPlayer) camY = Math.max(0, Math.min(localPlayer.y - viewHeightInGameUnits / 2, FULL_MAP_HEIGHT - viewHeightInGameUnits));
+
+    ctx.save();
+    ctx.scale(viewScale, viewScale);
+    ctx.translate(0, -camY);
+
+    drawTiledBackground();
+    drawBarriers();
+    drawMines();
+    drawHealingFields();
+    drawProjectiles();
+    gameState.allPlayers.forEach(player => drawPlayer(player, player.id === myPlayerId));
+
+    ctx.restore();
+    
+
+    // Overlay screens
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    const boxWidth = 450;
+    const boxHeight = 100;
+    const boxX = centerX - boxWidth / 2;
+    const boxY = centerY - boxHeight / 2 - 50;
+
+    const btnWidth = 200;
+    const btnHeight = 50;
+    const btnX = centerX - btnWidth / 2;
+    const btnY = centerY + 50;
+
+    gameState.continueButtonArea = null;
+
+    if (gameState.status === 'starting') {
+        // REMOVED: ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        // REMOVED: ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = 'white';
+        // Display countdown number if it is a number (3, 2, 1)
+        if (statusDisplay.textContent.match(/^\d+$/)) {
+            ctx.font = 'bold 80px sans-serif';
+        } else {
+             // Display pre-countdown status
+            ctx.font = 'bold 40px sans-serif';
+        }
+        
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(statusDisplay.textContent, centerX, centerY);
+
+    } else if (gameState.status === 'win_screen') {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+
+        ctx.fillStyle = '#22c55e';
+        // MODIFIED: Smaller font and sentence case
+        ctx.font = 'bold 32px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`You Won!`, centerX, boxY + boxHeight / 2);
+
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(btnX, btnY, btnWidth, btnHeight);
+
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.fillText('CONTINUE', centerX, btnY + btnHeight / 2);
+
+        gameState.continueButtonArea = { x: btnX, y: btnY, width: btnWidth, height: btnHeight };
+    } else if (gameState.status === 'death_screen') {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+
+        ctx.fillStyle = 'white';
+        // MODIFIED: Smaller font and sentence case
+        ctx.font = 'bold 28px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const killerName = gameState.eliminatedBy || 'The Environment';
+        ctx.fillText(`You were killed by ${killerName}.`, centerX, boxY + boxHeight / 2);
+
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(btnX, btnY, btnWidth, btnHeight);
+
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.fillText('CONTINUE', centerX, btnY + btnHeight / 2);
+
+        gameState.continueButtonArea = { x: btnX, y: btnY, width: btnWidth, height: btnHeight };
+    }
+}
+
+/* =========================
+   Hotbar & Menu Loadout rendering
+   ========================= */
+function renderHotbar() {
+    const hotbarContainer = document.getElementById('hotbar-container');
+    hotbarContainer.innerHTML = '';
+    gameState.loadout.forEach((abilityKey, index) => {
+        const ability = ALL_ABILITIES[abilityKey];
+        const slot = document.createElement('div');
+        slot.className = `hotbar-slot ${gameState.hotbarSelection === index ? 'selected' : ''}`;
+        slot.addEventListener('click', () => {
+            gameState.hotbarSelection = index;
+            useAbility(index);
+            renderHotbar();
+        });
+
+        const icon = document.createElement('div');
+        icon.className = 'hotbar-icon';
+        icon.textContent = ability ? ability.icon : '?';
+        slot.appendChild(icon);
+
+        const cooldown = document.createElement('div');
+        cooldown.className = 'hotbar-cooldown';
+        cooldown.style.height = '0%';
+        slot.appendChild(cooldown);
+
+        // NEW: Add slot number for reference
+        const slotNumber = document.createElement('div');
+        slotNumber.style.cssText = 'position: absolute; top: 2px; left: 5px; font-weight: bold; color: black; font-size: 0.8rem; z-index: 30;';
+        slotNumber.textContent = index + 1;
+        slot.appendChild(slotNumber);
+
+        hotbarContainer.appendChild(slot);
+    });
+}
+
+function updateHotbarVisuals() {
+    // show cooldowns based on lastAbilityTime if available
+    gameState.loadout.forEach((abilityKey, index) => {
+        const slots = document.querySelectorAll('#hotbar-container .hotbar-slot');
+        const slot = slots[index];
+        if (!slot) return;
+        const cooldownDiv = slot.querySelector('.hotbar-cooldown');
+        const localPlayer = gameState.allPlayers.get(myPlayerId);
+        if (!localPlayer || !Array.isArray(localPlayer.lastAbilityTime)) {
+            cooldownDiv.style.height = '0%';
+            return;
+        }
+        const last = localPlayer.lastAbilityTime[index] || 0;
+        const elapsed = Date.now() - last;
+        const pct = Math.max(0, Math.min(1, elapsed / ABILITY_COOLDOWN));
+        // MODIFIED: Change to 100% minus the progress to make it fill up from the bottom
+        cooldownDiv.style.height = `${(1 - pct) * 100}%`; 
+    });
+}
+
+function renderMenuLoadoutSlots() {
+    const container = document.getElementById('menu-loadout');
+    container.innerHTML = '';
+    gameState.loadout.forEach((abilityKey, index) => {
+        const slot = document.createElement('div');
+        slot.className = 'menu-loadout-slot';
+        if (index === gameState.hotbarSelection) slot.classList.add('selected');
+        const icon = document.createElement('div');
+        icon.className = 'text-4xl';
+        icon.textContent = ALL_ABILITIES[abilityKey]?.icon || '?';
+        slot.appendChild(icon);
+        slot.addEventListener('click', () => openAbilityModal(index));
+        container.appendChild(slot);
+    });
+}
+
+/* =========================
+   Ability selection modal
+   ========================= */
+let modalTargetSlot = 0;
+function openAbilityModal(slotIndex) {
+    modalTargetSlot = slotIndex;
+    modalSlotNumber.textContent = (slotIndex + 1).toString();
+    abilityList.innerHTML = '';
+    Object.keys(ALL_ABILITIES).forEach(key => {
+        const card = document.createElement('div');
+        card.className = 'ability-card';
+        card.innerHTML = `<div class="text-3xl">${ALL_ABILITIES[key].icon}</div><div class="text-sm">${ALL_ABILITIES[key].name}</div>`;
+        card.addEventListener('click', () => {
+            gameState.loadout[modalTargetSlot] = key;
+            abilityModal.classList.add('hidden');
+            renderMenuLoadoutSlots();
+            renderHotbar();
+        });
+        abilityList.appendChild(card);
+    });
+    abilityModal.classList.remove('hidden');
+}
+
+/* =========================
+   Modal helper
+   ========================= */
+function showModal(title, text, onClose = () => {}) {
+    modalTitle.textContent = title;
+    modalText.textContent = text;
+    messageModal.classList.remove('hidden');
+    const newBtn = modalCloseBtn.cloneNode(true);
+    modalCloseBtn.parentNode.replaceChild(newBtn, modalCloseBtn);
+    newBtn.addEventListener('click', () => { messageModal.classList.add('hidden'); onClose(); }, { once: true });
+}
+
+/* =========================
+   Auth helpers
+   ========================= */
+function toggleAuthMode() {
+    authMode = authMode === 'login' ? 'register' : 'login';
+    if (authMode === 'register') {
+        authModalTitle.textContent = 'Register New Account';
+        authSubmitBtn.textContent = 'Register';
+        authSubmitBtn.classList.replace('bg-green-500', 'bg-blue-500');
+        authSubmitBtn.classList.replace('hover:bg-green-600', 'hover:bg-blue-600');
+        toggleAuthModeBtn.textContent = 'Already have an account? Sign In';
+    } else {
+        authModalTitle.textContent = 'Sign In';
+        authSubmitBtn.textContent = 'Sign In';
+        authSubmitBtn.classList.replace('bg-blue-500', 'bg-green-500');
+        authSubmitBtn.classList.replace('hover:bg-blue-600', 'hover:bg-green-600');
+        toggleAuthModeBtn.textContent = 'New Player? Register Here';
+    }
+    authMessage.classList.add('hidden');
+    authSubmitBtn.disabled = false;
+}
+
+function showAuthModal() {
+    if (gameState.isAuthenticated) {
+        gameState.isAuthenticated = false;
+        gameState.authenticatedUser = null;
+        gameState.loadout = ['whiteBall', 'fireBall', 'knockback', 'dash', 'heal'];
+        updateAuthDisplay(null);
+        renderMenuLoadoutSlots();
+        showModal('Signed Out', 'You have been signed out. You are now playing anonymously.', () => {});
+    } else {
+        authModal.classList.remove('hidden');
+        authMode = 'login';
+        toggleAuthMode();
+        toggleAuthMode();
+    }
+}
+
+function updateAuthDisplay(username) {
+    if (username) {
+        authDisplayBtn.textContent = `Welcome, ${username} (Sign Out)`;
+        authDisplayBtn.style.backgroundColor = '#10b981';
+    } else {
+        authDisplayBtn.textContent = 'Sign In / Register';
+        authDisplayBtn.style.backgroundColor = '#fcd34d';
+        nameInput.disabled = false;
+        nameInput.value = 'Challenger';
+    }
+}
+
+function handleAuth(e) {
+    e.preventDefault();
+    const username = authUsernameInput.value.trim();
+    const password = authPasswordInput.value;
+    if (!username || !password) {
+        authMessage.textContent = 'Please enter both username and password.';
+        authMessage.classList.remove('hidden');
+        return;
+    }
+    authSubmitBtn.disabled = true;
+    authMessage.classList.add('hidden');
+    connectToServer().then(() => {
+        if (authMode === 'register') {
+            socket.send(JSON.stringify({ type: 'register', username, password, loadout: gameState.loadout }));
+        } else {
+            socket.send(JSON.stringify({ type: 'login', username, password }));
+        }
+    }).catch(() => {
+        authSubmitBtn.disabled = false;
+        authMessage.textContent = 'Failed to connect to server.';
+        authMessage.classList.remove('hidden');
+    });
+}
+
+/* =========================
+   Utility: UI screen switching
+   ========================= */
+function switchToGameScreen() {
+    menuScreen.classList.add('hidden');
+    gameScreenWrapper.classList.remove('hidden');
+    resize(); renderHotbar();
+}
+
+function switchToMenuScreen() {
+    gameScreenWrapper.classList.add('hidden');
+    menuScreen.classList.remove('hidden');
+}
+
+/* =========================
+   Initial render
+   ========================= */
+renderMenuLoadoutSlots();
+renderHotbar();
+
+/* =========================
+   Expose debug helpers for console (optional)
+   ========================= */
+window.__gameState = gameState;
+window.__socket = () => socket;
+
+/* =========================
+   End of script
+   ========================= */
+</script>
+</body>
+</html>
