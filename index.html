@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebSocket Clash Arena</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <meta content=" Fun multiplayer fighting gme with abilities and more">
-    
+    <meta content="Fun multiplayer fighting game with abilities and more">
+
     <style>
     
         body {
@@ -291,7 +291,19 @@ const closeAuthModal = document.getElementById('close-auth-modal');
 
 let isIntentionalDisconnect = false;
 
-const SERVER_URL = 'https://paperdevelopment_prog.github.io';
+// Dynamic server URL for both local development and GitHub Pages
+const getServerURL = () => {
+    // For local development with localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'ws://localhost:5500';
+    }
+    // For GitHub Pages or custom domain, construct the WebSocket URL from current host
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}`;
+};
+
+const SERVER_URL = getServerURL();
+console.log('Connecting to server:', SERVER_URL);
 /* Around line 238 in index.html */
 /* Around line 238 in index.html */
 /* Around line 238 in index.html */
@@ -320,17 +332,22 @@ const MAP_BARRIERS = [
     [9.75, 0, 0.25, 15]        // Right Side Barrier
 ];
 
+const HEAL_ICON_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSI4IiB5PSI4IiB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiMxMGI5ODEiIHN0cm9rZT0iIzA2N2E1NSIgc3Ryb2tlLXdpZHRoPSIyIi8+PHBhdGggZD0iTTMyIDIwIEwzMiA0NCBNMjAgMzIgTDQ0IDMyIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+';
+
+const WHITE_BALL_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyNSIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTBlMGUwIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=';
+
+const FIREBALL_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImZpcmVHcmFkIiBjeD0iNTAlIiBjeT0iNTAlIiByPSI1MCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNmZmYwMDA7c3RvcC1vcGFjaXR5OjEiIC8+PHN0b3Agb2Zmc2V0PSI1MCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNmZjYzMDA7c3RvcC1vcGFjaXR5OjEiIC8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZWYyODAwO3N0b3Atb3BhY2l0eToxIiAvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxjaXJjbGUgY3g9IjMyIiBjeT0iMzIiIHI9IjI1IiBmaWxsPSJ1cmwoI2ZpcmVHcmFkKSIgc3Ryb2tlPSIjYzUwMDAwIiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBkPSJNMjIgMjIgUTIwIDI4IDI0IDM0IFExOCA0MCAxNiA0OCBNMzIgMTggUTMwIDI2IDM2IDMyIFEzMiA0MCBzIDAgNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZhNTA4IiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+';
 
 const ALL_ABILITIES = {
-    'whiteBall': { name: 'White Ball', icon: '⚪', description: 'Basic direct shot (10 Damage).' },
-    'fireBall': { name: 'Fire Ball', icon: '🔥', description: 'Heavy direct shot (25 Damage).' }, 
-    'knockback': { name: 'Knockback', icon: '💥', description: 'Pushes opponent away instantly.' },
+    'whiteBall': { name: 'White Ball', icon: '⚪', svgIcon: WHITE_BALL_SVG, description: 'Basic direct shot (10 Damage).' },
+    'fireBall': { name: 'Fire Ball', icon: '🔥', svgIcon: FIREBALL_SVG, description: 'Heavy direct shot (25 Damage).' }, 
+    'knockback': { name: 'Knockback', icon: '🏏', description: 'Pushes opponent away instantly.' },
     'impulse': { name: 'Impulse', icon: '💫', description: 'Pulls opponent towards you instantly.' },
     'snowball': { name: 'Snowball', icon: '❄️', description: 'Stuns opponent for 1.5s.' }, 
     'landmine': { name: 'Landmine', icon: '💣', description: 'Places a proximity mine (30 Damage).' },
     'dash': { name: 'Dash', icon: '💨', description: 'Quickly dashes in your current direction.' },
-    'heal': { name: 'Heal Zone', icon: '💚', description: `Creates a 5s healing zone that gives 15 Health.` },
-    'reflection': { name: 'Reflection', icon: '🔄', description: 'Reflects projectiles for 1s.' },
+    'heal': { name: 'Heal Zone', icon: '🟩', svgIcon: HEAL_ICON_SVG, description: `Creates a 5s healing zone that gives 15 Health.` },
+    'reflection': { name: 'Reflection', icon: '🪞', description: 'Reflects projectiles for 1s.' },
     'target': { name: 'Target (Premium)', icon: '🎯', description: 'Fires a homing projectile. (In-game purchase required)' }
 };
 
@@ -395,8 +412,9 @@ function connectToServer() {
             showModal('Connection Error', 'Could not connect to the game server. Ensure server.js is running.', () => reject(error));
         };
         socket.onclose = () => {
-            if (gameState.status !== 'menu' && gameState.status !== 'death_screen' && gameState.status !== 'win_screen') {
-                showModal('Disconnected', 'Connection lost or terminated. The match has ended.', handleCleanupAndMenuTransition);
+            // Always return to menu silently on disconnect, regardless of game state
+            if (gameState.status !== 'menu') {
+                handleCleanupAndMenuTransition();
             }
             isIntentionalDisconnect = false;
         };
@@ -472,11 +490,20 @@ function handleServerMessage(event) {
             }
             break;
 
+        case 'returnToMenu':
+            // Opponent left before game started, return to menu silently
+            gameState.status = 'menu';
+            isIntentionalDisconnect = true;
+            if (socket) socket.close();
+            draw();
+            break;
+
         case 'afkKick':
             gameState.status = 'finished';
             isIntentionalDisconnect = true;
             gameState.eliminatedBy = null;
-            showModal('Inactive Disconnect', message.message, handleCleanupAndMenuTransition);
+            // Silent return to menu on AFK kick, no error modal
+            handleCleanupAndMenuTransition();
             break;
     }
 }
@@ -747,14 +774,12 @@ function drawTiledBackground() {
 function drawBarriers() {
     ctx.fillStyle = '#064e3b'; ctx.strokeStyle = '#042f2e'; ctx.lineWidth = 1;
     MAP_BARRIERS.forEach(b => {
-        for (let i = 0; i < b[2]; i++) {
-            for (let j = 0; j < b[3]; j++) {
-                const tileX = (b[0] + i) * TILE_SIZE;
-                const tileY = (b[1] + j) * TILE_SIZE;
-                ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
-                ctx.strokeRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
-            }
-        }
+        const pixelX = b[0] * TILE_SIZE;
+        const pixelY = b[1] * TILE_SIZE;
+        const pixelWidth = b[2] * TILE_SIZE;
+        const pixelHeight = b[3] * TILE_SIZE;
+        ctx.fillRect(pixelX, pixelY, pixelWidth, pixelHeight);
+        ctx.strokeRect(pixelX, pixelY, pixelWidth, pixelHeight);
     });
 }
 
@@ -785,9 +810,7 @@ function drawPlayer(player, isLocal) {
     }
 
     ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fillStyle = player.color; ctx.fill();
-    ctx.strokeStyle = 'black'; ctx.lineWidth = 2; ctx.stroke();
-
-    if (isLocal) { ctx.strokeStyle = '#fcd34d'; ctx.lineWidth = 3; ctx.stroke(); }
+    ctx.strokeStyle = 'black'; ctx.lineWidth = 1.5; ctx.stroke();
 
     const fistSize = size * 0.4;
     const armLength = player.isDashing ? size * 2.5 : size * 1.3;
@@ -795,10 +818,10 @@ function drawPlayer(player, isLocal) {
     const TILT_ANGLE = Math.PI / 3.5;
 
     ctx.beginPath(); ctx.arc(x + armLength * Math.cos(angle + TILT_ANGLE), y + armLength * Math.sin(angle + TILT_ANGLE), fistSize, 0, Math.PI * 2);
-    ctx.fillStyle = 'white'; ctx.fill(); ctx.strokeStyle = 'black'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = player.color; ctx.fill(); ctx.strokeStyle = 'black'; ctx.lineWidth = 1; ctx.stroke();
 
     ctx.beginPath(); ctx.arc(x + armLength * Math.cos(angle - TILT_ANGLE), y + armLength * Math.sin(angle - TILT_ANGLE), fistSize, 0, Math.PI * 2);
-    ctx.fillStyle = 'white'; ctx.fill(); ctx.strokeStyle = 'black'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = player.color; ctx.fill(); ctx.strokeStyle = 'black'; ctx.lineWidth = 1; ctx.stroke();
 
     const healthWidth = size * 2.5;
     const healthHeight = 4;
@@ -842,21 +865,41 @@ function drawProjectiles() {
         // Reset opacity before drawing the main ball
         ctx.globalAlpha = 1.0; 
 
-        // 2. Draw the main projectile ball
-        ctx.beginPath(); 
-        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2); 
-        ctx.fillStyle = p.color; // Base color from server (white for whiteBall/snowball, red for fireBall)
-        ctx.fill();
-        
-        // Add a highlight/border for definition
-        if (p.abilityType === 'snowball') {
-             ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-             ctx.lineWidth = 1; 
-             ctx.stroke();
+        // 2. Draw the main projectile ball with SVG icon for white/fire balls
+        if (p.abilityType === 'whiteBall' || p.abilityType === 'fireBall') {
+            // Draw a simple circular background first
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.fill();
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // Draw icon text
+            const iconText = p.abilityType === 'whiteBall' ? '⚪' : '🔥';
+            ctx.font = `${radius * 1.8}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = p.abilityType === 'whiteBall' ? '#333' : '#fff';
+            ctx.fillText(iconText, p.x, p.y);
         } else {
-             ctx.strokeStyle = 'black'; 
-             ctx.lineWidth = 1; 
-             ctx.stroke();
+            // Draw the main projectile ball for other abilities
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.fill();
+            
+            // Add a highlight/border for definition
+            if (p.abilityType === 'snowball') {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            } else {
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
         }
 
         // Old tracking logic (no change)
@@ -1006,7 +1049,18 @@ function renderHotbar() {
 
         const icon = document.createElement('div');
         icon.className = 'hotbar-icon';
-        icon.textContent = ability ? ability.icon : '?';
+        
+        if (ability && ability.svgIcon) {
+            // Use SVG icon if available
+            const img = document.createElement('img');
+            img.src = ability.svgIcon;
+            img.style.cssText = 'width: 100%; height: 100%; object-fit: contain;';
+            icon.appendChild(img);
+        } else {
+            // Use emoji
+            icon.style.cssText = 'font-size: 32px; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;';
+            icon.textContent = ability ? ability.icon : '?';
+        }
         slot.appendChild(icon);
 
         const cooldown = document.createElement('div');
@@ -1051,9 +1105,20 @@ function renderMenuLoadoutSlots() {
         const slot = document.createElement('div');
         slot.className = 'menu-loadout-slot';
         if (index === gameState.hotbarSelection) slot.classList.add('selected');
+        const ability = ALL_ABILITIES[abilityKey];
         const icon = document.createElement('div');
         icon.className = 'text-4xl';
-        icon.textContent = ALL_ABILITIES[abilityKey]?.icon || '?';
+        icon.style.cssText = 'display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;';
+        
+        if (ability && ability.svgIcon) {
+            const img = document.createElement('img');
+            img.src = ability.svgIcon;
+            img.style.cssText = 'width: 100%; height: 100%; object-fit: contain;';
+            icon.appendChild(img);
+        } else {
+            icon.textContent = ability?.icon || '?';
+        }
+        
         slot.appendChild(icon);
         slot.addEventListener('click', () => openAbilityModal(index));
         container.appendChild(slot);
@@ -1069,9 +1134,30 @@ function openAbilityModal(slotIndex) {
     modalSlotNumber.textContent = (slotIndex + 1).toString();
     abilityList.innerHTML = '';
     Object.keys(ALL_ABILITIES).forEach(key => {
+        const ability = ALL_ABILITIES[key];
         const card = document.createElement('div');
         card.className = 'ability-card';
-        card.innerHTML = `<div class="text-3xl">${ALL_ABILITIES[key].icon}</div><div class="text-sm">${ALL_ABILITIES[key].name}</div>`;
+        card.innerHTML = '';
+        
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'text-3xl';
+        iconDiv.style.cssText = 'display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;';
+        
+        if (ability.svgIcon) {
+            const img = document.createElement('img');
+            img.src = ability.svgIcon;
+            img.style.cssText = 'width: 100%; height: 100%; object-fit: contain;';
+            iconDiv.appendChild(img);
+        } else {
+            iconDiv.textContent = ability.icon;
+        }
+        
+        card.appendChild(iconDiv);
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'text-sm';
+        nameDiv.textContent = ability.name;
+        card.appendChild(nameDiv);
+        
         card.addEventListener('click', () => {
             gameState.loadout[modalTargetSlot] = key;
             abilityModal.classList.add('hidden');
