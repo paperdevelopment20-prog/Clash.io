@@ -5,7 +5,7 @@ const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 
 // Import the connectDB function
-const connectDB = require("./dbConn");
+const connectDB = require("./dbconn");
 
 // --- DATABASE SETUP ---
 
