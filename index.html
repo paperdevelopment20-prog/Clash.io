@@ -179,6 +179,7 @@
              <button id="leave-game-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl text-sm absolute top-4 left-4 z-50">Leave Game</button>
             <div id="status-display" class="font-bold absolute top-4 right-4 text-sm bg-gray-800 p-3 rounded z-50">Waiting for another player...</div>
         </div>
+        <div id="player-stats" class="absolute top-16 right-4 z-50"></div>
         <canvas id="game-canvas"></canvas>
         <div id="hotbar-container"></div>
     </div>
@@ -233,6 +234,16 @@
         </div>
     </div>
 
+    <div id="leaderboard-modal" class="modal hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg border-4 border-black">
+            <h3 class="text-3xl font-bold mb-6 text-black text-center">Leaderboard</h3>
+            <div id="leaderboard-content" class="overflow-y-auto max-h-80 text-left space-y-2">
+                <p class="text-center text-gray-500">Loading...</p>
+            </div>
+            <button id="close-leaderboard-modal" class="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow border-2 border-black">Close</button>
+        </div>
+    </div>
+
     <div id="message-modal" class="modal hidden">
         <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm text-center border-4 border-blue-500">
             <h3 id="modal-title" class="text-2xl font-bold mb-4 text-gray-800"></h3>
@@ -267,12 +278,16 @@ const nameInput = document.getElementById('name-input');
 const startButton = document.getElementById('start-button');
 const leaveGameBtn = document.getElementById('leave-game-btn');
 const statusDisplay = document.getElementById('status-display');
+const playerStatsDisplay = document.getElementById('player-stats');
 const abilityModal = document.getElementById('ability-modal');
 const closeAbilityModal = document.getElementById('close-ability-modal');
 const modalSlotNumber = document.getElementById('modal-slot-number');
 const abilityList = document.getElementById('ability-list');
 const updatesModal = document.getElementById('updates-modal');
 const updatesBtn = document.getElementById('updates-btn');
+const leaderboardModal = document.getElementById('leaderboard-modal');
+const leaderboardContent = document.getElementById('leaderboard-content');
+const closeLeaderboardModal = document.getElementById('close-leaderboard-modal');
 const closeUpdatesModal = document.getElementById('close-updates-modal');
 const messageModal = document.getElementById('message-modal');
 const modalTitle = document.getElementById('modal-title');
@@ -295,7 +310,7 @@ let isIntentionalDisconnect = false;
 const getServerURL = () => {
     // For local development with localhost
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        return 'ws://localhost:5500';
+        return 'ws://localhost:5000';
     }
     // For GitHub Pages or custom domain, construct the WebSocket URL from current host
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -307,12 +322,12 @@ console.log('Connecting to server:', SERVER_URL);
 /* Around line 238 in index.html */
 /* Around line 238 in index.html */
 /* Around line 238 in index.html */
-const TILE_SIZE = 40; // Increased to 40 to match menu background-size
-const TILES_X = 10;   // Halved to 10 (10 * 40 = 400px width)
-const TILES_Y = 15;   // Halved to 15 (15 * 40 = 600px height)
+const TILE_SIZE = 25;
+const TILES_X = 36;
+const TILES_Y = 24;
 
-const FULL_MAP_HEIGHT = TILES_Y * TILE_SIZE; // Remains 600
-const GAME_WORLD_WIDTH = TILES_X * TILE_SIZE; // Remains 400   // Decreased from 30 (15 * 40 = 600)
+const FULL_MAP_HEIGHT = TILES_Y * TILE_SIZE;
+const GAME_WORLD_WIDTH = TILES_X * TILE_SIZE;
 
 
 
@@ -325,12 +340,14 @@ const MOVEMENT_DEADZONE_SQ = 10 * 10;
 
     /* --- index.html --- */
 const MAP_BARRIERS = [
-    // format: [gridX, gridY, widthInTiles, heightInTiles]
-    [0, 0, 10, 0.25],          // Top Barrier (10 tiles wide)
-    [0, 14.75, 10, 0.25],      // Bottom Barrier
-    [0, 0, 0.25, 15],          // Left Side Barrier (15 tiles high)
-    [9.75, 0, 0.25, 15]        // Right Side Barrier
-];
+    [0, 0, 36, 0.25],
+    [0, 23.75, 36, 0.25],
+    [0, 0, 0.25, 24],
+    [35.75, 0, 0.25, 24],
+    [15, 10, 6, 4],
+    [16, 4, 4, 2],
+    [16, 18, 4, 2],
+    ];
 
 const HEAL_ICON_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSI4IiB5PSI4IiB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiMxMGI5ODEiIHN0cm9rZT0iIzA2N2E1NSIgc3Ryb2tlLXdpZHRoPSIyIi8+PHBhdGggZD0iTTMyIDIwIEwzMiA0NCBNMjAgMzIgTDQ0IDMyIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+';
 
@@ -364,6 +381,7 @@ let gameState = {
     authenticatedUser: null,
     eliminatedBy: null,
     continueButtonArea: null,
+    dyingPlayer: null,
 };
 
 let socket = null;
@@ -371,7 +389,17 @@ let myPlayerId = null;
 let authMode = 'login';
 let viewScale = 1;
 let viewHeightInGameUnits = 480;
+const ZOOM_FACTOR = 1.8;
 let mouseX = 0;
+
+// Particle trail system: Map of projectile id -> array of {x, y, age, maxAge, type}
+const projectileTrails = new Map();
+
+// Active ring effects for knockback/impulse: [{x, y, radius, maxRadius, age, maxAge, type}]
+const activeRings = [];
+
+// Dash ghost trail: [{x, y, color, age}]
+const dashTrail = [];
 let mouseY = 0;
 
 /* =========================
@@ -380,7 +408,7 @@ let mouseY = 0;
 function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    viewScale = window.innerWidth / GAME_WORLD_WIDTH;
+    viewScale = (window.innerWidth / GAME_WORLD_WIDTH) * ZOOM_FACTOR;
     viewHeightInGameUnits = window.innerHeight / viewScale;
     if (gameState.status !== 'menu') draw();
 }
@@ -394,11 +422,60 @@ startButton.addEventListener('click', startGame);
 leaveGameBtn.addEventListener('click', () => leaveGame(true));
 updatesBtn.addEventListener('click', () => updatesModal.classList.remove('hidden'));
 closeUpdatesModal.addEventListener('click', () => updatesModal.classList.add('hidden'));
+if (closeLeaderboardModal) closeLeaderboardModal.addEventListener('click', () => leaderboardModal.classList.add('hidden'));
+
+async function showLeaderboard() {
+    leaderboardModal.classList.remove('hidden');
+    leaderboardContent.innerHTML = '<p class="text-center text-gray-500">Loading...</p>';
+    try {
+        const response = await fetch('/api/leaderboard');
+        const players = await response.json();
+        if (players.length === 0) {
+            leaderboardContent.innerHTML = '<p class="text-center text-gray-500">No wins recorded yet. Be the first!</p>';
+        } else {
+            leaderboardContent.innerHTML = players.map((p, i) => `
+                <div class="flex justify-between items-center p-3 ${i === 0 ? 'bg-yellow-100' : i === 1 ? 'bg-gray-100' : i === 2 ? 'bg-orange-100' : 'bg-white'} rounded border border-gray-300">
+                    <span class="font-bold text-lg">${i + 1}. ${p.username}</span>
+                    <span class="text-green-600 font-bold">${p.wins} win${p.wins !== 1 ? 's' : ''}</span>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        leaderboardContent.innerHTML = '<p class="text-center text-red-500">Failed to load leaderboard.</p>';
+    }
+}
 closeAbilityModal.addEventListener('click', () => abilityModal.classList.add('hidden'));
 authDisplayBtn.addEventListener('click', showAuthModal);
 closeAuthModal.addEventListener('click', () => authModal.classList.add('hidden'));
 toggleAuthModeBtn.addEventListener('click', toggleAuthMode);
 authForm.addEventListener('submit', handleAuth);
+
+/* =========================
+   Player Stats Display
+   ========================= */
+function updatePlayerStatsDisplay() {
+    if (!playerStatsDisplay) return;
+    
+    const players = Array.from(gameState.allPlayers.values());
+    if (players.length === 0) {
+        playerStatsDisplay.innerHTML = '';
+        return;
+    }
+    
+    const header = `<div class="flex justify-between text-white text-xs font-bold border-b border-gray-500 pb-1 mb-1">
+        <span class="w-20">Username</span>
+        <span class="w-10 text-right">Wins</span>
+    </div>`;
+    
+    const rows = players.map(p => `
+        <div class="flex justify-between text-white text-xs py-1 border-b border-gray-600 ${p.id === myPlayerId ? 'bg-yellow-900 bg-opacity-50' : ''}">
+            <span class="w-20 truncate">${p.name}</span>
+            <span class="w-10 text-right text-green-400">${p.wins}</span>
+        </div>
+    `).join('');
+    
+    playerStatsDisplay.innerHTML = `<div class="bg-gray-800 bg-opacity-90 px-3 py-2 rounded-lg border border-gray-600 min-w-32">${header}${rows}</div>`;
+}
 
 /* =========================
    Server connection & messaging
@@ -449,11 +526,15 @@ function handleServerMessage(event) {
             break;
 
         case 'playerEliminated':
-            // NEW: Immediately show the death screen with killer name
             gameState.eliminatedBy = message.killerUsername;
-            gameState.status = 'death_screen';
-            statusDisplay.textContent = `GAME OVER!`;
-            draw();
+            const dyingP = gameState.allPlayers.get(myPlayerId);
+            if (dyingP) gameState.dyingPlayer = { x: dyingP.x, y: dyingP.y, color: dyingP.color, deathTime: Date.now() };
+            setTimeout(() => {
+                gameState.dyingPlayer = null;
+                gameState.status = 'death_screen';
+                statusDisplay.textContent = `GAME OVER!`;
+                draw();
+            }, 2000);
             break;
 
         case 'status': // NEW: Handle countdown status messages
@@ -470,6 +551,18 @@ function handleServerMessage(event) {
             updateGameStateFromBroadcast(message);
             break;
 
+        case 'abilityEffect':
+            activeRings.push({
+                x: message.x,
+                y: message.y,
+                radius: 0,
+                maxRadius: message.radius,
+                age: 0,
+                maxAge: 20,
+                type: message.effect, // 'knockback' or 'impulse'
+            });
+            break;
+
         case 'elimination':
             statusDisplay.textContent = message.message;
             const match = message.message.match(/eliminated by (.+)\.?/i);
@@ -478,16 +571,18 @@ function handleServerMessage(event) {
 
         case 'gameOver':
             const localPlayerName = gameState.isAuthenticated ? gameState.authenticatedUser : (nameInput.value.trim() || 'Challenger');
-            if (message.winnerName === localPlayerName) {
-                gameState.status = 'win_screen';
-                statusDisplay.textContent = `YOU WON!`;
-                draw();
-            } else {
-                gameState.status = 'death_screen';
-                statusDisplay.textContent = `GAME OVER! ${message.winnerName} Wins!`;
-                gameState.eliminatedBy = gameState.eliminatedBy || message.winnerName;
-                draw();
-            }
+            setTimeout(() => {
+                if (message.winnerName === localPlayerName) {
+                    gameState.status = 'win_screen';
+                    statusDisplay.textContent = `YOU WON!`;
+                    draw();
+                } else {
+                    gameState.status = 'death_screen';
+                    statusDisplay.textContent = `GAME OVER! ${message.winnerName} Wins!`;
+                    gameState.eliminatedBy = gameState.eliminatedBy || message.winnerName;
+                    draw();
+                }
+            }, 2000);
             break;
 
         case 'returnToMenu':
@@ -512,20 +607,57 @@ function handleServerMessage(event) {
    State update from server
    ========================= */
 function updateGameStateFromBroadcast(message) {
-    gameState.projectiles = message.projectiles || [];
+    const newProjectiles = message.projectiles || [];
+
+    // Spawn trail particles for fireball and snowball projectiles
+    const activeIds = new Set();
+    newProjectiles.forEach(p => {
+        activeIds.add(p.id);
+        if (p.abilityType === 'fireBall' || p.abilityType === 'snowball') {
+            if (!projectileTrails.has(p.id)) projectileTrails.set(p.id, []);
+            const trail = projectileTrails.get(p.id);
+            const maxAge = p.abilityType === 'fireBall' ? 18 : 22;
+            // Add 2 particles per update for density
+            for (let i = 0; i < 2; i++) {
+                trail.push({
+                    x: p.x + (Math.random() - 0.5) * 3,
+                    y: p.y + (Math.random() - 0.5) * 3,
+                    age: 0,
+                    maxAge,
+                    type: p.abilityType
+                });
+            }
+        }
+    });
+    // Clean up trails for removed projectiles
+    for (const id of projectileTrails.keys()) {
+        if (!activeIds.has(id)) projectileTrails.delete(id);
+    }
+    // Age all particles, remove dead ones
+    for (const [id, trail] of projectileTrails.entries()) {
+        for (const pt of trail) pt.age++;
+        projectileTrails.set(id, trail.filter(pt => pt.age < pt.maxAge));
+    }
+
+    gameState.projectiles = newProjectiles;
     gameState.mines = message.mines || [];
     gameState.healingFields = message.healingFields || [];
 
     const localPlayerBeforeUpdate = gameState.allPlayers.get(myPlayerId);
 
+    const prevPlayers = new Map(gameState.allPlayers);
     gameState.allPlayers.clear();
     (message.players || []).forEach(pData => {
         const isLocal = pData.id === myPlayerId;
+        const prev = prevPlayers.get(pData.id);
         const playerObj = {
             id: pData.id,
             name: pData.name,
             x: pData.x,
             y: pData.y,
+            // Render positions start at server pos if new, or keep previous render pos for lerping
+            renderX: prev ? prev.renderX : pData.x,
+            renderY: prev ? prev.renderY : pData.y,
             facingAngle: pData.facingAngle,
             health: pData.health,
             color: pData.color,
@@ -535,11 +667,14 @@ function updateGameStateFromBroadcast(message) {
             isStunned: pData.isStunned,
             isImpulsed: pData.isImpulsed,
             lastAbilityTime: pData.lastAbilityTime || Array(gameState.loadout.length).fill(0),
-            dx: isLocal ? (gameState.allPlayers.get(myPlayerId)?.dx || 0) : (pData.dx || 0),
-            dy: isLocal ? (gameState.allPlayers.get(myPlayerId)?.dy || 0) : (pData.dy || 0),
+            dx: isLocal ? (prev?.dx || 0) : (pData.dx || 0),
+            dy: isLocal ? (prev?.dy || 0) : (pData.dy || 0),
+            wins: pData.wins || 0,
         };
         gameState.allPlayers.set(pData.id, playerObj);
     });
+    
+    updatePlayerStatsDisplay();
 
     const localPlayerAfterUpdate = gameState.allPlayers.get(myPlayerId);
 
@@ -559,6 +694,30 @@ function updateGameStateFromBroadcast(message) {
 function gameLoop(timestamp) {
     updateMovementAndAim();
     updateHotbarVisuals();
+
+    // Lerp render positions toward server positions for smooth motion
+    gameState.allPlayers.forEach(p => {
+        const lerpSpeed = p.isDashing || p.isImpulsed ? 0.35 : 0.2;
+        // Feed dash trail ghosts while dashing
+        if (p.isDashing) {
+            dashTrail.push({ x: p.renderX, y: p.renderY, color: p.color, age: 0 });
+        }
+        p.renderX += (p.x - p.renderX) * lerpSpeed;
+        p.renderY += (p.y - p.renderY) * lerpSpeed;
+    });
+
+    // Age and remove old dash ghosts
+    for (let i = dashTrail.length - 1; i >= 0; i--) {
+        dashTrail[i].age++;
+        if (dashTrail[i].age > 12) dashTrail.splice(i, 1);
+    }
+
+    // Age and remove old rings
+    for (let i = activeRings.length - 1; i >= 0; i--) {
+        activeRings[i].age++;
+        activeRings[i].radius = (activeRings[i].age / activeRings[i].maxAge) * activeRings[i].maxRadius;
+        if (activeRings[i].age >= activeRings[i].maxAge) activeRings.splice(i, 1);
+    }
 
     if (gameState.status !== 'menu') {
         draw();
@@ -659,8 +818,10 @@ function updateMovementAndAim() {
         return;
     }
 
+    const viewWidthInGameUnits2 = canvas.width / viewScale;
     let camY = Math.max(0, Math.min(localPlayer.y - viewHeightInGameUnits / 2, FULL_MAP_HEIGHT - viewHeightInGameUnits));
-    const gameMouseX = mouseX / viewScale;
+    let camX = Math.max(0, Math.min(localPlayer.x - viewWidthInGameUnits2 / 2, GAME_WORLD_WIDTH - viewWidthInGameUnits2));
+    const gameMouseX = (mouseX / viewScale) + camX;
     const gameMouseY = (mouseY / viewScale) + camY;
     
     // The original logic calculates a normalized movement vector (dx/dy)
@@ -699,8 +860,10 @@ function useAbility(slotIndex) {
 
     if (Date.now() < (localPlayer.lastAbilityTime[slotIndex] || 0) + ABILITY_COOLDOWN) return;
 
+    const viewWidthInGameUnits3 = canvas.width / viewScale;
     let camY = Math.max(0, Math.min(localPlayer.y - viewHeightInGameUnits / 2, FULL_MAP_HEIGHT - viewHeightInGameUnits));
-    const gameMouseX = mouseX / viewScale;
+    let camX = Math.max(0, Math.min(localPlayer.x - viewWidthInGameUnits3 / 2, GAME_WORLD_WIDTH - viewWidthInGameUnits3));
+    const gameMouseX = (mouseX / viewScale) + camX;
     const gameMouseY = (mouseY / viewScale) + camY;
     const aimAngle = Math.atan2(gameMouseY - localPlayer.y, gameMouseX - localPlayer.x);
 
@@ -784,13 +947,12 @@ function drawBarriers() {
 }
 
 function drawPlayer(player, isLocal) {
-    const x = player.x;
-    const y = player.y;
+    const x = player.renderX !== undefined ? player.renderX : player.x;
+    const y = player.renderY !== undefined ? player.renderY : player.y;
     const size = PLAYER_SIZE;
 
     if (player.isImpulsed) {
         ctx.beginPath();
-    
         ctx.arc(x, y, size * 2.5, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(147, 51, 234, 0.8)';
         ctx.lineWidth = 3;
@@ -806,11 +968,47 @@ function drawPlayer(player, isLocal) {
         ctx.beginPath(); ctx.arc(x, y, size + 5, 0, Math.PI * 2); ctx.fillStyle = shieldColor; ctx.fill();
     }
     if (player.isStunned) {
-        ctx.globalAlpha = 0.5; ctx.fillStyle = 'gray'; ctx.fillRect(x - size, y - size, size * 2, size * 2); ctx.globalAlpha = 1.0;
+        // Blue icy aura
+        ctx.beginPath();
+        ctx.arc(x, y, size + 4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(147, 210, 255, 0.35)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(100, 180, 255, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // Rotating snowflake stars
+        const numStars = 5;
+        const orbit = size + 12;
+        const spin = (Date.now() / 300);
+        for (let i = 0; i < numStars; i++) {
+            const a = spin + (i / numStars) * Math.PI * 2;
+            const sx = x + Math.cos(a) * orbit;
+            const sy = y + Math.sin(a) * orbit;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#a0d8ff';
+            ctx.fill();
+            // Small cross for snowflake feel
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(sx - 3, sy); ctx.lineTo(sx + 3, sy);
+            ctx.moveTo(sx, sy - 3); ctx.lineTo(sx, sy + 3);
+            ctx.stroke();
+        }
     }
 
     ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fillStyle = player.color; ctx.fill();
     ctx.strokeStyle = 'black'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Draw username below player
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'white';
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 2;
+    ctx.strokeText(player.name, x, y + size + 15);
+    ctx.fillText(player.name, x, y + size + 15);
 
     const fistSize = size * 0.4;
     const armLength = player.isDashing ? size * 2.5 : size * 1.3;
@@ -831,43 +1029,82 @@ function drawPlayer(player, isLocal) {
     ctx.fillStyle = '#10b981'; ctx.fillRect(healthX, healthY, (player.health / MAX_HEALTH) * healthWidth, healthHeight);
 }
 
-function drawProjectiles() {
-    gameState.projectiles.forEach(p => {
-        const radius = p.radius || PROJECTILE_RADIUS; 
-        
-        // 1. Draw projectile trails/effects based on abilityType
-        if (p.abilityType === 'fireBall') {
-            // Draw fire trail (series of small, fading circles behind the projectile)
-            const trailLength = 4;
-            for (let i = 1; i <= trailLength; i++) {
-                // Calculate trail position: opposite direction of movement
-                const trailX = p.x - p.dx * (i * 3);
-                const trailY = p.y - p.dy * (i * 3);
-                
-                // Fire colors: Red, Orange, Yellow
-                const colors = ['#f87171', '#fb923c', '#fcd34d']; 
-                const colorIndex = i % colors.length;
-                
-                ctx.beginPath(); 
-                ctx.arc(trailX, trailY, radius * (1 - i / (trailLength + 1)), 0, Math.PI * 2); 
-                ctx.fillStyle = colors[colorIndex];
-                ctx.globalAlpha = 0.5 - (i * 0.1); // Fade the trail
-                ctx.fill();
-            }
-        } else if (p.abilityType === 'snowball') {
-            // Draw a slight blue halo for a "cold" effect
+function drawDashTrailAndRings() {
+    // Draw dash ghost trail
+    for (const ghost of dashTrail) {
+        const t = 1 - ghost.age / 12;
+        ctx.globalAlpha = t * 0.45;
+        ctx.beginPath();
+        ctx.arc(ghost.x, ghost.y, PLAYER_SIZE * (0.5 + t * 0.5), 0, Math.PI * 2);
+        ctx.fillStyle = ghost.color;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+
+    // Draw expanding rings for knockback/impulse
+    for (const ring of activeRings) {
+        const t = ring.age / ring.maxAge;
+        const alpha = (1 - t) * 0.85;
+        if (ring.type === 'knockback') {
+            // Red/orange burst ring — pushes OUT
             ctx.beginPath();
-            ctx.arc(p.x, p.y, radius + 2, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(147, 197, 253, 0.4)'; // Light blue
-            ctx.fill();
+            ctx.arc(ring.x, ring.y, ring.radius, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 120, 30, ${alpha})`;
+            ctx.lineWidth = 4 * (1 - t) + 1;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(ring.x, ring.y, ring.radius * 0.6, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 220, 80, ${alpha * 0.6})`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        } else {
+            // Purple implosion ring — pulls IN
+            ctx.beginPath();
+            ctx.arc(ring.x, ring.y, ring.maxRadius - ring.radius, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(180, 60, 255, ${alpha})`;
+            ctx.lineWidth = 4 * (1 - t) + 1;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(ring.x, ring.y, (ring.maxRadius - ring.radius) * 0.6, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(220, 150, 255, ${alpha * 0.6})`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
         }
+    }
+}
 
-        // Reset opacity before drawing the main ball
-        ctx.globalAlpha = 1.0; 
+function drawProjectiles() {
+    // Draw all trail particles first (behind projectiles)
+    for (const trail of projectileTrails.values()) {
+        trail.forEach(pt => {
+            const life = 1 - pt.age / pt.maxAge;
+            const size = (pt.type === 'fireBall' ? 4.5 : 3.5) * life;
+            if (size < 0.3) return;
 
-        // 2. Draw the main projectile ball with SVG icon for white/fire balls
+            ctx.globalAlpha = life * 0.85;
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, size, 0, Math.PI * 2);
+
+            if (pt.type === 'fireBall') {
+                // Fire gradient: bright yellow core → orange → red
+                const fireColors = ['#fff176', '#ffa726', '#ef5350'];
+                ctx.fillStyle = fireColors[Math.floor((1 - life) * fireColors.length)] || '#ef5350';
+            } else {
+                // Snow gradient: white → light blue → blue
+                const snowColors = ['#ffffff', '#b3e5fc', '#4fc3f7'];
+                ctx.fillStyle = snowColors[Math.floor((1 - life) * snowColors.length)] || '#4fc3f7';
+            }
+            ctx.fill();
+        });
+    }
+    ctx.globalAlpha = 1.0;
+
+    // Draw each projectile on top of trails
+    gameState.projectiles.forEach(p => {
+        const radius = p.radius || PROJECTILE_RADIUS;
+        ctx.globalAlpha = 1.0;
+
         if (p.abilityType === 'whiteBall' || p.abilityType === 'fireBall') {
-            // Draw a simple circular background first
             ctx.beginPath();
             ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
             ctx.fillStyle = p.color;
@@ -875,39 +1112,27 @@ function drawProjectiles() {
             ctx.strokeStyle = 'black';
             ctx.lineWidth = 1;
             ctx.stroke();
-            
-            // Draw icon text
-            const iconText = p.abilityType === 'whiteBall' ? '⚪' : '🔥';
             ctx.font = `${radius * 1.8}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = p.abilityType === 'whiteBall' ? '#333' : '#fff';
-            ctx.fillText(iconText, p.x, p.y);
+            ctx.fillText(p.abilityType === 'whiteBall' ? '⚪' : '🔥', p.x, p.y);
         } else {
-            // Draw the main projectile ball for other abilities
             ctx.beginPath();
             ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
             ctx.fillStyle = p.color;
             ctx.fill();
-            
-            // Add a highlight/border for definition
-            if (p.abilityType === 'snowball') {
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-            } else {
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-            }
+            ctx.strokeStyle = p.abilityType === 'snowball' ? 'rgba(255,255,255,0.8)' : 'black';
+            ctx.lineWidth = 1;
+            ctx.stroke();
         }
 
-        // Old tracking logic (no change)
         if (p.isTracking) {
             ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.dx * 10, p.y - p.dy * 10);
             ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2; ctx.stroke();
         }
     });
+    ctx.globalAlpha = 1.0;
 }
 
 function drawMines() {
@@ -934,11 +1159,16 @@ function draw() {
     const localPlayer = gameState.allPlayers.get(myPlayerId);
 
     let camY = 0;
-    if (localPlayer) camY = Math.max(0, Math.min(localPlayer.y - viewHeightInGameUnits / 2, FULL_MAP_HEIGHT - viewHeightInGameUnits));
+    let camX = 0;
+    const viewWidthInGameUnits = canvas.width / viewScale;
+    if (localPlayer) {
+        camY = Math.max(0, Math.min(localPlayer.y - viewHeightInGameUnits / 2, FULL_MAP_HEIGHT - viewHeightInGameUnits));
+        camX = Math.max(0, Math.min(localPlayer.x - viewWidthInGameUnits / 2, GAME_WORLD_WIDTH - viewWidthInGameUnits));
+    }
 
     ctx.save();
     ctx.scale(viewScale, viewScale);
-    ctx.translate(0, -camY);
+    ctx.translate(-camX, -camY);
 
     drawTiledBackground();
     drawBarriers();
@@ -946,6 +1176,24 @@ function draw() {
     drawHealingFields();
     drawProjectiles();
     gameState.allPlayers.forEach(player => drawPlayer(player, player.id === myPlayerId));
+
+    // Draw death shrink animation
+    if (gameState.dyingPlayer) {
+        const elapsed = Date.now() - gameState.dyingPlayer.deathTime;
+        const progress = Math.min(elapsed / 1000, 1); // 1 second shrink
+        const shrinkSize = PLAYER_SIZE * (1 - progress);
+        if (shrinkSize > 0.5) {
+            ctx.globalAlpha = 1 - progress * 0.5;
+            ctx.beginPath();
+            ctx.arc(gameState.dyingPlayer.x, gameState.dyingPlayer.y, shrinkSize, 0, Math.PI * 2);
+            ctx.fillStyle = gameState.dyingPlayer.color;
+            ctx.fill();
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+    }
 
     ctx.restore();
     
