@@ -47,17 +47,17 @@ connectDB();
 
 // --- GAME CONSTANTS (MUST MATCH CLIENT) ---
 // --- GAME CONSTANTS (MUST MATCH CLIENT) ---
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 /* Around line 238 in index.html */
-const TILE_SIZE = 25; // Smaller tiles for more detail
-const TILES_X = 32; // Wider map (32 * 25 = 800px width)
-const TILES_Y = 24; // Taller map (24 * 25 = 600px height)
+const TILE_SIZE = 25;
+const TILES_X = 36; // (36 * 25 = 900px width)
+const TILES_Y = 24; // (24 * 25 = 600px height)
 
-const FULL_MAP_HEIGHT = TILES_Y * TILE_SIZE; // 600
-const GAME_WORLD_WIDTH = TILES_X * TILE_SIZE; // 800
+const FULL_MAP_HEIGHT = TILES_Y * TILE_SIZE;
+const GAME_WORLD_WIDTH = TILES_X * TILE_SIZE;
 
-const CANVAS_WIDTH = TILES_X * TILE_SIZE; // 800
-const CANVAS_HEIGHT = TILES_Y * TILE_SIZE; // 600
+const CANVAS_WIDTH = TILES_X * TILE_SIZE;
+const CANVAS_HEIGHT = TILES_Y * TILE_SIZE;
 const PLAYER_SIZE = 10;
 const PLAYER_SPEED = 2;
 const MAX_HEALTH = 100;
@@ -77,13 +77,14 @@ const REGEN_AMOUNT = 1 / 60;
 /* --- server.js --- */
 // Fixed map barriers
 const MAP_BARRIERS = [
-    [0, 0, 32, 0.25], // Top wall
-    [0, 23.75, 32, 0.25], // Bottom wall
-    [0, 0, 0.25, 24], // Left wall
-    [31.75, 0, 0.25, 24], // Right wall
-    [6, 10, 6, 4], // Big center barrier (8 - 2 = 6)
-    [7, 4, 4, 2], // Top barrier (9 - 2 = 7)
-    [7, 18, 4, 2], // Bottom barrier (9 - 2 = 7)
+    [0, 0, 36, 0.25],
+    [0, 23.75, 36, 0.25],
+    [0, 0, 0.25, 24],
+    [35.75, 0, 0.25, 24],
+    // Inner barriers centered on 36-tile wide map (center at tile 18)
+    [15, 10, 6, 4], // Big center (spans 15-21, center 18)
+    [16, 4, 4, 2],  // Top (spans 16-20, center 18)
+    [16, 18, 4, 2], // Bottom (spans 16-20, center 18)
 ];
 const ALL_ABILITIES = {
     whiteBall: { name: "White Ball", damage: 10, projSpeed: 5, duration: 0 },
@@ -216,16 +217,13 @@ class GameRoom {
         this.players[player.id] = player;
         this.playerCount++;
 
-        // MAP REFERENCE:
-        // Top Wall: Y 0
-        // Middle Barriers: Y 10 to 14
-        // Bottom Barrier: Y 18 to 20
-        // Bottom Wall: Y 23.75
-
-        // We set the spawn points in the clear lane at the very bottom (Grid Y: 21 to 22)
+        // Map center X = tile 18 = 450px
+        // Top barrier: tile y 4-6 (px 100-150)  → spawn below at y=7 (175px)
+        // Bottom barrier: tile y 18-20 (px 450-500) → spawn above at y=17 (425px)
+        const centerX = CANVAS_WIDTH / 2;
         const spawns = [
-            { x: TILES_X * TILE_SIZE * 0.25, y: 22 * TILE_SIZE }, // Bottom Left Quadrant
-            { x: TILES_X * TILE_SIZE * 0.75, y: 22 * TILE_SIZE }, // Bottom Right Quadrant
+            { x: centerX, y: 7 * TILE_SIZE },  // Below top barrier, center
+            { x: centerX, y: 17 * TILE_SIZE }, // Above bottom barrier, center
         ];
 
         // Assign position based on player order
@@ -1101,12 +1099,21 @@ wss.on("connection", (ws) => {
                     abilityKey === "knockback" ||
                     abilityKey === "impulse"
                 ) {
+                    const ringRadius = PLAYER_SIZE * 5;
+                    // Broadcast ring effect to all players in room
+                    room.broadcast({
+                        type: "abilityEffect",
+                        effect: abilityKey,
+                        x: player.x,
+                        y: player.y,
+                        radius: ringRadius,
+                    });
                     Object.values(room.players).forEach((target) => {
                         if (target.id !== playerId) {
                             const distSq =
                                 (player.x - target.x) ** 2 +
                                 (player.y - target.y) ** 2;
-                            if (distSq < (PLAYER_SIZE * 5) ** 2) {
+                            if (distSq < ringRadius ** 2) {
                                 const angle = Math.atan2(
                                     target.y - player.y,
                                     target.x - player.x,
@@ -1121,17 +1128,11 @@ wss.on("connection", (ws) => {
 
                                 target.x = Math.max(
                                     PLAYER_SIZE,
-                                    Math.min(
-                                        CANVAS_WIDTH - PLAYER_SIZE,
-                                        target.x,
-                                    ),
+                                    Math.min(CANVAS_WIDTH - PLAYER_SIZE, target.x),
                                 );
                                 target.y = Math.max(
                                     PLAYER_SIZE,
-                                    Math.min(
-                                        CANVAS_HEIGHT - PLAYER_SIZE,
-                                        target.y,
-                                    ),
+                                    Math.min(CANVAS_HEIGHT - PLAYER_SIZE, target.y),
                                 );
                             }
                         }
