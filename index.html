@@ -201,57 +201,38 @@
         }
         /* MODIFIED: Gap adjustment for ability list */
         /* Update the grid for 5 columns */
-#ability-list { 
-    display: grid; 
-    grid-template-columns: repeat(5, 1fr); 
-    gap: 10px; 
-}
+#ability-list { grid-template-columns: repeat(5, 1fr); gap: 10px; }
 
-/* Ensure the card fits the image perfectly */
-.ability-card {
-    background-color: #6b7280; 
-    border: 2px solid #4b5563; 
-    border-radius: 8px;
-    cursor: pointer; 
-    transition: all 0.1s; 
-    display: flex;
-    justify-content: center; 
-    align-items: center; 
-    height: 60px; 
-    width: 60px; /* Keep it a square */
-    overflow: hidden;
-}
+        /* MODIFIED: Ability Card Styling (Smaller & Rounded Edges) */
 
-/* MODIFIED: Style for the Base64 images */
-.ability-card img {
-    width: 80%;      /* Leave a little breathing room for the border */
-    height: 80%;
-    object-fit: contain;
-    pointer-events: none; /* Prevents dragging the image by accident */
-}
+        #ability-modal .p-4 { padding: 8px; text-align: center; }
 
-.ability-card:hover { 
-    background-color: #4b5563; 
-    border-color: #9ca3af;
-}
+        .ability-card {
 
-/* Hide extra text labels in the grid view if you only want icons */
-.ability-card .font-bold, 
-.ability-card .text-sm { 
-    display: none; 
-}
-        .hidden { display: none !important; }
-        .menu-content {
-            /* UPDATE: Smaller overall content width */
-            width: 100%; max-width: 400px; background: transparent; 
-            padding: 2rem; 
-            text-align: center; /* REVERTED: Center alignment */
-            display: flex;
-            flex-direction: column; 
-            align-items: center; /* REVERTED: Center alignment */
-            /* MODIFIED: Add space at bottom to move loadout down */
-            min-height: 70vh; 
-            justify-content: space-between; 
+            background-color: #6b7280; border: 2px solid #4b5563; border-radius: 8px;
+
+            cursor: pointer; transition: all 0.1s; display: flex;
+
+            flex-direction: column; justify-content: center; align-items: center; height: 60px; 
+
+        }
+
+        .ability-card:hover { background-color: #4b5563; }
+
+        /* MODIFIED: Smaller icon size for the 60px height (1.75rem) */
+
+        .ability-card .text-3xl { font-size: 1.75rem; line-height: 1; }
+
+        .ability-card .font-bold, .ability-card .text-sm { display: none; }
+
+        .modal {
+
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+
+            background-color: rgba(0, 0, 0, 0.8); display: flex;
+
+            justify-content: center; align-items: center; z-index: 150;
+
         }
         /* MODIFIED: Move loadout label to be above the loadout slots */
         .loadout-wrapper {
