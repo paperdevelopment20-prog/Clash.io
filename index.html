@@ -56,27 +56,31 @@
         /* MODIFIED: Change to white text with black outline */
         #menu-screen h1 { color: #ffffff; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; font-size: 3rem; }
         #start-button {
-    /* The specific dark green from your image */
-    background-color: rgba(13, 66, 38, 0.85); 
-    border: 2px solid #000000; 
-    color: #ffffff; 
-    border-radius: 10px; 
+    background-color: rgba(13, 66, 38, 0.85) !important; /* Force the color */
+    border: 2px solid #000000 !important;
+    color: #ffffff !important;
+    border-radius: 10px;
     
-    /* Layout and Sizing */
+    /* FIX FOR LENGTH: Use a fixed pixel width or smaller rem */
+    width: 140px !important; 
+    height: 50px;
+    margin: 0 auto 1.5rem auto;
+    
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 0 auto 1.5rem auto; /* Centers the button */
-    padding: 10px 0;
     font-family: sans-serif;
     font-weight: 700;
     text-transform: uppercase;
-    transition: all 0.1s ease;
+    transition: all 0.2s ease;
+    cursor: pointer;
 }
 
+/* TEENY BIT DARKER HOVER */
 #start-button:hover { 
-    background-color: rgba(20, 100, 55, 0.95); /* Slightly brighter on hover */
-    transform: scale(1.05); /* Slight pop effect */
+    background-color: rgba(8, 45, 25, 0.95) !important; /* Lower numbers = darker */
+    border-color: #000;
+    transform: scale(0.98); /* Slight "press" effect */
 }
         .menu-top-btn {
             background-color: #fff; border: 1px solid #000; color: #000;
