@@ -55,22 +55,25 @@
         }
         /* MODIFIED: Change to white text with black outline */
         #menu-screen h1 { color: #ffffff; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; font-size: 3rem; }
-        #start-button {
-    background-color: rgba(13, 66, 38, 0.85) !important; /* Force the color */
+       #start-button {
+    /* The "Reconnect" Dark Green */
+    background-color: rgba(13, 66, 38, 0.85) !important; 
     border: 2px solid #000000 !important;
     color: #ffffff !important;
     border-radius: 10px;
+
+    /* DIMENSIONS */
+    width: 140px !important;   /* Keeping width short as requested */
+    height: 80px !important;  /* Increased height to make it "longer" */
     
-    /* FIX FOR LENGTH: Use a fixed pixel width or smaller rem */
-    width: 140px !important; 
-    height: 50px;
-    margin: 0 auto 1.5rem auto;
-    
+    /* Layout */
     display: flex;
     justify-content: center;
     align-items: center;
+    margin: 0 auto 1.5rem auto;
     font-family: sans-serif;
     font-weight: 700;
+    font-size: 1.75rem; /* Slightly larger text to fill the taller space */
     text-transform: uppercase;
     transition: all 0.2s ease;
     cursor: pointer;
@@ -78,9 +81,9 @@
 
 /* TEENY BIT DARKER HOVER */
 #start-button:hover { 
-    background-color: rgba(8, 45, 25, 0.95) !important; /* Lower numbers = darker */
-    border-color: #000;
-    transform: scale(0.98); /* Slight "press" effect */
+    /* Dropped the RGB values slightly to darken it */
+    background-color: rgba(8, 40, 22, 0.95) !important; 
+    transform: scale(0.97); /* Subtle "click" feel */
 }
         .menu-top-btn {
             background-color: #fff; border: 1px solid #000; color: #000;
