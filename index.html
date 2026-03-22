@@ -615,7 +615,8 @@ function updateGameStateFromBroadcast(message) {
             const trail = projectileTrails.get(p.id);
             const maxAge = p.abilityType === 'fireBall' ? 18 : 22;
             // Add 2 particles per update for density
-            for (let i = 0; i < 2; i++) {
+           const particleCount = p.abilityType === 'fireBall' ? 4 : 2;
+            for (let i = 0; i < particleCount; i++) {
                 trail.push({
                     x: p.x + (Math.random() - 0.5) * 3,
                     y: p.y + (Math.random() - 0.5) * 3,
@@ -1075,7 +1076,7 @@ function drawProjectiles() {
     for (const trail of projectileTrails.values()) {
         trail.forEach(pt => {
             const life = 1 - pt.age / pt.maxAge;
-            const size = (pt.type === 'fireBall' ? 4.5 : 3.5) * life;
+            const size = (pt.type === 'fireBall' ? 6.5 : 3.5) * life;
             if (size < 0.3) return;
 
             ctx.globalAlpha = life * 0.85;
