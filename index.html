@@ -62,9 +62,9 @@
     color: #ffffff !important;
     border-radius: 8px;
 
-    /* DIMENSIONS: Long (Wide) but Short (Thin) */
-    width: 320px !important;   /* Horizontal length */
-    height: 44px !important;   /* Vertical height (short/thin) */
+    /* DIMENSIONS: Thin and Short */
+    width: 120px !important;   /* Narrower length */
+    height: 40px !important;   /* Very short height */
     
     /* Layout */
     display: flex;
@@ -75,9 +75,8 @@
     /* Typography */
     font-family: ui-sans-serif, system-ui, sans-serif;
     font-weight: 800;
-    font-size: 1.25rem; 
+    font-size: 1.1rem; /* Smaller text to fit the shorter button */
     text-transform: uppercase;
-    letter-spacing: 1px;
     
     /* Interaction */
     transition: all 0.2s ease;
@@ -86,9 +85,9 @@
 
 /* TEENY BIT DARKER HOVER */
 #start-button:hover { 
-    /* Slightly lower RGB values (8, 45, 25) to darken it */
+    /* Slightly darker green (8, 45, 25) */
     background-color: rgba(8, 45, 25, 0.95) !important; 
-    transform: scale(0.99); /* Very subtle press effect */
+    transform: scale(0.98); /* Subtle press effect */
 }
 
 #start-button:active {
