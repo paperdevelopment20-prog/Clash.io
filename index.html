@@ -57,7 +57,10 @@
         #menu-screen h1 { color: #ffffff; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; font-size: 3rem; }
         #start-button {
             /* OLD STYLE - Kept for reference but class is updated below */
-            background-color: #22c55e; border: 2px solid #000; color: #000;
+            background-color: rgba(0, 0, 0, 0.6); /* Transparent black (60% opacity) */
+            border: 2px solid rgba(255, 255, 255, 0.2); /* Subtle light border */
+            color: #ffffff; /* White text for contrast */
+            backdrop-filter: blur(4px); /* Optional: adds a nice frosted glass effect */
             width: 100%; transition: background-color 0.1s;
             font-weight: bold; text-transform: uppercase;
             /* UPDATE: Smaller start button */
@@ -200,7 +203,7 @@
                     <label for="name-input" class="menu-label">PLAYER NAME (For Anonymous Play)</label>
                     <input type="text" id="name-input" maxlength="12" class="w-full p-4 text-xl text-center focus:outline-none transition-all" value="Challenger">
                 </div>
-                <button id="start-button" class="w-12 px-8 py-2 text-xl font-bold text-white transition-colors duration-200 bg-transparent border-4 border-white rounded-lg hover:bg-white hover:text-green-600 shadow-xl">
+                <button id="start-button" class="w-48 px-8 py-2 text-xl font-bold text-white transition-colors duration-200 bg-transparent border-4 border-white rounded-lg hover:bg-white hover:text-green-600 shadow-xl">
                  1v1
                 </button>
             </div>
