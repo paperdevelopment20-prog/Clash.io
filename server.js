@@ -366,7 +366,7 @@ class GameRoom {
                 roomId: this.id,
                 wins: p.wins || 0,
             })),
-            projectiles: this.projectiles,
+           projectiles: this.projectiles.map(p => ({ ...p, abilityType: p.type })),
             mines: this.mines,
             healingFields: this.healingFields.map((f) => ({
                 x: f.x,
