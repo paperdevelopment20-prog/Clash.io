@@ -56,36 +56,39 @@
         /* MODIFIED: Change to white text with black outline */
         #menu-screen h1 { color: #ffffff; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; font-size: 3rem; }
        #start-button {
-    /* Base "Reconnect" Dark Green */
+    /* The "Reconnect" Dark Green */
     background-color: rgba(13, 66, 38, 0.85) !important; 
     border: 2px solid #000000 !important;
     color: #ffffff !important;
-    border-radius: 12px;
+    border-radius: 8px;
 
-    /* DIMENSIONS: Keep width tight, make vertical length (height) much longer */
-    width: 140px !important;   
-    height: 120px !important;  
+    /* DIMENSIONS: Long (Wide) but Short (Thin) */
+    width: 320px !important;   /* Horizontal length */
+    height: 44px !important;   /* Vertical height (short/thin) */
     
-    /* Layout & Alignment */
+    /* Layout */
     display: flex;
     justify-content: center;
     align-items: center;
     margin: 0 auto 1.5rem auto;
-    font-family: sans-serif;
+    
+    /* Typography */
+    font-family: ui-sans-serif, system-ui, sans-serif;
     font-weight: 800;
-    font-size: 2rem; /* Larger font to match the taller button */
+    font-size: 1.25rem; 
     text-transform: uppercase;
+    letter-spacing: 1px;
+    
+    /* Interaction */
     transition: all 0.2s ease;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 /* TEENY BIT DARKER HOVER */
 #start-button:hover { 
-    /* Slightly lower RGB values for a subtle darkening effect */
-    background-color: rgba(10, 50, 30, 0.95) !important; 
-    transform: translateY(-2px); /* Lifts slightly when hovered */
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    /* Slightly lower RGB values (8, 45, 25) to darken it */
+    background-color: rgba(8, 45, 25, 0.95) !important; 
+    transform: scale(0.99); /* Very subtle press effect */
 }
 
 #start-button:active {
