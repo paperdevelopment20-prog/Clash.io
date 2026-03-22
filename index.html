@@ -349,101 +349,55 @@ const MAP_BARRIERS = [
 // SVG ICON CONSTANTS (Base64 Encoded)
 // ============================================
 
-// WHITE BALL - Simple clean white sphere
-const WHITE_BALL_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9IndoaXRlIiBjeD0iMzUlIiBjeT0iMzUlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZmZmZmZmO3N0b3Atb3BhY2l0eToxIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZTBlMGUwO3N0b3Atb3BhY2l0eToxIi8+PC9yYWRpYWxHcmFkaWVudD48L2RlZnM+PGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMjgiIGZpbGw9InVybCgjd2hpdGUpIiBzdHJva2U9IiM4ODg4ODgiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg==';
+// ============================================
+// CLEAN & SIMPLE SVG CONSTANTS
+// ============================================
 
-// FIREBALL - Orange/red gradient sphere with flame effect
-const FIREBALL_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImZpcmUiIGN4PSI0MCUiIGN5PSI0MCUiIHI9IjYwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6I2ZmZTA0YjtzdG9wLW9wYWNpdHk6MSIvPjxzdG9wIG9mZnNldD0iNTAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZmY4YzAwO3N0b3Atb3BhY2l0eToxIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojY2MzMzAwO3N0b3Atb3BhY2l0eToxIi8+PC9yYWRpYWxHcmFkaWVudD48L2RlZnM+PGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMjgiIGZpbGw9InVybCgjZmlyZSkiIHN0cm9rZT0iIzk5MjIwMCIgc3Ryb2tlLXdpZHRoPSIyIi8+PHBhdGggZD0iTTI0IDI4IFEyMiAyMiAxOCAxOCBRMjAgMjQgMjIgMzAgUTE5IDM4IDE4IDQwIiBmaWxsPSIjZmZhNTA4IiBvcGFjaXR5PSIwLjYiLz48cGF0aCBkPSJNNDAgMjggUTQyIDIyIDQ2IDE4IFE0NCAyNCA0MiAzMCBRNDUgMzggNDYgNDAiIGZpbGw9IiNmZmE1MDgiIG9wYWNpdHk9IjAuNiIvPjwvc3ZnPg==';
+// WHITE BALL - Basic Circle
+const WHITE_BALL_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyNCIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjY2NjY2NjIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=';
 
-// UPDATED: KNOCKBACK - Red boxing glove with impact lines
-const KNOCKBACK_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMjggMTYgQzMyIDEwIDQwIDEwIDQ0IDE2IEM0OCA5IDU2IDEwIDYwIDE2IEw2MCA0MCBDNjAgNDggNTIgNTYgNDggNjAgTDQ0IDYwIEw0MCA2MCBDMzYgNTYgMjggNDggMjggNDAgWiBNNDAgNTYgTDMyIDU2IEwzMiAxNiIgc3Ryb2tlPSIjODkwMDAwIiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9IiNlZjQ0NDQiLz48cGF0aCBkPSJNMTYgMzIgTDQgMzIgTTEwIDI4IEw0IDMyIEwxMCAzNiIgc3Ryb2tlPSIjODkwMDAwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0yMCAyNCBMMTggMjAgTTE4IDI4IEwyMCAyNCBMMjIgMjAiIHN0cm9rZT0iI2ZmYWFhYSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9IjAuNSIvPjwvc3ZnPg==';
+// FIREBALL - Sphere with a simple flame tail
+const FIREBALL_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzOCIgY3k9IjMyIiByPSIyMCIgZmlsbD0iI2ZmNDUwMCIvPjxwYXRoIGQ9Ik0yMCAzMiBMMCAxNiBMMTAgMzIgTDAgNDggW extravaganzaiBmaWxsPSIjZmY0NTAwIi8+PC9zdmc+';
 
-// UPDATED: IMPULSE - Three arrows pointing inward to center circle
-const IMPULSE_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSI4IiBmaWxsPSIjYzA4NGZjIiBzdHJva2U9IiM2MjM3OTkiIHN0cm9rZS13aWR0aD0iMiIvPjxwYXRoIGQ9Ik0xMiAzMiBMMjQgMzIgTTIwIDI4IEwyNCAzMiBMMjAgMzYiIHN0cm9rZT0iI2MwODRmYyIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMzIgMTIgTDMyIDI0IE0yOCAyMCBMMzIgMjQgTTM2IDIwIiBzdHJva2U9IiNjMDg0ZmMiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBhdGggZD0iTTUyIDUyIEw0MCA0MCBNNDggNDAgTDQwIDQwIEw0MCA0OCIgc3Ryb2tlPSIjYzA4NGZjIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==';
+// KNOCKBACK - A bold Boxing Glove
+const KNOCKBACK_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMjAgNDAgSDQwIEM0OCA0MCA1MiAzNiA1MiAzMCBDNTIgMjQgNDggMjAgNDAgMjAgSDI4IEMyNCAyMCAyMCAyNCAyMCAyOCBaIiBmaWxsPSIjZWY0NDQ0Ii8+PHJlY3QgeD0iMTIiIHk9IjI0IiB3aWR0aD0iOCIgaGVpZ2h0PSIxNiIgZmlsbD0iI2FhMDAwMCIvPjwvc3ZnPg==';
 
-// SNOWBALL - Simple blue sphere
-const SNOWBALL_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImJsdWUiIGN4PSIzNSUiIGN5PSIzNSUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM2ZGQzZmY7c3RvcC1vcGFjaXR5OjEiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMDg4ZGQ7c3RvcC1vcGFjaXR5OjEiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyOCIgZmlsbD0idXJsKCNibHVlKSIgc3Ryb2tlPSIjMDA0NDY2IiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=';
+// IMPULSE - 3 Arrows pointing to a center dot
+const IMPULSE_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSI2IiBmaWxsPSIjYzA4NGZjIi8+PHBhdGggZD0iTTEwIDMyIEgyMiBNNTQgMzIgSDQyIE0zMiAxMCBWMjIiIHN0cm9rZT0iI2MwODRmYyIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMTggMjYgTDIyIDMyIEwxOCAzOCBNNDYgMjYgTDQyIDMyIEw0NiAzOCBNMjYgMTggTDMyIDIyIEwzOCAxOCIgc3Ryb2tlPSIjYzA4NGZjIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==';
 
-// LANDMINE - Gray dome with red trigger button
-const LANDMINE_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImRvbWUiIGN4PSI1MCUiIGN5PSI0MCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM3Nzc3Nzc7c3RvcC1vcGFjaXR5OjEiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMzMzMzMzM7c3RvcC1vcGFjaXR5OjEiLz48L3JhZGlhbEdyYWRpZW50PjxyYWRpYWxHcmFkaWVudCBpZD0iYnV0dG9uIiBjeD0iNTAlIiBjeT0iNTAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZWY0NDQ0O3N0b3Atb3BhY2l0eToxIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojYzAwMDAwO3N0b3Atb3BhY2l0eToxIi8+PC9yYWRpYWxHcmFkaWVudD48L2RlZnM+PGVsbGlwc2UgY3g9IjMyIiBjeT0iMzIiIHJ4PSIyNiIgcnk9IjIwIiBmaWxsPSJ1cmwoI2RvbWUpIiBzdHJva2U9IiMxMTExMTEiIHN0cm9rZS13aWR0aD0iMiIvPjxwYXRoIGQ9Ik0xOCAyMEgyNlY0NEgxOFpNNDIgMjBINThWMDRINDFaTTEyIDQySDUyVjUwSDEyWiIgZmlsbD0iI2EwYTBhMCIgb3BhY2l0eT0iMC4yIi8+PGNpcmNsZSBjeD0iMzIgY3k9IjMyIiByPSIxMiIgZmlsbD0idXJsKCNidXR0b24pIiBzdHJva2U9IiM2NjAwMDAiIHN0cm9rZS13aWR0aD0iMSIvPjxjaXJjbGUgY3g9IjI5IiBjeT0iMjkiIHI9IjIiIGZpbGw9IiNmZmFhYWEiIG9wYWNpdHk9IjAuNSIvPjwvc3ZnPg==';
+// SNOWBALL - Simple Blue Circle
+const SNOWBALL_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyNCIgZmlsbD0iIzZkZDNmZiIgc3Ryb2tlPSIjMDA4OGRkIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=';
 
-// UPDATED: DASH - Three blue arrows pointing right
-const DASH_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTYgMzIgSDI4IE0yMiAyNiBMMjggMzIgTDIyIDM4IE0zMiAzMiBINDQgTTM4IDI2IEw0NCAzMiBMMzggMzggTTQ4IDMyIEg2MCBNNTQgMjYgTDYwIDMyIEw1NCAzOCIgc3Ryb2tlPSIjMDhiNmQ0IiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==';
+// LANDMINE - A flat base with a bright red flashing light top
+const LANDMINE_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSIxMCIgeT0iNDgiIHdpZHRoPSI0NCIgaGVpZ2h0PSI4IiByeD0iNCIgZmlsbD0iIzQ0NDQ0NCIvPjxjaXJjbGUgY3g9IjMyIiBjeT0iMzgiIHI9IjEwIiBmaWxsPSIjZWY0NDQ0Ii8+PHBhdGggZD0iTTMyIDI4IFYyMCBNNDAgMzAgTDQ4IDIyIE0yNCAzMCBMMTYgMjIiIHN0cm9rZT0iI2VmMTQ0NCIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=';
 
-// HEAL - Green cross/plus in circle
-const HEAL_ICON_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImhlYWwiIGN4PSI1MCUiIGN5PSI1MCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM0YWRlODA7c3RvcC1vcGFjaXR5OjEiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwZjc5MzE7c3RvcC1vcGFjaXR5OjEiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyNiIgZmlsbD0idXJsKCNoZWFsKSIgc3Ryb2tlPSIjMDY1ZjQ2IiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBkPSJNMzIgMjAgTDMyIDQ0IE0yMCAzMiBMNDQgMzIiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=';
+// DASH - Three fast motion lines/arrows
+const DASH_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTYgMjAgTDI4IDMyIEwxNiA0NCBNMzIgMjAgTDQ0IDMyIEwzMiA0NCBNNDggMjAgTDYwIDMyIEw0OCA0NCIgc3Ryb2tlPSIjMDhiNmQ0IiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==';
 
-// UPDATED: REFLECTION - Wall with incoming and bouncing arrows
-const REFLECTION_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSI0MCIgeT0iMTIiIHdpZHRoPSI4IiBoZWlnaHQ9IjQwIiByeD0iMiIgZmlsbD0iI2Y1OWUwYSIgc3Ryb2tlPSIjYjk0ZDMxIiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBkPSJNMTIgMjAgTDQwIDMyIE0zMCAyNSBMNDAgMzIgTDMwIDM1IiBzdHJva2U9IiNmY2QzNGQiIHN0cm9rZS1widthPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMjAgNDAgTDEyIDQ0IEwyMCA0NyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMiLz48cGF0aCBkPSJNNDAgMzIgTDgxIDYwIE0xMiA0NCBMMTYgMzYgTDI4IDI0IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS1widthPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIGZpbGw9Im5vbmUiLz48L3N2Zz4=';
+// HEAL - Simple Green Plus
+const HEAL_ICON_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSI4IiB5PSI4IiB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHJ4PSI4IiBmaWxsPSIjNGFkZTgwIi8+PHBhdGggZD0iTTMyIDE4IFY0NiBNMTggMzIgSDQ2IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==';
 
-// UPDATED: TARGET - Red crosshair
-const TARGET_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyMCIgc3Ryb2tlPSIjZWY0NDQ0IiBzdHJva2Utd2lkdGg9IjQiLz48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSI0IiBmaWxsPSIjZWY0NDQ0Ii8+PHBhdGggZD0iTTMyIDggTDMyIDI0IE0zMiA0MCBMMzIgNTYgTTEyIDMyIEwyOCAzMiBNNDAgMzIgTDU2IDMyIiBzdHJva2U9IiNlZjQ0NDQiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+';
+// REFLECTION - A thick wall and a "V" shaped bounce arrow
+const REFLECTION_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSI0OCIgeT0iMTIiIHdpZHRoPSI4IiBoZWlnaHQ9IjQwIiByeD0iMiIgZmlsbD0iI2Y1OWUwYSIvPjxwYXRoIGQ9Ik04IDIwIEw0OCAzMiBMOCA0NCIgc3Ryb2tlPSIjZmNkNTRkIiBzdHJva2Utd2lkdGg9IjUiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==';
+
+// TARGET - Clean Red Crosshair
+const TARGET_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyMiIgc3Ryb2tlPSIjZWY0NDQ0IiBzdHJva2Utd2lkdGg9IjQiLz48cGF0aCBkPSJNMzIgMTIgVjUyIE0xMiAzMiBITTUyIiBzdHJva2U9IiNlZjQ0NDQiIHN0cm9rZS13aWR0aD0iNCIvPjxjaXJjbGUgY3g9IjMyIiBjeT0iMzIiIHI9IjQiIGZpbGw9IiNlZjQ0NDQiLz48L3N2Zz4=';
 
 // ============================================
 // ALL_ABILITIES OBJECT
 // ============================================
 
 const ALL_ABILITIES = {
-    'whiteBall': { 
-        name: 'White Ball', 
-        icon: '⚪', 
-        svgIcon: WHITE_BALL_SVG, 
-        description: 'Basic direct shot (10 Damage).' 
-    },
-    'fireBall': { 
-        name: 'Fire Ball', 
-        icon: '🔥', 
-        svgIcon: FIREBALL_SVG, 
-        description: 'Heavy direct shot (25 Damage).' 
-    }, 
-    'knockback': { 
-        name: 'Knockback', 
-        icon: '🥊', 
-        svgIcon: KNOCKBACK_SVG, 
-        description: 'Pushes opponent away instantly.' 
-    },
-    'impulse': { 
-        name: 'Impulse', 
-        icon: '💫', 
-        svgIcon: IMPULSE_SVG, 
-        description: 'Pulls opponent towards you instantly.' 
-    },
-    'snowball': { 
-        name: 'Snowball', 
-        icon: '❄️', 
-        svgIcon: SNOWBALL_SVG, 
-        description: 'Stuns opponent for 1.5s.' 
-    }, 
-    'landmine': { 
-        name: 'Landmine', 
-        icon: '💣', 
-        svgIcon: LANDMINE_SVG, 
-        description: 'Places a proximity mine (30 Damage).' 
-    },
-    'dash': { 
-        name: 'Dash', 
-        icon: '💨', 
-        svgIcon: DASH_SVG, 
-        description: 'Quickly dashes in your current direction.' 
-    },
-    'heal': { 
-        name: 'Heal Zone', 
-        icon: '🟩', 
-        svgIcon: HEAL_ICON_SVG, 
-        description: 'Creates a 5s healing zone that gives 15 Health.' 
-    },
-    'reflection': { 
-        name: 'Reflection', 
-        icon: '🪞', 
-        svgIcon: REFLECTION_SVG, 
-        description: 'Reflects projectiles for 1s.' 
-    },
-    'target': { 
-        name: 'Target (Premium)', 
-        icon: '🎯', 
-        svgIcon: TARGET_SVG, 
-        description: 'Fires a homing projectile. (In-game purchase required)' 
-    }
+    'whiteBall': { name: 'White Ball', icon: '⚪', svgIcon: WHITE_BALL_SVG, description: 'Basic direct shot (10 Damage).' },
+    'fireBall': { name: 'Fire Ball', icon: '🔥', svgIcon: FIREBALL_SVG, description: 'Heavy direct shot (25 Damage).' }, 
+    'knockback': { name: 'Knockback', icon: '🥊', svgIcon: KNOCKBACK_SVG, description: 'Pushes opponent away.' },
+    'impulse': { name: 'Impulse', icon: '💫', svgIcon: IMPULSE_SVG, description: 'Pulls opponent towards you.' },
+    'snowball': { name: 'Snowball', icon: '❄️', svgIcon: SNOWBALL_SVG, description: 'Stuns opponent for 1.5s.' }, 
+    'landmine': { name: 'Landmine', icon: '💣', svgIcon: LANDMINE_SVG, description: 'Places a proximity mine.' },
+    'dash': { name: 'Dash', icon: '💨', svgIcon: DASH_SVG, description: 'Quickly dashes forward.' },
+    'heal': { name: 'Heal Zone', icon: '🟩', svgIcon: HEAL_ICON_SVG, description: 'Creates a healing zone.' },
+    'reflection': { name: 'Reflection', icon: '🪞', svgIcon: REFLECTION_SVG, description: 'Reflects projectiles.' },
+    'target': { name: 'Target', icon: '🎯', svgIcon: TARGET_SVG, description: 'Fires a homing projectile.' }
 };
 let gameState = {
     status: 'menu',
