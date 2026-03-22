@@ -56,34 +56,40 @@
         /* MODIFIED: Change to white text with black outline */
         #menu-screen h1 { color: #ffffff; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; font-size: 3rem; }
        #start-button {
-    /* The "Reconnect" Dark Green */
+    /* Base "Reconnect" Dark Green */
     background-color: rgba(13, 66, 38, 0.85) !important; 
     border: 2px solid #000000 !important;
     color: #ffffff !important;
-    border-radius: 10px;
+    border-radius: 12px;
 
-    /* DIMENSIONS */
-    width: 140px !important;   /* Keeping width short as requested */
-    height: 100px !important;  /* Increased height to make it "longer" */
+    /* DIMENSIONS: Keep width tight, make vertical length (height) much longer */
+    width: 140px !important;   
+    height: 120px !important;  
     
-    /* Layout */
+    /* Layout & Alignment */
     display: flex;
     justify-content: center;
     align-items: center;
     margin: 0 auto 1.5rem auto;
     font-family: sans-serif;
-    font-weight: 700;
-    font-size: 1.75rem; /* Slightly larger text to fill the taller space */
+    font-weight: 800;
+    font-size: 2rem; /* Larger font to match the taller button */
     text-transform: uppercase;
     transition: all 0.2s ease;
     cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 /* TEENY BIT DARKER HOVER */
 #start-button:hover { 
-    /* Dropped the RGB values slightly to darken it */
-    background-color: rgba(8, 40, 22, 0.95) !important; 
-    transform: scale(0.97); /* Subtle "click" feel */
+    /* Slightly lower RGB values for a subtle darkening effect */
+    background-color: rgba(10, 50, 30, 0.95) !important; 
+    transform: translateY(-2px); /* Lifts slightly when hovered */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+#start-button:active {
+    transform: translateY(2px); /* Sinks when clicked */
 }
         .menu-top-btn {
             background-color: #fff; border: 1px solid #000; color: #000;
