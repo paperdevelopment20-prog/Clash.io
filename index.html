@@ -56,29 +56,28 @@
         /* MODIFIED: Change to white text with black outline */
         #menu-screen h1 { color: #ffffff; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; font-size: 3rem; }
         #start-button {
-            /* OLD STYLE - Kept for reference but class is updated below */
-            /* Deep Forest Green with 85% opacity */
-background-color: rgba(13, 66, 38, 0.85); 
+    /* The specific dark green from your image */
+    background-color: rgba(13, 66, 38, 0.85); 
+    border: 2px solid #000000; 
+    color: #ffffff; 
+    border-radius: 10px; 
+    
+    /* Layout and Sizing */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 1.5rem auto; /* Centers the button */
+    padding: 10px 0;
+    font-family: sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: all 0.1s ease;
+}
 
-/* Clean black border for that industrial look */
-border: 2px solid #000000; 
-
-/* Crisp white text for maximum readability */
-color: #ffffff; 
-
-/* Smoothing the edges to match your image */
-border-radius: 10px; 
-font-family: sans-serif;
-font-weight: 700;
-padding: 10px 20px;
-text-align: center;
-            width: 100%; transition: background-color 0.1s;
-            font-weight: bold; text-transform: uppercase;
-            /* UPDATE: Smaller start button */
-            padding-top: 1rem; padding-bottom: 1rem; font-size: 1.5rem; margin-bottom: 1.5rem;
-        }
-        #start-button:hover { background-color: #4ade80; }
-        /* UPDATE: Shrink Top Buttons */
+#start-button:hover { 
+    background-color: rgba(20, 100, 55, 0.95); /* Slightly brighter on hover */
+    transform: scale(1.05); /* Slight pop effect */
+}
         .menu-top-btn {
             background-color: #fff; border: 1px solid #000; color: #000;
             padding: 6px 10px; font-weight: bold; cursor: pointer;
