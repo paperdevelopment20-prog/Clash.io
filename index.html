@@ -93,64 +93,13 @@
 #start-button:active {
     transform: translateY(2px); /* Sinks when clicked */
 }
-        /* UPDATE: Redesign the 'Updates' Button */
-#updates-btn {
-    /* The specific dark "Reconnect" green */
-    background-color: rgba(13, 66, 38, 0.85) !important; 
-    border: 2px solid #000000 !important;
-    border-radius: 8px; /* Clean rounded corners */
-    
-    /* Center the contents */
-    display: inline-flex !important;
-    justify-content: center;
-    align-items: center;
-    gap: 6px; /* Space between icon and text */
-
-    /* Typography & Sizing */
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    color: #ffffff !important; /* White text for contrast */
-    padding: 8px 16px !important; 
-    font-weight: 800;
-    font-size: 0.9rem !important;
-    text-transform: uppercase;
-    
-    /* Interaction */
-    transition: all 0.2s ease;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-    z-index: 60;
-}
-
-/* Hover effect to match the new 1v1 style */
-#updates-btn:hover { 
-    background-color: rgba(20, 100, 55, 0.95) !important; /* Slightly brighter green */
-    transform: translateY(-2px); /* Lifts slightly */
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    color: #fff !important; /* Ensure text remains bright */
-}
-
-#updates-btn:active {
-    transform: translateY(1px); /* Sinks when clicked */
-}
-
-/* Redesign the other top button (Discord) to match slightly */
-.menu-top-btn:not(#updates-btn) {
-    background-color: #fff;
-    border: 1px solid #000;
-    color: #000;
-    padding: 6px 10px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    text-decoration: none; 
-    display: inline-block;
-    font-size: 0.8rem;
-    border-radius: 6px;
-}
-
-.menu-top-btn:not(#updates-btn):hover {
-    background-color: #e5e7eb;
-}
+        .menu-top-btn {
+            background-color: #fff; border: 1px solid #000; color: #000;
+            padding: 6px 10px; font-weight: bold; cursor: pointer;
+            transition: background-color 0.2s; text-decoration: none; 
+            display: inline-block; font-size: 0.8rem;
+        }
+        .menu-top-btn:hover { background-color: #e5e7eb; }
         /* UPDATE: Shrink Auth Button */
         #sign-in-btn, #auth-display-btn {
             background-color: #fcd34d; border: 2px solid #000; color: #000;
@@ -200,39 +149,35 @@
             display: none; /* HIDE THE NUMBER */
         }
         /* MODIFIED: Gap adjustment for ability list */
-        /* Update the grid for 5 columns */
-#ability-list { grid-template-columns: repeat(5, 1fr); gap: 10px; }
-
+        #ability-list { grid-template-columns: repeat(5, 1fr); gap: 10px; }
         /* MODIFIED: Ability Card Styling (Smaller & Rounded Edges) */
-
         #ability-modal .p-4 { padding: 8px; text-align: center; }
-
         .ability-card {
-
             background-color: #6b7280; border: 2px solid #4b5563; border-radius: 8px;
-
             cursor: pointer; transition: all 0.1s; display: flex;
-
             flex-direction: column; justify-content: center; align-items: center; height: 60px; 
-
         }
-
         .ability-card:hover { background-color: #4b5563; }
-
         /* MODIFIED: Smaller icon size for the 60px height (1.75rem) */
-
         .ability-card .text-3xl { font-size: 1.75rem; line-height: 1; }
-
         .ability-card .font-bold, .ability-card .text-sm { display: none; }
-
         .modal {
-
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-
             background-color: rgba(0, 0, 0, 0.8); display: flex;
-
             justify-content: center; align-items: center; z-index: 150;
-
+        }
+        .hidden { display: none !important; }
+        .menu-content {
+            /* UPDATE: Smaller overall content width */
+            width: 100%; max-width: 400px; background: transparent; 
+            padding: 2rem; 
+            text-align: center; /* REVERTED: Center alignment */
+            display: flex;
+            flex-direction: column; 
+            align-items: center; /* REVERTED: Center alignment */
+            /* MODIFIED: Add space at bottom to move loadout down */
+            min-height: 70vh; 
+            justify-content: space-between; 
         }
         /* MODIFIED: Move loadout label to be above the loadout slots */
         .loadout-wrapper {
@@ -431,42 +376,38 @@ const MAP_BARRIERS = [
     [16, 18, 4, 2],
     ];
 // ============================================
-// CLEAN INLINE SVG ASSETS
+// CLEAN & SIMPLE SVG CONSTANTS
 // ============================================
 
-// ============================================
-// OPTIMIZED STYLIZED SVG ASSETS
-// ============================================
+// WHITE BALL - Basic Circle
+const WHITE_BALL_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyNCIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjY2NjY2NjIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=';
 
-// WHITE BALL - Pristine luminous pearl
-const WHITE_BALL_SVG = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyOCIgZmlsbD0idXJsKCNwZWFybEdyYWQpIi8+PGRlZnM+PHJhZGlhbEdyYWRpZW50IGlkPSJwZWFybEdyYWQiIGN4PSIzMiIgY3k9IjMyIiByPSIyOCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmZmZmZiIvPjxzdG9wIG9mZnNldD0iMC42IiBzdG9wLWNvbG9yPSIjZjBmMGYwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjYjliOWI5Ii8+PC9yYWRpYWxHcmFkaWVudD48L2RlZnM+PC9zdmc+';
+// FIREBALL - Sphere with a simple flame tail
+const FIREBALL_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzOCIgY3k9IjMyIiByPSIyMCIgZmlsbD0iI2ZmNDUwMCIvPjxwYXRoIGQ9Ik0yMCAzMiBMMCAxNiBMMTAgMzIgTDAgNDggW extravaganzaiBmaWxsPSIjZmY0NTAwIi8+PC9zdmc+';
 
-// FIREBALL - Intense blazing sphere with trail
-const FIREBALL_SVG = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzOCIgY3k9IjMyIiByPSIyMiIgZmlsbD0idXJsKCNmaXJlR3JhZCkiLz48cGF0aCBkPSJNMjIgMzIgQzEwIDE4IDU4IDAgMjIgNDUgQzUwIDcxIDAgNDYgMjIgMzIgWiIgZmlsbD0idXJsKCN0cmFpbEdyYWQpIi8+PGRlZnM+PHJhZGlhbEdyYWRpZW50IGlkPSJmaXJlR3JhZCIgY3g9IjM4IiBjeT0iMzIiIHI9IjIyIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmZmZjAwIi8+PHN0b3Agb2Zmc2V0PSIwLjQiIHN0b3ALWNvbG9yPSIjZmY4ODAwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZmY0NDAwIi8+PC9yYWRpYWxHcmFkaWVudD48cmFkaWFsR3JhZGllbnQgaWQ9InRyYWlsR3JhZCIgY3g9IjM4IiBjeT0iMzIiIHI9IjIyIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmY0NDAwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZmY0NDAAMDAiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz48L3N2Zz4=';
+// KNOCKBACK - A bold Boxing Glove
+const KNOCKBACK_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMjAgNDAgSDQwIEM0OCA0MCA1MiAzNiA1MiAzMCBDNTIgMjQgNDggMjAgNDAgMjAgSDI4IEMyNCAyMCAyMCAyNCAyMCAyOCBaIiBmaWxsPSIjZWY0NDQ0Ii8+PHJlY3QgeD0iMTIiIHk9IjI0IiB3aWR0aD0iOCIgaGVpZ2h0PSIxNiIgZmlsbD0iI2FhMDAwMCIvPjwvc3ZnPg==';
 
-// KNOCKBACK - Detailed Boxing Glove with impact trail
-const KNOCKBACK_SVG = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMjIgMTYgSDQyIEM1MCAxNiA1NCAyMCA1NCAyNiBMNTQgMzggQzU0IDQ0IDUwIDQ4IDQyIDQ4IEgyMiBaIiBmaWxsPSIjZWY0NDQ0Ii8+PHBhdGggZD0iTTIyIDE2IFY0OCBaIiBmaWxsPSIjYWEwMDAwIi8+PHBhdGggZD0iTTEwIDE2IEwyMiA4IEMyNiAxMCAyNiAxNiAyNiAyMiBaIiBmaWxsPSIjYWEwMDAwIi8+PC9zdmc+';
+// IMPULSE - 3 Arrows pointing to a center dot
+const IMPULSE_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSI2IiBmaWxsPSIjYzA4NGZjIi8+PHBhdGggZD0iTTEwIDMyIEgyMiBNNTQgMzIgSDQyIE0zMiAxMCBWMjIiIHN0cm9rZT0iI2MwODRmYyIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMTggMjYgTDIyIDMyIEwxOCAzOCBNNDYgMjYgTDQyIDMyIEw0NiAzOCBNMjYgMTggTDMyIDIyIEwzOCAxOCIgc3Ryb2tlPSIjYzA4NGZjIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==';
 
-// IMPULSE - Dynamic Violet Vortex
-const IMPULSE_SVG = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyOCIgZmlsbD0idXJsKCN2b3J0ZXhHcmFkKSIvPjxwYXRoIGQ9Ik0zMiAzMiBMNDggNDggTDY0IDMyIEw0OCAxNiBaIiBmaWxsPSIjYzA4NGZjIi8+PC9zdmc+';
+// SNOWBALL - Simple Blue Circle
+const SNOWBALL_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyNCIgZmlsbD0iIzZkZDNmZiIgc3Ryb2tlPSIjMDA4OGRkIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=';
 
-// SNOWBALL - Ice-textured frosty sphere
-const SNOWBALL_SVG = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyOCIgZmlsbD0idXJsKCNpY2VHcmFkKSIvPjxwYXRoIGQ9Ik0zMiAzMiBMNDggNDggTDY0IDMyIEw0OCAxNiBaIiBmaWxsPSIjYzA4NGZjIi8+PC9zdmc+';
+// LANDMINE - A flat base with a bright red flashing light top
+const LANDMINE_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSIxMCIgeT0iNDgiIHdpZHRoPSI0NCIgaGVpZ2h0PSI4IiByeD0iNCIgZmlsbD0iIzQ0NDQ0NCIvPjxjaXJjbGUgY3g9IjMyIiBjeT0iMzgiIHI9IjEwIiBmaWxsPSIjZWY0NDQ0Ii8+PHBhdGggZD0iTTMyIDI4IFYyMCBNNDAgMzAgTDQ4IDIyIE0yNCAzMCBMMTYgMjIiIHN0cm9rZT0iI2VmMTQ0NCIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=';
 
-// LANDMINE - Tactical proximity mine with hazard stripes
-const LANDMINE_SVG = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSI4IiB5PSI0OCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjEyIiByeD0iNCIgZmlsbD0iIzQ0NDQ0NCIvPjxjaXJjbGUgY3g9IjMyIiBjeT0iMzgiIHI9IjEwIiBmaWxsPSIjZWY0NDQ0Ii8+PC9zdmc+';
+// DASH - Three fast motion lines/arrows
+const DASH_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTYgMjAgTDI4IDMyIEwxNiA0NCBNMzIgMjAgTDQ0IDMyIEwzMiA0NCBNNDggMjAgTDYwIDMyIEw0OCA0NCIgc3Ryb2tlPSIjMDhiNmQ0IiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==';
 
-// DASH - Fast aerodynamic motion lines/arrows
-const DASH_SVG = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTEwIDMyIEgyMiBNNTQgMzIgSDQyIE0zMiAxMCBWMjIiIHN0cm9rZT0iI2MwODRmYyIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=';
+// HEAL - Simple Green Plus
+const HEAL_ICON_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSI4IiB5PSI4IiB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHJ4PSI4IiBmaWxsPSIjNGFkZTgwIi8+PHBhdGggZD0iTTMyIDE4IFY0NiBNMTggMzIgSDQ2IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==';
 
-// HEAL - Stylized Green Plus within a Halo
-const HEAL_ICON_SVG = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSI4IiB5PSI4IiB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHJ4PSI4IiBmaWxsPSIjNGFkZTgwIi8+PC9zdmc+';
+// REFLECTION - A thick wall and a "V" shaped bounce arrow
+const REFLECTION_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSI0OCIgeT0iMTIiIHdpZHRoPSI4IiBoZWlnaHQ9IjQwIiByeD0iMiIgZmlsbD0iI2Y1OWUwYSIvPjxwYXRoIGQ9Ik04IDIwIEw0OCAzMiBMOCA0NCIgc3Ryb2tlPSIjZmNkNTRkIiBzdHJva2Utd2lkdGg9IjUiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==';
 
-// REFLECTION - Angled crystal shield bounce
-const REFLECTION_SVG = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSI0OCIgeT0iMTIiIHdpZHRoPSI4IiBoZWlnaHQ9IjQwIiByeD0iMiIgZmlsbD0iI2Y1OWUwYSIvPjwvc3ZnPg==';
-
-// TARGET - Highly detailed Crosshair/Reticle
-const TARGET_SVG = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48c3ZnIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyMiIgc3Ryb2tlPSIjZWY0NDQ0IiBzdHJva2Utd2lkdGg9IjQiLz48L3N2Zz4=';
+// TARGET - Clean Red Crosshair
+const TARGET_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIyMiIgc3Ryb2tlPSIjZWY0NDQ0IiBzdHJva2Utd2lkdGg9IjQiLz48cGF0aCBkPSJNMzIgMTIgVjUyIE0xMiAzMiBITTUyIiBzdHJva2U9IiNlZjQ0NDQiIHN0cm9rZS13aWR0aD0iNCIvPjxjaXJjbGUgY3g9IjMyIiBjeT0iMzIiIHI9IjQiIGZpbGw9IiNlZjQ0NDQiLz48L3N2Zz4=';
 
 // ============================================
 // ALL_ABILITIES OBJECT
