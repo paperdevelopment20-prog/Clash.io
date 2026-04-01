@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" href="/C.png">
     <link rel="apple-touch-icon" href="/C.png">
     <style>
-    
+
         body {
             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
             background-color: #1f2937; 
@@ -26,7 +26,7 @@
                 background-position: -40px 0; /* Causes the background to scroll left */
             }
         }
-        
+
         #menu-screen {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -65,19 +65,19 @@
     /* DIMENSIONS: Thin and Short */
     width: 360px !important;   /* Narrower length */
     height: 40px !important;   /* Very short height */
-    
+
     /* Layout */
     display: flex;
     justify-content: center;
     align-items: center;
     margin: 0 auto 1.5rem auto;
-    
+
     /* Typography */
     font-family: ui-sans-serif, system-ui, sans-serif;
     font-weight: 800;
     font-size: 1.1rem; /* Smaller text to fit the shorter button */
     text-transform: uppercase;
-    
+
     /* Interaction */
     transition: all 0.2s ease;
     cursor: pointer;
@@ -99,7 +99,7 @@
     background-color: rgba(13, 66, 38, 0.85) !important; 
     border: 2px solid #000000 !important;
     border-radius: 8px; /* Clean rounded corners */
-    
+
     /* Center the contents */
     display: inline-flex !important;
     justify-content: center;
@@ -113,7 +113,7 @@
     font-weight: 800;
     font-size: 0.9rem !important;
     text-transform: uppercase;
-    
+
     /* Interaction */
     transition: all 0.2s ease;
     cursor: pointer;
@@ -163,22 +163,35 @@
         }
         #game-canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
         #hotbar-container {
-            position: absolute; bottom: 20px; left: 50%;
-            transform: translateX(-50%); display: flex; gap: 10px; padding: 10px;
-            background-color: rgba(0, 0, 0, 0.6); border-radius: 8px; z-index: 40; 
+            position: absolute; bottom: 16px; left: 50%;
+            transform: translateX(-50%); display: flex; gap: 8px; padding: 6px 10px;
+            background-color: transparent; z-index: 40;
+        }
+        .hotbar-slot-wrapper {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
         }
         .hotbar-slot {
-            width: 60px; height: 60px; background-color: #374151;
-            border: 3px solid #6b7280; border-radius: 4px;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            cursor: pointer; position: relative; transition: all 0.1s; overflow: hidden; 
+            width: 58px; height: 58px; background-color: #ffffff;
+            border: 2px solid #111; border-radius: 6px;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; position: relative; transition: all 0.1s; overflow: hidden;
         }
-        .hotbar-slot.selected { border-color: #fcd34d; box-shadow: 0 0 10px #fcd34d; }
+        .hotbar-slot.selected { border-color: #fcd34d; border-width: 3px; box-shadow: 0 0 8px #fcd34d; }
+        .hotbar-slot-number {
+            font-size: 0.65rem; font-weight: 800; color: #fff;
+            background: rgba(0,0,0,0.65); border-radius: 3px;
+            padding: 1px 6px; min-width: 18px; text-align: center; line-height: 1.5;
+        }
         .hotbar-cooldown {
             position: absolute; top: 0; left: 0; width: 100%;
-            background-color: rgba(0, 0, 0, 0.7); z-index: 10; transition: height 0.05s linear;
+            background-color: rgba(0, 0, 0, 0.55); z-index: 10; transition: height 0.05s linear;
         }
-        .hotbar-icon { z-index: 20; color: white; font-size: 1.5rem; line-height: 1.5rem; }
+        .hotbar-cooldown-text {
+            position: absolute; bottom: 4px; left: 0; width: 100%; text-align: center;
+            font-size: 0.7rem; font-weight: 700; color: #fff; z-index: 15;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+        }
+        .hotbar-icon { z-index: 20; color: white; font-size: 1.5rem; line-height: 1.5rem; width: 100%; height: 100%; }
         /* MODIFIED: Reduce gap and adjust margin for loadout */
         #menu-loadout { justify-content: center; gap: 12px; margin-top: 10px; margin-bottom: 0px; }
         /* MODIFIED: Increase size of loadout slots (60px x 60px) and rounded edges (8px) */
@@ -285,7 +298,7 @@
     1v1
 </button>
             </div>
-            
+
             <div class="loadout-wrapper">
                 <div id="menu-loadout" class="flex justify-center"></div> </div>
         </div>
@@ -465,16 +478,16 @@ const TARGET_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNj
 // ============================================
 
 const ALL_ABILITIES = {
-    'whiteBall': { name: 'White Ball', icon: '⚪', svgIcon: WHITE_BALL_SVG, description: 'Basic direct shot (10 Damage).' },
-    'fireBall': { name: 'Fire Ball', icon: '🔥', svgIcon: FIREBALL_SVG, description: 'Heavy direct shot (25 Damage).' }, 
-    'knockback': { name: 'Knockback', icon: '🥊', svgIcon: KNOCKBACK_SVG, description: 'Pushes opponent away.' },
-    'impulse': { name: 'Impulse', icon: '💫', svgIcon: IMPULSE_SVG, description: 'Pulls opponent towards you.' },
-    'snowball': { name: 'Snowball', icon: '❄️', svgIcon: SNOWBALL_SVG, description: 'Stuns opponent for 1.5s.' }, 
-    'landmine': { name: 'Landmine', icon: '💣', svgIcon: LANDMINE_SVG, description: 'Places a proximity mine.' },
-    'dash': { name: 'Dash', icon: '💨', svgIcon: DASH_SVG, description: 'Quickly dashes forward.' },
-    'heal': { name: 'Heal Zone', icon: '🟩', svgIcon: HEAL_ICON_SVG, description: 'Creates a healing zone.' },
-    'reflection': { name: 'Reflection', icon: '🪞', svgIcon: REFLECTION_SVG, description: 'Reflects projectiles.' },
-    'target': { name: 'Target', icon: '🎯', svgIcon: TARGET_SVG, description: 'Fires a homing projectile.' }
+    'whiteBall': { name: 'White Ball', icon: '⚪', svgIcon: WHITE_BALL_SVG, description: 'Basic direct shot (10 Damage).', color: '#334155' },
+    'fireBall':  { name: 'Fire Ball',  icon: '🔥', svgIcon: FIREBALL_SVG,  description: 'Heavy direct shot (25 Damage).',  color: '#7c2d12' },
+    'knockback': { name: 'Knockback',  icon: '🥊', svgIcon: KNOCKBACK_SVG, description: 'Pushes opponent away.',            color: '#7f1d1d' },
+    'impulse':   { name: 'Impulse',    icon: '💫', svgIcon: IMPULSE_SVG,   description: 'Pulls opponent towards you.',      color: '#4a1d96' },
+    'snowball':  { name: 'Snowball',   icon: '❄️', svgIcon: SNOWBALL_SVG,  description: 'Stuns opponent for 1.5s.',         color: '#1e3a5f' },
+    'landmine':  { name: 'Landmine',   icon: '💣', svgIcon: LANDMINE_SVG,  description: 'Places a proximity mine.',         color: '#292524' },
+    'dash':      { name: 'Dash',       icon: '💨', svgIcon: DASH_SVG,      description: 'Quickly dashes forward.',          color: '#1e3a8a' },
+    'heal':      { name: 'Heal Zone',  icon: '🟩', svgIcon: HEAL_ICON_SVG, description: 'Creates a healing zone.',          color: '#14532d' },
+    'reflection':{ name: 'Reflection', icon: '🪞', svgIcon: REFLECTION_SVG,description: 'Reflects projectiles.',            color: '#78350f' },
+    'target':    { name: 'Target',     icon: '🎯', svgIcon: TARGET_SVG,    description: 'Fires a homing projectile.',       color: '#7f1d1d' },
 };
 let gameState = {
     status: 'menu',
@@ -563,25 +576,25 @@ authForm.addEventListener('submit', handleAuth);
    ========================= */
 function updatePlayerStatsDisplay() {
     if (!playerStatsDisplay) return;
-    
+
     const players = Array.from(gameState.allPlayers.values());
     if (players.length === 0) {
         playerStatsDisplay.innerHTML = '';
         return;
     }
-    
+
     const header = `<div class="flex justify-between text-white text-xs font-bold border-b border-gray-500 pb-1 mb-1">
         <span class="w-20">Username</span>
         <span class="w-10 text-right">Wins</span>
     </div>`;
-    
+
     const rows = players.map(p => `
         <div class="flex justify-between text-white text-xs py-1 border-b border-gray-600 ${p.id === myPlayerId ? 'bg-yellow-900 bg-opacity-50' : ''}">
             <span class="w-20 truncate">${p.name}</span>
             <span class="w-10 text-right text-green-400">${p.wins}</span>
         </div>
     `).join('');
-    
+
     playerStatsDisplay.innerHTML = `<div class="bg-gray-800 bg-opacity-90 px-3 py-2 rounded-lg border border-gray-600 min-w-32">${header}${rows}</div>`;
 }
 
@@ -782,7 +795,7 @@ function updateGameStateFromBroadcast(message) {
         };
         gameState.allPlayers.set(pData.id, playerObj);
     });
-    
+
     updatePlayerStatsDisplay();
 
     const localPlayerAfterUpdate = gameState.allPlayers.get(myPlayerId);
@@ -806,7 +819,7 @@ function gameLoop(timestamp) {
 
     // Lerp render positions toward server positions for smooth motion
     gameState.allPlayers.forEach(p => {
-        const lerpSpeed = p.isDashing || p.isImpulsed ? 0.35 : 0.2;
+        const lerpSpeed = p.isDashing ? 0.35 : 0.2;
         // Feed dash trail ghosts while dashing
         if (p.isDashing) {
             dashTrail.push({ x: p.renderX, y: p.renderY, color: p.color, age: 0 });
@@ -862,7 +875,7 @@ async function startGame() {
         showModal('Error', 'Name must be 12 characters or less.');
         return;
     }
-    
+
     // Validate loadout integrity before sending
     if (playerLoadout.length !== 5 || playerLoadout.some(a => !ALL_ABILITIES[a])) {
          showModal('Error', 'Invalid loadout configuration.');
@@ -873,14 +886,14 @@ async function startGame() {
         startButton.disabled = true;
         startButton.textContent = 'Connecting...';
         if (!socket || socket.readyState !== WebSocket.OPEN) await connectToServer();
-        
+
         socket.send(JSON.stringify({ 
             type: 'joinGame', 
             name: playerName, 
             loadout: playerLoadout,
             isAuth: gameState.isAuthenticated // Send auth status
         }));
-        
+
         switchToGameScreen();
         gameState.status = 'starting';
         statusDisplay.textContent = 'Waiting for another player...';
@@ -932,14 +945,14 @@ function updateMovementAndAim() {
     let camX = Math.max(0, Math.min(localPlayer.x - viewWidthInGameUnits2 / 2, GAME_WORLD_WIDTH - viewWidthInGameUnits2));
     const gameMouseX = (mouseX / viewScale) + camX;
     const gameMouseY = (mouseY / viewScale) + camY;
-    
+
     // The original logic calculates a normalized movement vector (dx/dy)
     let dx = gameMouseX - localPlayer.x;
     let dy = gameMouseY - localPlayer.y;
 
     if (dx * dx + dy * dy < MOVEMENT_DEADZONE_SQ) { dx = 0; dy = 0; } 
     else { const mag = Math.sqrt(dx * dx + dy * dy); dx /= mag; dy /= mag; }
-    
+
     // NEW LOGIC: If the game is in the 'starting' phase, explicitly prevent movement
     // by overriding dx/dy to 0, but allow the facingAngle to be calculated and sent.
     if (gameState.status === 'starting') {
@@ -954,7 +967,7 @@ function updateMovementAndAim() {
     localPlayer.dx = dx;
     localPlayer.dy = dy;
     localPlayer.facingAngle = facingAngle;
-    
+
     if (socket && socket.readyState === WebSocket.OPEN) {
         // Send raw floats for dx/dy/angle
         socket.send(JSON.stringify({ type: 'movement', dx: dx, dy: dy, facingAngle: localPlayer.facingAngle }));
@@ -1022,11 +1035,11 @@ function drawTiledBackground() {
     // 1. Fill the entire map area with the base green color
     ctx.fillStyle = '#22c55e'; 
     ctx.fillRect(0, 0, GAME_WORLD_WIDTH, FULL_MAP_HEIGHT);
-    
+
     // 2. Draw the 40px grid pattern (matching the menu)
     ctx.strokeStyle = 'rgba(0,0,0,0.05)'; 
     ctx.lineWidth = 1; 
-    
+
     const MENU_TILE_SIZE = 40; // The size of the grid pattern from the menu CSS
 
     ctx.beginPath();
@@ -1060,18 +1073,6 @@ function drawPlayer(player, isLocal) {
     const y = player.renderY !== undefined ? player.renderY : player.y;
     const size = PLAYER_SIZE;
 
-    if (player.isImpulsed) {
-        ctx.beginPath();
-        ctx.arc(x, y, size * 2.5, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(147, 51, 234, 0.8)';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(x, y, size * 1.8, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(147, 51, 234, 0.4)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-    }
     if (player.isProtected) {
         const shieldColor = player.isReflecting ? 'rgba(252, 211, 77, 0.5)' : 'rgba(59, 130, 246, 0.5)';
         ctx.beginPath(); ctx.arc(x, y, size + 5, 0, Math.PI * 2); ctx.fillStyle = shieldColor; ctx.fill();
@@ -1139,13 +1140,20 @@ function drawPlayer(player, isLocal) {
 }
 
 function drawDashTrailAndRings() {
-    // Draw dash ghost trail
+    // Draw dash ghost trail — electric blue
     for (const ghost of dashTrail) {
         const t = 1 - ghost.age / 12;
-        ctx.globalAlpha = t * 0.45;
+        // Outer glow ring
+        ctx.globalAlpha = t * 0.25;
         ctx.beginPath();
-        ctx.arc(ghost.x, ghost.y, PLAYER_SIZE * (0.5 + t * 0.5), 0, Math.PI * 2);
-        ctx.fillStyle = ghost.color;
+        ctx.arc(ghost.x, ghost.y, PLAYER_SIZE * (1.0 + t * 0.6), 0, Math.PI * 2);
+        ctx.fillStyle = '#60a5fa';
+        ctx.fill();
+        // Inner solid trail
+        ctx.globalAlpha = t * 0.55;
+        ctx.beginPath();
+        ctx.arc(ghost.x, ghost.y, PLAYER_SIZE * (0.4 + t * 0.4), 0, Math.PI * 2);
+        ctx.fillStyle = '#3b82f6';
         ctx.fill();
         ctx.globalAlpha = 1;
     }
@@ -1210,8 +1218,41 @@ function drawProjectiles() {
 
     // Draw each projectile on top of trails
     gameState.projectiles.forEach(p => {
-        const radius = p.radius || PROJECTILE_RADIUS;
         ctx.globalAlpha = 1.0;
+
+        // --- RING PROJECTILES (knockback / impulse) ---
+        if (p.isRing) {
+            const outerR = p.ringRadius || 42;
+            const innerR = outerR * 0.28;
+            const color = p.abilityType === 'impulse' ? '#a855f7' : '#ef4444';
+            const glow  = p.abilityType === 'impulse' ? 'rgba(168,85,247,0.25)' : 'rgba(239,68,68,0.25)';
+
+            // Outer glow fill
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, outerR, 0, Math.PI * 2);
+            ctx.fillStyle = glow;
+            ctx.fill();
+            // Outer ring stroke
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, outerR, 0, Math.PI * 2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            // Inner circle fill
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, innerR, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            // Inner ring stroke
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, innerR, 0, Math.PI * 2);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            return;
+        }
+
+        const radius = p.radius || PROJECTILE_RADIUS;
 
         if (p.abilityType === 'whiteBall' || p.abilityType === 'fireBall') {
             ctx.beginPath();
@@ -1245,9 +1286,47 @@ function drawProjectiles() {
 }
 
 function drawMines() {
+    const now = Date.now();
     gameState.mines.forEach(m => {
+        if (m.isRing) {
+            const outerR = m.ringRadius || 50;
+            const innerR = outerR * 0.28;
+            const elapsed = now - (m.placedTime || now);
+            const timeLeft = Math.max(0, ((m.explosionDelay || 3000) - elapsed) / 1000);
+            const urgency = 1 - timeLeft / ((m.explosionDelay || 3000) / 1000);
+            const pulse = 0.65 + 0.35 * Math.sin(now / (200 - urgency * 150));
+
+            // Outer glow fill (pulsing)
+            ctx.beginPath();
+            ctx.arc(m.x, m.y, outerR, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(239, 68, 68, ${0.12 * pulse})`;
+            ctx.fill();
+            // Outer ring
+            ctx.beginPath();
+            ctx.arc(m.x, m.y, outerR, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(239, 68, 68, ${pulse})`;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            // Inner circle
+            ctx.beginPath();
+            ctx.arc(m.x, m.y, innerR, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(239, 68, 68, ${0.5 * pulse})`;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            // Countdown text
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(timeLeft.toFixed(1) + 's', m.x, m.y);
+            ctx.textBaseline = 'alphabetic';
+            return;
+        }
+        // Legacy mine
         ctx.beginPath();
-        ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
+        ctx.arc(m.x, m.y, m.radius || 20, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
         ctx.fill();
     });
@@ -1305,7 +1384,7 @@ function draw() {
     }
 
     ctx.restore();
-    
+
 
     // Overlay screens
     const centerX = canvas.width / 2;
@@ -1326,7 +1405,7 @@ function draw() {
     if (gameState.status === 'starting') {
         // REMOVED: ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         // REMOVED: ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         ctx.fillStyle = 'white';
         // Display countdown number if it is a number (3, 2, 1)
         if (statusDisplay.textContent.match(/^\d+$/)) {
@@ -1335,7 +1414,7 @@ function draw() {
              // Display pre-countdown status
             ctx.font = 'bold 40px sans-serif';
         }
-        
+
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(statusDisplay.textContent, centerX, centerY);
@@ -1396,8 +1475,15 @@ function renderHotbar() {
     hotbarContainer.innerHTML = '';
     gameState.loadout.forEach((abilityKey, index) => {
         const ability = ALL_ABILITIES[abilityKey];
+
+        // Wrapper: slot box + number label below
+        const wrapper = document.createElement('div');
+        wrapper.className = 'hotbar-slot-wrapper';
+
         const slot = document.createElement('div');
         slot.className = `hotbar-slot ${gameState.hotbarSelection === index ? 'selected' : ''}`;
+        // Apply ability color as background
+        if (ability && ability.color) slot.style.backgroundColor = ability.color;
         slot.addEventListener('click', () => {
             gameState.hotbarSelection = index;
             useAbility(index);
@@ -1406,16 +1492,16 @@ function renderHotbar() {
 
         const icon = document.createElement('div');
         icon.className = 'hotbar-icon';
-        
+        icon.style.cssText = 'display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;';
+
         if (ability && ability.svgIcon) {
-            // Use SVG icon if available
             const img = document.createElement('img');
             img.src = ability.svgIcon;
-            img.style.cssText = 'width: 100%; height: 100%; object-fit: contain;';
+            img.style.cssText = 'width: 90%; height: 90%; object-fit: contain; filter: brightness(2) contrast(1.2) drop-shadow(0 0 2px rgba(255,255,255,0.6));';
             icon.appendChild(img);
         } else {
-            // Use emoji
-            icon.style.cssText = 'font-size: 32px; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;';
+            icon.style.fontSize = '34px';
+            icon.style.filter = 'drop-shadow(0 0 2px rgba(255,255,255,0.6))';
             icon.textContent = ability ? ability.icon : '?';
         }
         slot.appendChild(icon);
@@ -1425,13 +1511,19 @@ function renderHotbar() {
         cooldown.style.height = '0%';
         slot.appendChild(cooldown);
 
-        // NEW: Add slot number for reference
-        const slotNumber = document.createElement('div');
-        slotNumber.style.cssText = 'position: absolute; top: 2px; left: 5px; font-weight: bold; color: black; font-size: 0.8rem; z-index: 30;';
-        slotNumber.textContent = index + 1;
-        slot.appendChild(slotNumber);
+        const cooldownText = document.createElement('div');
+        cooldownText.className = 'hotbar-cooldown-text';
+        slot.appendChild(cooldownText);
 
-        hotbarContainer.appendChild(slot);
+        wrapper.appendChild(slot);
+
+        // Number label below the slot
+        const slotNumber = document.createElement('div');
+        slotNumber.className = 'hotbar-slot-number';
+        slotNumber.textContent = index + 1;
+        wrapper.appendChild(slotNumber);
+
+        hotbarContainer.appendChild(wrapper);
     });
 }
 
@@ -1450,8 +1542,13 @@ function updateHotbarVisuals() {
         const last = localPlayer.lastAbilityTime[index] || 0;
         const elapsed = Date.now() - last;
         const pct = Math.max(0, Math.min(1, elapsed / ABILITY_COOLDOWN));
-        // MODIFIED: Change to 100% minus the progress to make it fill up from the bottom
-        cooldownDiv.style.height = `${(1 - pct) * 100}%`; 
+        cooldownDiv.style.height = `${(1 - pct) * 100}%`;
+        // Update countdown text
+        const cooldownText = slot.querySelector('.hotbar-cooldown-text');
+        if (cooldownText) {
+            const remaining = Math.max(0, (ABILITY_COOLDOWN - elapsed) / 1000);
+            cooldownText.textContent = pct < 1 ? remaining.toFixed(1) + 's' : '';
+        }
     });
 }
 
@@ -1466,7 +1563,7 @@ function renderMenuLoadoutSlots() {
         const icon = document.createElement('div');
         icon.className = 'text-4xl';
         icon.style.cssText = 'display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;';
-        
+
         if (ability && ability.svgIcon) {
             const img = document.createElement('img');
             img.src = ability.svgIcon;
@@ -1475,7 +1572,7 @@ function renderMenuLoadoutSlots() {
         } else {
             icon.textContent = ability?.icon || '?';
         }
-        
+
         slot.appendChild(icon);
         slot.addEventListener('click', () => openAbilityModal(index));
         container.appendChild(slot);
@@ -1495,11 +1592,11 @@ function openAbilityModal(slotIndex) {
         const card = document.createElement('div');
         card.className = 'ability-card';
         card.innerHTML = '';
-        
+
         const iconDiv = document.createElement('div');
         iconDiv.className = 'text-3xl';
         iconDiv.style.cssText = 'display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;';
-        
+
         if (ability.svgIcon) {
             const img = document.createElement('img');
             img.src = ability.svgIcon;
@@ -1508,13 +1605,13 @@ function openAbilityModal(slotIndex) {
         } else {
             iconDiv.textContent = ability.icon;
         }
-        
+
         card.appendChild(iconDiv);
         const nameDiv = document.createElement('div');
         nameDiv.className = 'text-sm';
         nameDiv.textContent = ability.name;
         card.appendChild(nameDiv);
-        
+
         card.addEventListener('click', () => {
             gameState.loadout[modalTargetSlot] = key;
             abilityModal.classList.add('hidden');
@@ -1626,7 +1723,7 @@ function switchToMenuScreen() {
     menuScreen.classList.remove('hidden');
 }
 
-/* =========================
+/* =========================kl;asdf    vnnvn            
    Initial render
    ========================= */
 renderMenuLoadoutSlots();
