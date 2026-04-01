@@ -1,7 +1,7 @@
 const ws = require("ws");
 const express = require("express");
 const path = require("path");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 
 // Import the connectDB function
@@ -83,22 +83,16 @@ const MAP_BARRIERS = [
     [35.75, 0, 0.25, 24],
     // Inner barriers centered on 36-tile wide map (center at tile 18)
     [15, 10, 6, 4], // Big center (spans 15-21, center 18)
-    [16, 4, 4, 2],  // Top (spans 16-20, center 18)
+    [16, 4, 4, 2], // Top (spans 16-20, center 18)
     [16, 18, 4, 2], // Bottom (spans 16-20, center 18)
 ];
 const ALL_ABILITIES = {
     whiteBall: { name: "White Ball", damage: 10, projSpeed: 5, duration: 0 },
     fireBall: { name: "Fire Ball", damage: 25, projSpeed: 3, duration: 0 },
-    knockback: { name: "Knockback", damage: 0, force: 150, duration: 150 },
-    impulse: { name: "Impulse", damage: 0, force: -100, duration: 150 },
+    knockback: { name: "Knockback", damage: 0, force: 200, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0 },
+    impulse:   { name: "Impulse",   damage: 0, force: 200, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0 },
     snowball: { name: "Snowball", damage: 0, projSpeed: 4, stunDuration: 1500 },
-    landmine: {
-        name: "Landmine",
-        damage: 30,
-        projSpeed: 0,
-        radius: 20,
-        duration: 0,
-    },
+    landmine: { name: "Landmine", damage: 30, force: 0, ringRadius: 36, explosionDelay: 3000, projSpeed: 0, duration: 0 },
     dash: {
         name: "Dash",
         damage: 0,
@@ -222,7 +216,7 @@ class GameRoom {
         // Bottom barrier: tile y 18-20 (px 450-500) → spawn above at y=17 (425px)
         const centerX = CANVAS_WIDTH / 2;
         const spawns = [
-            { x: centerX, y: 7 * TILE_SIZE },  // Below top barrier, center
+            { x: centerX, y: 7 * TILE_SIZE }, // Below top barrier, center
             { x: centerX, y: 17 * TILE_SIZE }, // Above bottom barrier, center
         ];
 
@@ -366,7 +360,10 @@ class GameRoom {
                 roomId: this.id,
                 wins: p.wins || 0,
             })),
-           projectiles: this.projectiles.map(p => ({ ...p, abilityType: p.type })),
+            projectiles: this.projectiles.map((p) => ({
+                ...p,
+                abilityType: p.type,
+            })),
             mines: this.mines,
             healingFields: this.healingFields.map((f) => ({
                 x: f.x,
@@ -442,6 +439,59 @@ class GameRoom {
         const now = Date.now();
 
         this.projectiles.forEach((p, index) => {
+            // --- RING PROJECTILES (knockback / impulse) ---
+            if (p.isRing) {
+                if (now - p.createdAt > p.lifetime) {
+                    projectilesToRemove.push(index);
+                    return;
+                }
+                // Travel until stopAfter ms OR until a player is inside — then freeze in place
+                const hasStopped = p.stopped || (p.stopAfter && (now - p.createdAt > p.stopAfter));
+                if (!hasStopped) {
+                    p.x += p.dx;
+                    p.y += p.dy;
+                    // Hit a wall — freeze instead of removing
+                    if (checkCollision(p.x, p.y, PROJECTILE_RADIUS)) {
+                        p.x -= p.dx;
+                        p.y -= p.dy;
+                        p.dx = 0;
+                        p.dy = 0;
+                        p.stopped = true;
+                    }
+                }
+                let knockbackHit = false;
+                playerList.forEach((target) => {
+                    if (target.id === p.ownerId) return;
+                    if (knockbackHit) return;
+                    const distSq = (p.x - target.x) ** 2 + (p.y - target.y) ** 2;
+                    if (distSq < p.ringRadius ** 2) {
+                        const angle = Math.atan2(target.y - p.y, target.x - p.x);
+                        if (p.type === "impulse") {
+                            // Stop ring here so it pins to this location and keeps pulling
+                            p.dx = 0;
+                            p.dy = 0;
+                            p.stopped = true;
+                            // Continuous gravity pull toward center every tick — ring stays alive
+                            const pullStrength = 14;
+                            target.x += Math.cos(angle) * -pullStrength;
+                            target.y += Math.sin(angle) * -pullStrength;
+                            target.x = Math.max(PLAYER_SIZE, Math.min(CANVAS_WIDTH - PLAYER_SIZE, target.x));
+                            target.y = Math.max(PLAYER_SIZE, Math.min(CANVAS_HEIGHT - PLAYER_SIZE, target.y));
+                        } else {
+                            // Knockback: one-shot push OUT, ring consumed
+                            target.x += Math.cos(angle) * p.force;
+                            target.y += Math.sin(angle) * p.force;
+                            target.x = Math.max(PLAYER_SIZE, Math.min(CANVAS_WIDTH - PLAYER_SIZE, target.x));
+                            target.y = Math.max(PLAYER_SIZE, Math.min(CANVAS_HEIGHT - PLAYER_SIZE, target.y));
+                            target.lastDamageTime = now;
+                            knockbackHit = true;
+                        }
+                    }
+                });
+                if (knockbackHit) projectilesToRemove.push(index);
+                return;
+            }
+
             p.x += p.dx;
             p.y += p.dy;
 
@@ -484,6 +534,13 @@ class GameRoom {
 
                         projectilesToRemove.push(index);
 
+                        // Apply stun effect if this is a snowball
+                        if (p.isStun) {
+                            target.isStunned = true;
+                            target.stunEndTime =
+                                now + ALL_ABILITIES.snowball.stunDuration;
+                        }
+
                         // Apply damage/heal
                         if (p.damage > 0) {
                             target.health = Math.max(
@@ -517,6 +574,27 @@ class GameRoom {
         const now = Date.now();
 
         this.mines.forEach((m, index) => {
+            // --- RING MINES (landmine redesign) ---
+            if (m.isRing) {
+                const age = now - m.placedTime;
+                if (age >= m.explosionDelay) {
+                    // Explode: deal damage only (no push)
+                    playerList.forEach((target) => {
+                        const distSq = (m.x - target.x) ** 2 + (m.y - target.y) ** 2;
+                        if (distSq < m.ringRadius ** 2) {
+                            if (m.damage > 0) {
+                                target.health = Math.max(0, target.health - m.damage);
+                                target.lastDamageTime = now;
+                                if (target.health <= 0) this.handleElimination(target.id, m.ownerId);
+                            }
+                        }
+                    });
+                    minesToRemove.push(index);
+                }
+                return; // no contact trigger for ring mines
+            }
+
+            // Normal mine (legacy)
             playerList.forEach((target) => {
                 if (target.id !== m.ownerId) {
                     const distSq =
@@ -1073,79 +1151,55 @@ wss.on("connection", (ws) => {
                         projColor = "#add8e6"; // Ice Blue
                     }
 
-                    const newProjectile = {
-                        ownerId: playerId,
-                        type: abilityKey, // CRITICAL: Tells the client how to render it (flames vs ice)
-                        x:
-                            player.x +
-                            Math.cos(angle) *
-                                (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
-                        y:
-                            player.y +
-                            Math.sin(angle) *
-                                (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
-                        dx: Math.cos(angle) * speed,
-                        dy: Math.sin(angle) * speed,
-                        damage: ability.damage,
-                        color: projColor,
-                        isStun: abilityKey === "snowball",
-                        isTracking: false,
-                        lifetime: 3000,
-                    };
-                    room.projectiles.push(newProjectile);
+                    const spreadAngles = abilityKey === "whiteBall"
+                        ? [angle - 0.28, angle, angle + 0.28]
+                        : [angle];
+
+                    spreadAngles.forEach((shootAngle) => {
+                        room.projectiles.push({
+                            ownerId: playerId,
+                            type: abilityKey,
+                            x: player.x + Math.cos(shootAngle) * (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
+                            y: player.y + Math.sin(shootAngle) * (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
+                            dx: Math.cos(shootAngle) * speed,
+                            dy: Math.sin(shootAngle) * speed,
+                            damage: ability.damage,
+                            color: projColor,
+                            isStun: abilityKey === "snowball",
+                            isTracking: false,
+                            lifetime: 3000,
+                        });
+                    });
                 }
-                // --- AOE ABILITIES (Knockback, Impulse) ---
-                else if (
-                    abilityKey === "knockback" ||
-                    abilityKey === "impulse"
-                ) {
-                    const ringRadius = PLAYER_SIZE * 5;
-                    // Broadcast ring effect to all players in room
-                    room.broadcast({
-                        type: "abilityEffect",
-                        effect: abilityKey,
+                // --- RING PROJECTILES (Knockback, Impulse) ---
+                else if (abilityKey === "knockback" || abilityKey === "impulse") {
+                    room.projectiles.push({
                         x: player.x,
                         y: player.y,
-                        radius: ringRadius,
-                    });
-                    Object.values(room.players).forEach((target) => {
-                        if (target.id !== playerId) {
-                            const distSq =
-                                (player.x - target.x) ** 2 +
-                                (player.y - target.y) ** 2;
-                            if (distSq < ringRadius ** 2) {
-                                const angle = Math.atan2(
-                                    target.y - player.y,
-                                    target.x - player.x,
-                                );
-
-                                target.isImpulsed = true;
-                                target.impulseEndTime =
-                                    Date.now() + ability.duration;
-
-                                target.x += Math.cos(angle) * ability.force;
-                                target.y += Math.sin(angle) * ability.force;
-
-                                target.x = Math.max(
-                                    PLAYER_SIZE,
-                                    Math.min(CANVAS_WIDTH - PLAYER_SIZE, target.x),
-                                );
-                                target.y = Math.max(
-                                    PLAYER_SIZE,
-                                    Math.min(CANVAS_HEIGHT - PLAYER_SIZE, target.y),
-                                );
-                            }
-                        }
+                        dx: Math.cos(aimAngle) * ability.projSpeed,
+                        dy: Math.sin(aimAngle) * ability.projSpeed,
+                        ownerId: playerId,
+                        type: abilityKey,
+                        isRing: true,
+                        ringRadius: ability.ringRadius,
+                        force: ability.force,
+                        stopAfter: ability.stopAfter,
+                        lifetime: abilityKey === "impulse" ? 6000 : 3500,
+                        createdAt: Date.now(),
+                        stopped: false,
                     });
                 }
-                // --- UTILITY ABILITIES (Landmine, Dash, Heal, Reflection) ---
+                // --- RING MINE (Landmine) ---
                 else if (abilityKey === "landmine") {
                     room.mines.push({
                         ownerId: playerId,
                         x: player.x,
                         y: player.y,
-                        radius: ability.radius,
-                        damage: ability.damage,
+                        isRing: true,
+                        ringRadius: ability.ringRadius,
+                        force: ability.force,
+                        placedTime: Date.now(),
+                        explosionDelay: ability.explosionDelay,
                     });
                 } else if (abilityKey === "dash") {
                     const dashAngle = player.facingAngle;
