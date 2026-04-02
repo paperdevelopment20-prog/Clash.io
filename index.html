@@ -272,6 +272,7 @@
              <button id="leave-game-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl text-sm absolute top-4 left-4 z-50">Leave Game</button>
             <div id="status-display" class="font-bold absolute top-4 right-4 text-sm bg-gray-800 p-3 rounded z-50">Waiting for another player...</div>
         </div>
+        <div id="kill-counter" class="absolute bottom-4 left-4 z-50" style="background-color: rgba(13, 66, 38, 0.85); border: 2px solid #000000; color: #ffffff; padding: 12px 16px; border-radius: 8px; font-weight: bold; font-size: 1.1rem;">Kills: <span id="kill-count">0</span></div>
         <div id="player-stats" class="absolute top-16 right-4 z-50"></div>
         <canvas id="game-canvas"></canvas>
         <div id="hotbar-container"></div>
@@ -287,6 +288,7 @@
         <div class="absolute top-6 right-6 z-50">
             <button id="auth-display-btn" class="rounded">Sign In / Register</button>
         </div>
+        <div id="online-counter" class="absolute bottom-6 left-6 z-50" style="background-color: rgba(13, 66, 38, 0.85); border: 2px solid #000000; color: #ffffff; padding: 12px 16px; border-radius: 8px; font-weight: bold; font-size: 1.1rem;">👥 Online: <span id="online-count">0</span></div>
         <div class="menu-content">
             <div>
                 <h1 class="text-6xl font-black mb-12 tracking-tight">Clash.io</h1>
@@ -309,6 +311,24 @@
             <h3 class="text-3xl font-bold mb-4 text-white text-center">Select Ability for Slot <span id="modal-slot-number">1</span></h3>
             <div id="ability-list" class="grid gap-4"></div>
             <button id="close-ability-modal" class="absolute top-0 right-0 p-2 bg-red-600 hover:bg-red-700 text-white font-black text-lg border-2 border-black w-10 h-10 flex items-center justify-center">X</button>
+        </div>
+    </div>
+
+    <div id="target-password-modal" class="modal hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg border-4 border-black relative">
+            <button id="close-target-modal" class="absolute top-0 right-0 p-2 bg-red-600 hover:bg-red-700 text-white font-black text-lg border-2 border-black w-10 h-10 flex items-center justify-center">X</button>
+            <div class="text-center">
+                <h3 class="text-4xl font-bold mb-6 text-gray-800">Target</h3>
+                <div class="text-8xl mb-6">🎯</div>
+                <p class="text-gray-700 mb-6 text-sm leading-relaxed">Target is a ability that will track your opponent and deal 50 damage. (Note: This ability can be used in any slot.)</p>
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-bold mb-2">Enter Password:</label>
+                    <input type="password" id="target-password-input" class="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:border-blue-600" placeholder="Password">
+                    <p id="target-password-error" class="text-red-600 text-sm mt-2 hidden">Incorrect password. Try again.</p>
+                </div>
+                <button id="target-password-submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow border-2 border-black mb-2">Unlock Target</button>
+                <button id="target-password-cancel" class="w-full bg-red-400 hover:bg-red-500 text-white font-bold py-3 rounded-lg shadow border-2 border-black">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -374,6 +394,12 @@ const abilityModal = document.getElementById('ability-modal');
 const closeAbilityModal = document.getElementById('close-ability-modal');
 const modalSlotNumber = document.getElementById('modal-slot-number');
 const abilityList = document.getElementById('ability-list');
+const targetPasswordModal = document.getElementById('target-password-modal');
+const closeTargetModal = document.getElementById('close-target-modal');
+const targetPasswordInput = document.getElementById('target-password-input');
+const targetPasswordError = document.getElementById('target-password-error');
+const targetPasswordSubmit = document.getElementById('target-password-submit');
+const targetPasswordCancel = document.getElementById('target-password-cancel');
 const updatesModal = document.getElementById('updates-modal');
 const updatesBtn = document.getElementById('updates-btn');
 const leaderboardModal = document.getElementById('leaderboard-modal');
@@ -413,9 +439,9 @@ console.log('Connecting to server:', SERVER_URL);
 /* Around line 238 in index.html */
 /* Around line 238 in index.html */
 /* Around line 238 in index.html */
-const TILE_SIZE = 25;
-const TILES_X = 36;
-const TILES_Y = 24;
+const TILE_SIZE = 20;
+const TILES_X = 45;
+const TILES_Y = 30;
 
 const FULL_MAP_HEIGHT = TILES_Y * TILE_SIZE;
 const GAME_WORLD_WIDTH = TILES_X * TILE_SIZE;
@@ -431,13 +457,13 @@ const MOVEMENT_DEADZONE_SQ = 10 * 10;
 
     /* --- index.html --- */
 const MAP_BARRIERS = [
-    [0, 0, 36, 0.25],
-    [0, 23.75, 36, 0.25],
-    [0, 0, 0.25, 24],
-    [35.75, 0, 0.25, 24],
-    [15, 10, 6, 4],
-    [16, 4, 4, 2],
-    [16, 18, 4, 2],
+    [0, 0, 45, 1],
+    [0, 29, 45, 1],
+    [0, 0, 1, 30],
+    [44, 0, 1, 30],
+    [17, 11, 11, 8],
+    [19, 5, 7, 4],
+    [19, 21, 7, 4],
     ];
 // ============================================
 // CLEAN & SIMPLE SVG CONSTANTS
@@ -503,6 +529,7 @@ let gameState = {
     eliminatedBy: null,
     continueButtonArea: null,
     dyingPlayer: null,
+    killCount: 0,
 };
 
 let socket = null;
@@ -566,6 +593,38 @@ async function showLeaderboard() {
     }
 }
 closeAbilityModal.addEventListener('click', () => abilityModal.classList.add('hidden'));
+
+// Target password modal handlers
+closeTargetModal.addEventListener('click', () => {
+    targetPasswordModal.classList.add('hidden');
+    abilityModal.classList.remove('hidden');
+});
+
+targetPasswordCancel.addEventListener('click', () => {
+    targetPasswordModal.classList.add('hidden');
+    abilityModal.classList.remove('hidden');
+});
+
+targetPasswordSubmit.addEventListener('click', () => {
+    const enteredPassword = targetPasswordInput.value;
+    if (enteredPassword === TARGET_PASSWORD) {
+        gameState.loadout[modalTargetSlot] = 'target';
+        targetPasswordModal.classList.add('hidden');
+        renderMenuLoadoutSlots();
+        renderHotbar();
+    } else {
+        targetPasswordError.classList.remove('hidden');
+        targetPasswordInput.value = '';
+        targetPasswordInput.focus();
+    }
+});
+
+targetPasswordInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        targetPasswordSubmit.click();
+    }
+});
+
 authDisplayBtn.addEventListener('click', showAuthModal);
 closeAuthModal.addEventListener('click', () => authModal.classList.add('hidden'));
 toggleAuthModeBtn.addEventListener('click', toggleAuthMode);
@@ -604,7 +663,12 @@ function updatePlayerStatsDisplay() {
 function connectToServer() {
     return new Promise((resolve, reject) => {
         socket = new WebSocket(SERVER_URL);
-        socket.onopen = () => { console.log('Connected to server.'); resolve(); };
+        socket.onopen = () => { 
+            console.log('Connected to server.');
+            // Request online count on connection
+            socket.send(JSON.stringify({ type: 'getOnlineCount' }));
+            resolve();
+        };
         socket.onerror = (error) => {
             console.error('WebSocket Error:', error);
             showModal('Connection Error', 'Could not connect to the game server. Ensure server.js is running.', () => reject(error));
@@ -646,6 +710,10 @@ function handleServerMessage(event) {
             showModal('Server Error', message.message, () => {});
             break;
 
+        case 'onlineCount':
+            document.getElementById('online-count').textContent = message.count;
+            break;
+
         case 'playerEliminated':
             gameState.eliminatedBy = message.killerUsername;
             const dyingP = gameState.allPlayers.get(myPlayerId);
@@ -666,6 +734,8 @@ function handleServerMessage(event) {
             gameState.status = 'playing';
             statusDisplay.textContent = 'FIGHT!';
             gameState.eliminatedBy = null;
+            gameState.killCount = 0;
+            document.getElementById('kill-count').textContent = '0';
             break;
 
         case 'state':
@@ -686,8 +756,17 @@ function handleServerMessage(event) {
 
         case 'elimination':
             statusDisplay.textContent = message.message;
-            const match = message.message.match(/eliminated by (.+)\.?/i);
-            if (match) gameState.eliminatedBy = gameState.eliminatedBy || match[1];
+            const match = message.message.match(/eliminated by ([^.!]+)/i);
+            if (match) {
+                const killerName = match[1].trim();
+                gameState.eliminatedBy = gameState.eliminatedBy || killerName;
+                // Check if the local player got the kill
+                const localPlayer = gameState.allPlayers.get(myPlayerId);
+                if (localPlayer && killerName === localPlayer.name) {
+                    gameState.killCount++;
+                    document.getElementById('kill-count').textContent = gameState.killCount;
+                }
+            }
             break;
 
         case 'gameOver':
@@ -749,6 +828,17 @@ function updateGameStateFromBroadcast(message) {
                     type: p.abilityType
                 });
             }
+        } else if (p.abilityType === 'target') {
+            // Target projectile: small red trail
+            if (!projectileTrails.has(p.id)) projectileTrails.set(p.id, []);
+            const trail = projectileTrails.get(p.id);
+            trail.push({
+                x: p.x + (Math.random() - 0.5) * 1.5,
+                y: p.y + (Math.random() - 0.5) * 1.5,
+                age: 0,
+                maxAge: 10,
+                type: 'target'
+            });
         }
     });
     // Clean up trails for removed projectiles
@@ -896,6 +986,8 @@ async function startGame() {
 
         switchToGameScreen();
         gameState.status = 'starting';
+        gameState.killCount = 0;
+        document.getElementById('kill-count').textContent = '0';
         statusDisplay.textContent = 'Waiting for another player...';
         requestAnimationFrame(gameLoop);
     } catch (err) {
@@ -1032,39 +1124,60 @@ canvas.addEventListener('click', (e) => {
    Drawing routines
    ========================= */
 function drawTiledBackground() {
-    // 1. Fill the entire map area with the base green color
-    ctx.fillStyle = '#22c55e'; 
-    ctx.fillRect(0, 0, GAME_WORLD_WIDTH, FULL_MAP_HEIGHT);
-
-    // 2. Draw the 40px grid pattern (matching the menu)
-    ctx.strokeStyle = 'rgba(0,0,0,0.05)'; 
-    ctx.lineWidth = 1; 
-
-    const MENU_TILE_SIZE = 40; // The size of the grid pattern from the menu CSS
-
-    ctx.beginPath();
-    // Draw vertical lines every 40 units across the map width
-    for (let x = 0; x <= GAME_WORLD_WIDTH; x += MENU_TILE_SIZE) { 
-        ctx.moveTo(x, 0); 
-        ctx.lineTo(x, FULL_MAP_HEIGHT); 
+    // Draw green tiles with grid lines (matching main menu style)
+    const brightGreen = '#2ad676';
+    for (let row = 0; row < TILES_Y; row++) {
+        for (let col = 0; col < TILES_X; col++) {
+            const x = col * TILE_SIZE;
+            const y = row * TILE_SIZE;
+            
+            // Draw tile background
+            ctx.fillStyle = brightGreen;
+            ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+            
+            // Draw grid lines (matching menu style)
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, TILE_SIZE, TILE_SIZE);
+        }
     }
-    // Draw horizontal lines every 40 units down the map height
-    for (let y = 0; y <= FULL_MAP_HEIGHT; y += MENU_TILE_SIZE) { 
-        ctx.moveTo(0, y); 
-        ctx.lineTo(GAME_WORLD_WIDTH, y); 
-    }
-    ctx.stroke();
 }
 
 function drawBarriers() {
-    ctx.fillStyle = '#064e3b'; ctx.strokeStyle = '#042f2e'; ctx.lineWidth = 1;
     MAP_BARRIERS.forEach(b => {
         const pixelX = b[0] * TILE_SIZE;
         const pixelY = b[1] * TILE_SIZE;
-        const pixelWidth = b[2] * TILE_SIZE;
-        const pixelHeight = b[3] * TILE_SIZE;
-        ctx.fillRect(pixelX, pixelY, pixelWidth, pixelHeight);
-        ctx.strokeRect(pixelX, pixelY, pixelWidth, pixelHeight);
+        const pixelW = b[2] * TILE_SIZE;
+        const pixelH = b[3] * TILE_SIZE;
+
+        // Draw dark green tiles for barriers
+        const darkGreen = '#0d4226';
+        const startCol = Math.floor(b[0]);
+        const startRow = Math.floor(b[1]);
+        const endCol = Math.ceil(b[0] + b[2]);
+        const endRow = Math.ceil(b[1] + b[3]);
+
+        for (let row = startRow; row < endRow; row++) {
+            for (let col = startCol; col < endCol; col++) {
+                const tx = col * TILE_SIZE;
+                const ty = row * TILE_SIZE;
+
+                const clipX = Math.max(tx, pixelX);
+                const clipY = Math.max(ty, pixelY);
+                const clipW = Math.min(tx + TILE_SIZE, pixelX + pixelW) - clipX;
+                const clipH = Math.min(ty + TILE_SIZE, pixelY + pixelH) - clipY;
+                if (clipW <= 0 || clipH <= 0) continue;
+
+                // Draw dark green tile
+                ctx.fillStyle = darkGreen;
+                ctx.fillRect(clipX, clipY, clipW, clipH);
+
+                // Draw grid line
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(tx + 0.5, ty + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+            }
+        }
     });
 }
 
@@ -1206,6 +1319,10 @@ function drawProjectiles() {
                 // Fire gradient: bright yellow core → orange → red
                 const fireColors = ['#fff176', '#ffa726', '#ef5350'];
                 ctx.fillStyle = fireColors[Math.floor((1 - life) * fireColors.length)] || '#ef5350';
+            } else if (pt.type === 'target') {
+                // Target gradient: bright red → darker red
+                const targetColors = ['#ff4444', '#dd0000', '#990000'];
+                ctx.fillStyle = targetColors[Math.floor((1 - life) * targetColors.length)] || '#990000';
             } else {
                 // Snow gradient: white → light blue → blue
                 const snowColors = ['#ffffff', '#b3e5fc', '#4fc3f7'];
@@ -1364,6 +1481,7 @@ function draw() {
     drawHealingFields();
     drawProjectiles();
     gameState.allPlayers.forEach(player => drawPlayer(player, player.id === myPlayerId));
+    drawDashTrailAndRings();
 
     // Draw death shrink animation
     if (gameState.dyingPlayer) {
@@ -1583,6 +1701,8 @@ function renderMenuLoadoutSlots() {
    Ability selection modal
    ========================= */
 let modalTargetSlot = 0;
+const TARGET_PASSWORD = 'TargetMaster2026';
+
 function openAbilityModal(slotIndex) {
     modalTargetSlot = slotIndex;
     modalSlotNumber.textContent = (slotIndex + 1).toString();
@@ -1613,10 +1733,19 @@ function openAbilityModal(slotIndex) {
         card.appendChild(nameDiv);
 
         card.addEventListener('click', () => {
-            gameState.loadout[modalTargetSlot] = key;
-            abilityModal.classList.add('hidden');
-            renderMenuLoadoutSlots();
-            renderHotbar();
+            // If target ability, show password modal instead
+            if (key === 'target') {
+                abilityModal.classList.add('hidden');
+                targetPasswordInput.value = '';
+                targetPasswordError.classList.add('hidden');
+                targetPasswordModal.classList.remove('hidden');
+                targetPasswordInput.focus();
+            } else {
+                gameState.loadout[modalTargetSlot] = key;
+                abilityModal.classList.add('hidden');
+                renderMenuLoadoutSlots();
+                renderHotbar();
+            }
         });
         abilityList.appendChild(card);
     });
@@ -1728,6 +1857,15 @@ function switchToMenuScreen() {
    ========================= */
 renderMenuLoadoutSlots();
 renderHotbar();
+
+/* =========================
+   Periodic online count refresh
+   ========================= */
+setInterval(() => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'getOnlineCount' }));
+    }
+}, 5000); // Refresh every 5 seconds
 
 /* =========================
    Expose debug helpers for console (optional)
