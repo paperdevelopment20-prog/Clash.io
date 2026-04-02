@@ -49,9 +49,9 @@ connectDB();
 // --- GAME CONSTANTS (MUST MATCH CLIENT) ---
 const PORT = process.env.PORT || 5000;
 /* Around line 238 in index.html */
-const TILE_SIZE = 25;
-const TILES_X = 36; // (36 * 25 = 900px width)
-const TILES_Y = 24; // (24 * 25 = 600px height)
+const TILE_SIZE = 20;
+const TILES_X = 45; // (45 * 20 = 900px width)
+const TILES_Y = 30; // (30 * 20 = 600px height)
 
 const FULL_MAP_HEIGHT = TILES_Y * TILE_SIZE;
 const GAME_WORLD_WIDTH = TILES_X * TILE_SIZE;
@@ -77,14 +77,13 @@ const REGEN_AMOUNT = 1 / 60;
 /* --- server.js --- */
 // Fixed map barriers
 const MAP_BARRIERS = [
-    [0, 0, 36, 0.25],
-    [0, 23.75, 36, 0.25],
-    [0, 0, 0.25, 24],
-    [35.75, 0, 0.25, 24],
-    // Inner barriers centered on 36-tile wide map (center at tile 18)
-    [15, 10, 6, 4], // Big center (spans 15-21, center 18)
-    [16, 4, 4, 2], // Top (spans 16-20, center 18)
-    [16, 18, 4, 2], // Bottom (spans 16-20, center 18)
+    [0, 0, 45, 1],
+    [0, 29, 45, 1],
+    [0, 0, 1, 30],
+    [44, 0, 1, 30],
+    [17, 11, 11, 8],
+    [19, 5, 7, 4],
+    [19, 21, 7, 4],
 ];
 const ALL_ABILITIES = {
     whiteBall: { name: "White Ball", damage: 10, projSpeed: 5, duration: 0 },
@@ -108,7 +107,7 @@ const ALL_ABILITIES = {
         projSpeed: 0,
     },
     reflection: { name: "Reflection", damage: 0, projSpeed: 0, duration: 1000 },
-    target: { name: "Target", damage: 0, projSpeed: 0, duration: 0 },
+    target: { name: "Target", damage: 50, projSpeed: 1, duration: 0 },
 };
 
 // --- GAME UTILITIES (SHARED) ---
@@ -211,13 +210,14 @@ class GameRoom {
         this.players[player.id] = player;
         this.playerCount++;
 
-        // Map center X = tile 18 = 450px
-        // Top barrier: tile y 4-6 (px 100-150)  → spawn below at y=7 (175px)
-        // Bottom barrier: tile y 18-20 (px 450-500) → spawn above at y=17 (425px)
+        // Map center X = tile 22.5 = 450px
+        // Top inner barrier: tile y 5-9 (px 100-180) → spawn below at y=10 (200px)
+        // Bottom inner barrier: tile y 21-25 (px 420-500) → spawn above at y=20 (400px)
+        // Center barrier: tile y 11-19 (px 220-380)
         const centerX = CANVAS_WIDTH / 2;
         const spawns = [
-            { x: centerX, y: 7 * TILE_SIZE }, // Below top barrier, center
-            { x: centerX, y: 17 * TILE_SIZE }, // Above bottom barrier, center
+            { x: centerX, y: 10 * TILE_SIZE }, // Below top barrier, center
+            { x: centerX, y: 20 * TILE_SIZE }, // Above bottom barrier, center (safe gap)
         ];
 
         // Assign position based on player order
@@ -497,7 +497,7 @@ class GameRoom {
 
             if (p.isTracking) {
                 const target = playerList.find((pl) => pl.id !== p.ownerId);
-                const speed = ALL_ABILITIES.whiteBall.projSpeed;
+                const speed = p.type === 'target' ? 1.5 : ALL_ABILITIES.whiteBall.projSpeed;
                 if (target) {
                     const angle = Math.atan2(target.y - p.y, target.x - p.x);
                     p.dx = Math.cos(angle) * speed;
@@ -579,9 +579,10 @@ class GameRoom {
                 const age = now - m.placedTime;
                 if (age >= m.explosionDelay) {
                     // Explode: deal damage only (no push)
+                    const explosionRadiusPx = m.ringRadius * TILE_SIZE;
                     playerList.forEach((target) => {
                         const distSq = (m.x - target.x) ** 2 + (m.y - target.y) ** 2;
-                        if (distSq < m.ringRadius ** 2) {
+                        if (distSq < explosionRadiusPx ** 2) {
                             if (m.damage > 0) {
                                 target.health = Math.max(0, target.health - m.damage);
                                 target.lastDamageTime = now;
@@ -816,6 +817,19 @@ let nextPlayerId = 1;
 let nextRoomId = 1;
 
 /**
+ * Broadcasts the current online player count to all connected clients.
+ */
+function broadcastOnlineCount() {
+    const onlineCount = wss.clients.size;
+    const message = JSON.stringify({ type: "onlineCount", count: onlineCount });
+    wss.clients.forEach((client) => {
+        if (client.readyState === ws.OPEN) {
+            client.send(message);
+        }
+    });
+}
+
+/**
  * Finds or creates a suitable 1v1 room.
  */
 function findOrCreateRoom() {
@@ -1020,6 +1034,12 @@ wss.on("connection", (ws) => {
             return;
         }
 
+        if (data.type === "getOnlineCount") {
+            const onlineCount = wss.clients.size;
+            ws.send(JSON.stringify({ type: "onlineCount", count: onlineCount }));
+            return;
+        }
+
         if (data.type === "joinGame") {
             // MODIFIED: Changed from 'join' to 'joinGame'
             const playerName = data.name ? data.name.trim() : "Anonymous";
@@ -1068,6 +1088,7 @@ wss.on("connection", (ws) => {
 
             room.addPlayer(newPlayer);
             console.log(`Player ${playerName} joined Room ${room.id}.`);
+            broadcastOnlineCount();
             return;
         }
 
@@ -1196,6 +1217,7 @@ wss.on("connection", (ws) => {
                         x: player.x,
                         y: player.y,
                         isRing: true,
+                        damage: ability.damage,
                         ringRadius: ability.ringRadius,
                         force: ability.force,
                         placedTime: Date.now(),
@@ -1240,6 +1262,20 @@ wss.on("connection", (ws) => {
                     player.isProtected = true;
                     player.isReflecting = true;
                     player.protectionEndTime = Date.now() + ability.duration;
+                } else if (abilityKey === "target") {
+                    // Target: Red homing projectile
+                    room.projectiles.push({
+                        ownerId: playerId,
+                        type: abilityKey,
+                        x: player.x + Math.cos(aimAngle) * (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
+                        y: player.y + Math.sin(aimAngle) * (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
+                        dx: Math.cos(aimAngle) * ability.projSpeed,
+                        dy: Math.sin(aimAngle) * ability.projSpeed,
+                        damage: ability.damage,
+                        color: "#ff0000",
+                        isTracking: true,
+                        lifetime: 10000,
+                    });
                 }
 
                 player.lastActivityTime = Date.now();
@@ -1279,6 +1315,7 @@ wss.on("connection", (ws) => {
                 room.removePlayer(playerId);
             }
         }
+        broadcastOnlineCount();
     });
 
     ws.on("error", (error) => {
