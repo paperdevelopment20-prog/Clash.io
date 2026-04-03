@@ -161,7 +161,7 @@
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: #111827;
         }
-        #game-canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+        #game-canvas { display: block; width: 100%; height: 100%; cursor: auto; }
         #hotbar-container {
             position: absolute; bottom: 16px; left: 50%;
             transform: translateX(-50%); display: flex; gap: 8px; padding: 6px 10px;
@@ -530,6 +530,7 @@ let gameState = {
     continueButtonArea: null,
     dyingPlayer: null,
     killCount: 0,
+    lastAbilityUseTime: 0,
 };
 
 let socket = null;
@@ -817,8 +818,8 @@ function updateGameStateFromBroadcast(message) {
             if (!projectileTrails.has(p.id)) projectileTrails.set(p.id, []);
             const trail = projectileTrails.get(p.id);
             const maxAge = p.abilityType === 'fireBall' ? 18 : 22;
-            // Add 2 particles per update for density
-           const particleCount = p.abilityType === 'fireBall' ? 4 : 2;
+            // Add fewer particles for fireball (no trail effect)
+           const particleCount = 2;
             for (let i = 0; i < particleCount; i++) {
                 trail.push({
                     x: p.x + (Math.random() - 0.5) * 3,
@@ -1081,6 +1082,9 @@ function useAbility(slotIndex) {
     const gameMouseY = (mouseY / viewScale) + camY;
     const aimAngle = Math.atan2(gameMouseY - localPlayer.y, gameMouseX - localPlayer.x);
 
+    // Record ability use time for hand extension effect
+    gameState.lastAbilityUseTime = Date.now();
+
     if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ type: 'ability', slotIndex: slotIndex, aimAngle: aimAngle }));
     }
@@ -1137,7 +1141,7 @@ function drawTiledBackground() {
             
             // Draw grid lines (matching menu style)
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-            ctx.lineWidth = 1;
+            ctx.lineWidth = 0.15;
             ctx.strokeRect(x, y, TILE_SIZE, TILE_SIZE);
         }
     }
@@ -1234,7 +1238,9 @@ function drawPlayer(player, isLocal) {
     ctx.fillText(player.name, x, y + size + 15);
 
     const fistSize = size * 0.4;
-    const armLength = player.isDashing ? size * 2.5 : size * 1.3;
+    // Extend arms when dashing OR when an ability was recently used (within 200ms)
+    const recentlyUsedAbility = Date.now() - gameState.lastAbilityUseTime < 200;
+    const armLength = (player.isDashing || recentlyUsedAbility) ? size * 2.5 : size * 1.3;
     let angle = player.facingAngle || 0;
     const TILT_ANGLE = Math.PI / 3.5;
 
@@ -1253,20 +1259,20 @@ function drawPlayer(player, isLocal) {
 }
 
 function drawDashTrailAndRings() {
-    // Draw dash ghost trail — electric blue
+    // Draw dash ghost trail — light blue
     for (const ghost of dashTrail) {
         const t = 1 - ghost.age / 12;
         // Outer glow ring
         ctx.globalAlpha = t * 0.25;
         ctx.beginPath();
         ctx.arc(ghost.x, ghost.y, PLAYER_SIZE * (1.0 + t * 0.6), 0, Math.PI * 2);
-        ctx.fillStyle = '#60a5fa';
+        ctx.fillStyle = '#87ceeb';
         ctx.fill();
         // Inner solid trail
         ctx.globalAlpha = t * 0.55;
         ctx.beginPath();
         ctx.arc(ghost.x, ghost.y, PLAYER_SIZE * (0.4 + t * 0.4), 0, Math.PI * 2);
-        ctx.fillStyle = '#3b82f6';
+        ctx.fillStyle = '#5dade2';
         ctx.fill();
         ctx.globalAlpha = 1;
     }
@@ -1308,17 +1314,21 @@ function drawProjectiles() {
     for (const trail of projectileTrails.values()) {
         trail.forEach(pt => {
             const life = 1 - pt.age / pt.maxAge;
-            const size = (pt.type === 'fireBall' ? 6.5 : 3.5) * life;
+            const size = (pt.type === 'fireBall' ? 14 : 3.5) * life;
             if (size < 0.3) return;
 
-            ctx.globalAlpha = life * 0.85;
+            ctx.globalAlpha = life * 0.75;
             ctx.beginPath();
             ctx.arc(pt.x, pt.y, size, 0, Math.PI * 2);
 
             if (pt.type === 'fireBall') {
-                // Fire gradient: bright yellow core → orange → red
-                const fireColors = ['#fff176', '#ffa726', '#ef5350'];
-                ctx.fillStyle = fireColors[Math.floor((1 - life) * fireColors.length)] || '#ef5350';
+                // Orange fiery gradient: bright orange → deeper orange → dark orange red
+                const fireGradient = ctx.createRadialGradient(pt.x - size * 0.3, pt.y - size * 0.3, 0, pt.x, pt.y, size);
+                fireGradient.addColorStop(0, '#ffcc66');
+                fireGradient.addColorStop(0.3, '#ff9933');
+                fireGradient.addColorStop(0.7, '#ff6600');
+                fireGradient.addColorStop(1, '#cc3300');
+                ctx.fillStyle = fireGradient;
             } else if (pt.type === 'target') {
                 // Target gradient: bright red → darker red
                 const targetColors = ['#ff4444', '#dd0000', '#990000'];
@@ -1372,18 +1382,91 @@ function drawProjectiles() {
         const radius = p.radius || PROJECTILE_RADIUS;
 
         if (p.abilityType === 'whiteBall' || p.abilityType === 'fireBall') {
+            if (p.abilityType === 'fireBall') {
+                const time = performance.now() * 0.004;
+                
+                // Calculate direction of movement
+                const speed = Math.sqrt(p.dx * p.dx + p.dy * p.dy);
+                const trailAngle = Math.atan2(p.dy, p.dx);
+                
+                // Draw 5 big animated flame particles behind the core
+                for (let flameIdx = 0; flameIdx < 5; flameIdx++) {
+                    // Position behind the fireball
+                    const offsetDist = radius * 2;
+                    const baseX = p.x - Math.cos(trailAngle) * offsetDist;
+                    const baseY = p.y - Math.sin(trailAngle) * offsetDist;
+                    
+                    // Spread flames around the back
+                    const spreadAngle = (flameIdx / 5) * Math.PI * 2;
+                    const spreadDist = radius * 1.2;
+                    const flameX = baseX + Math.cos(spreadAngle) * spreadDist;
+                    const flameY = baseY + Math.sin(spreadAngle) * spreadDist;
+                    
+                    // Pulsing animation
+                    const pulse = 0.6 + Math.sin(time * 2 + flameIdx * 0.8) * 0.4;
+                    const flameRadius = radius * 0.8 * pulse;
+                    
+                    // Orange flame gradient
+                    const flameGradient = ctx.createRadialGradient(
+                        flameX - flameRadius * 0.3, 
+                        flameY - flameRadius * 0.3, 
+                        0, 
+                        flameX, 
+                        flameY, 
+                        flameRadius
+                    );
+                    flameGradient.addColorStop(0, 'rgba(255, 200, 100, 0.9)');
+                    flameGradient.addColorStop(0.4, 'rgba(255, 130, 30, 0.8)');
+                    flameGradient.addColorStop(0.8, 'rgba(255, 60, 0, 0.5)');
+                    flameGradient.addColorStop(1, 'rgba(220, 40, 0, 0.1)');
+                    
+                    ctx.beginPath();
+                    ctx.arc(flameX, flameY, flameRadius, 0, Math.PI * 2);
+                    ctx.fillStyle = flameGradient;
+                    ctx.fill();
+                }
+                // Strong outer glow
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, radius * 1.6, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 80, 0, 0.3)';
+                ctx.fill();
+            }
+            
             ctx.beginPath();
-            ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-            ctx.fillStyle = p.color;
+            // Make fireball much larger
+            const fireballRadius = p.abilityType === 'fireBall' ? radius * 2 : radius;
+            ctx.arc(p.x, p.y, fireballRadius, 0, Math.PI * 2);
+            
+            if (p.abilityType === 'fireBall') {
+                // Large, intense ORANGE fireball gradient
+                const gradient = ctx.createRadialGradient(
+                    p.x - fireballRadius * 0.3, 
+                    p.y - fireballRadius * 0.3, 
+                    0, 
+                    p.x, 
+                    p.y, 
+                    fireballRadius
+                );
+                gradient.addColorStop(0, '#ffdd66');
+                gradient.addColorStop(0.3, '#ffaa33');
+                gradient.addColorStop(1, '#ff6600');
+                ctx.fillStyle = gradient;
+            } else {
+                ctx.fillStyle = p.color;
+            }
             ctx.fill();
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = p.abilityType === 'fireBall' ? '#cc3300' : 'black';
+            ctx.lineWidth = p.abilityType === 'fireBall' ? 4 : 1;
             ctx.stroke();
-            ctx.font = `${radius * 1.8}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = p.abilityType === 'whiteBall' ? '#333' : '#fff';
-            ctx.fillText(p.abilityType === 'whiteBall' ? '⚪' : '🔥', p.x, p.y);
+            
+            // Only draw emoji for white ball, not fireball
+            if (p.abilityType === 'whiteBall') {
+                ctx.font = `${fireballRadius * 1.8}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#333';
+                ctx.fillText('⚪', p.x, p.y);
+            }
         } else {
             ctx.beginPath();
             ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
@@ -1450,11 +1533,37 @@ function drawMines() {
 }
 
 function drawHealingFields() {
+    const time = performance.now() * 0.002;
     gameState.healingFields.forEach(f => {
-        ctx.beginPath(); ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(52, 211, 153, 0.4)'; ctx.fill();
-        ctx.strokeStyle = '#34d399'; ctx.lineWidth = 3; ctx.stroke();
-        ctx.font = 'bold 16px sans-serif'; ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.fillText('💚', f.x, f.y + 6);
+        // Pulsing glow effect
+        const pulse = 0.6 + Math.sin(time) * 0.4;
+        
+        // Outer pulsing aura
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.radius * 1.4, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(74, 222, 128, ${pulse * 0.3})`;
+        ctx.fill();
+        
+        // Main healing field circle with light green
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+        const healing_gradient = ctx.createRadialGradient(f.x - f.radius * 0.3, f.y - f.radius * 0.3, 0, f.x, f.y, f.radius);
+        healing_gradient.addColorStop(0, 'rgba(134, 239, 172, 0.6)');
+        healing_gradient.addColorStop(1, 'rgba(74, 222, 128, 0.4)');
+        ctx.fillStyle = healing_gradient;
+        ctx.fill();
+        
+        // Light green stroke that pulses
+        ctx.strokeStyle = `rgba(134, 239, 172, ${pulse * 0.8})`;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Animated heart emoji with scale pulse
+        ctx.font = `bold ${16 + pulse * 4}px sans-serif`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('💚', f.x, f.y);
     });
 }
 
@@ -1551,11 +1660,31 @@ function draw() {
         ctx.textBaseline = 'middle';
         ctx.fillText(`You Won!`, centerX, boxY + boxHeight / 2);
 
-        ctx.fillStyle = '#22c55e';
+        // Check if mouse is over continue button for hover effect
+        const isHovering = mouseX > btnX && mouseX < btnX + btnWidth && 
+                          mouseY > btnY && mouseY < btnY + btnHeight;
+
+        // Draw button with hover effect
+        ctx.fillStyle = isHovering ? '#16a34a' : '#22c55e';
         ctx.fillRect(btnX, btnY, btnWidth, btnHeight);
+        
+        // Add border and glow on hover
+        if (isHovering) {
+            ctx.strokeStyle = '#4ade80';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(btnX, btnY, btnWidth, btnHeight);
+            
+            // Glow effect
+            ctx.shadowColor = 'rgba(34, 197, 94, 0.6)';
+            ctx.shadowBlur = 12;
+            ctx.strokeStyle = 'rgba(132, 204, 22, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(btnX - 2, btnY - 2, btnWidth + 4, btnHeight + 4);
+            ctx.shadowBlur = 0;
+        }
 
         ctx.fillStyle = 'white';
-        ctx.font = 'bold 24px sans-serif';
+        ctx.font = isHovering ? 'bold 26px sans-serif' : 'bold 24px sans-serif';
         ctx.fillText('CONTINUE', centerX, btnY + btnHeight / 2);
 
         gameState.continueButtonArea = { x: btnX, y: btnY, width: btnWidth, height: btnHeight };
@@ -1574,11 +1703,31 @@ function draw() {
         const killerName = gameState.eliminatedBy || 'The Environment';
         ctx.fillText(`You were killed by ${killerName}.`, centerX, boxY + boxHeight / 2);
 
-        ctx.fillStyle = '#22c55e';
+        // Check if mouse is over continue button for hover effect
+        const isHoveringDeath = mouseX > btnX && mouseX < btnX + btnWidth && 
+                                mouseY > btnY && mouseY < btnY + btnHeight;
+
+        // Draw button with hover effect
+        ctx.fillStyle = isHoveringDeath ? '#16a34a' : '#22c55e';
         ctx.fillRect(btnX, btnY, btnWidth, btnHeight);
+        
+        // Add border and glow on hover
+        if (isHoveringDeath) {
+            ctx.strokeStyle = '#4ade80';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(btnX, btnY, btnWidth, btnHeight);
+            
+            // Glow effect
+            ctx.shadowColor = 'rgba(34, 197, 94, 0.6)';
+            ctx.shadowBlur = 12;
+            ctx.strokeStyle = 'rgba(132, 204, 22, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(btnX - 2, btnY - 2, btnWidth + 4, btnHeight + 4);
+            ctx.shadowBlur = 0;
+        }
 
         ctx.fillStyle = 'white';
-        ctx.font = 'bold 24px sans-serif';
+        ctx.font = isHoveringDeath ? 'bold 26px sans-serif' : 'bold 24px sans-serif';
         ctx.fillText('CONTINUE', centerX, btnY + btnHeight / 2);
 
         gameState.continueButtonArea = { x: btnX, y: btnY, width: btnWidth, height: btnHeight };
