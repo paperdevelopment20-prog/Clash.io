@@ -1,7 +1,7 @@
 const ws = require("ws");
 const express = require("express");
 const path = require("path");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 
 // Import the connectDB function
@@ -83,18 +83,19 @@ const MAP_BARRIERS = [
     [19, 21, 7, 4],
 ];
 const ALL_ABILITIES = {
-    whiteBall: { name: "White Ball", damage: 10, projSpeed: 5, duration: 0 },
-    fireBall: { name: "Fire Ball", damage: 25, projSpeed: 3, duration: 0 },
-    knockback: { name: "Knockback", damage: 0, force: 200, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0 },
-    impulse:   { name: "Impulse",   damage: 0, force: 200, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0 },
-    snowball: { name: "Snowball", damage: 0, projSpeed: 4, stunDuration: 1500 },
-    landmine: { name: "Landmine", damage: 30, force: 0, ringRadius: 36, explosionDelay: 3000, projSpeed: 0, duration: 0 },
+    whiteBall: { name: "White Ball", damage: 10, projSpeed: 5, duration: 0, cooldown: 800 },
+    fireBall: { name: "Fire Ball", damage: 25, projSpeed: 3, duration: 0, cooldown: 800 },
+    knockback: { name: "Knockback", damage: 0, force: 200, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 800 },
+    impulse:   { name: "Impulse",   damage: 0, force: 200, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 800 },
+    snowball: { name: "Snowball", damage: 0, projSpeed: 4, stunDuration: 1500, cooldown: 10000 },
+    landmine: { name: "Landmine", damage: 30, force: 0, ringRadius: 36, explosionDelay: 3000, projSpeed: 0, duration: 0, cooldown: 800 },
     dash: {
         name: "Dash",
         damage: 0,
         projSpeed: 0,
         duration: 200,
         dashDistance: 10,
+        cooldown: 800,
     },
     heal: {
         name: "Heal Zone",
@@ -102,9 +103,10 @@ const ALL_ABILITIES = {
         duration: HEALING_DURATION,
         radius: HEALING_RADIUS,
         projSpeed: 0,
+        cooldown: 800,
     },
-    reflection: { name: "Reflection", damage: 0, projSpeed: 0, duration: 1000 },
-    target: { name: "Target", damage: 50, projSpeed: 1, duration: 0 },
+    reflection: { name: "Reflection", damage: 0, projSpeed: 0, duration: 3000, cooldown: 10000 },
+    target: { name: "Target", damage: 50, projSpeed: 1, duration: 0, cooldown: 800 },
 };
 
 // --- GAME UTILITIES (SHARED) ---
@@ -1133,14 +1135,14 @@ wss.on("connection", (ws) => {
                 if (isNaN(aimAngle)) return;
 
                 // 2. Cooldown Check
-                if (
-                    Date.now() <
-                    player.lastAbilityTime[slotIndex] + ABILITY_COOLDOWN
-                )
-                    return;
-
                 const abilityKey = player.loadout[slotIndex];
                 const ability = ALL_ABILITIES[abilityKey];
+                const cooldown = ability?.cooldown || ABILITY_COOLDOWN;
+                if (
+                    Date.now() <
+                    player.lastAbilityTime[slotIndex] + cooldown
+                )
+                    return;
 
                 if (!ability) return;
 
