@@ -208,12 +208,12 @@ class GameRoom {
         this.playerCount++;
 
         // Map center X = tile 22.5 = 450px
-        // Top bracket: tiles y 3-6 → spawn above at y=2 (40px)
-        // Bottom bracket: tiles y 23-26 → spawn below at y=27 (540px)
+        // Top barrier: tiles y 0-1 → spawn below at y=2 (40px)
+        // Bottom barrier: tiles y 29-30 → spawn above at y=27 (540px)
         const centerX = CANVAS_WIDTH / 2;
         const spawns = [
-            { x: centerX, y: 2 * TILE_SIZE }, // Above top bracket
-            { x: centerX, y: 27 * TILE_SIZE }, // Below bottom bracket
+            { x: centerX, y: 2 * TILE_SIZE }, // Below top barrier
+            { x: centerX, y: 27 * TILE_SIZE }, // Above bottom barrier
         ];
 
         // Assign position based on player order
@@ -719,7 +719,7 @@ class GameRoom {
     }
 
     updateGameState() {
-        if (this.gameStatus !== "playing") return;
+        if (this.gameStatus === "lobby") return;
 
         const now = Date.now();
         const playerList = Object.values(this.players);
