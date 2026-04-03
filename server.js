@@ -73,9 +73,6 @@ const REGEN_DELAY = 10000;
 const REGEN_AMOUNT = 1 / 60;
 
 // Fixed map barriers
-// MODIFIED: Removed all custom map barriers, keeping only the canvas boundaries enforced below.
-/* --- server.js --- */
-// Fixed map barriers
 const MAP_BARRIERS = [
     [0, 0, 45, 1],
     [0, 29, 45, 1],
@@ -211,13 +208,12 @@ class GameRoom {
         this.playerCount++;
 
         // Map center X = tile 22.5 = 450px
-        // Top inner barrier: tile y 5-9 (px 100-180) → spawn below at y=10 (200px)
-        // Bottom inner barrier: tile y 21-25 (px 420-500) → spawn above at y=20 (400px)
-        // Center barrier: tile y 11-19 (px 220-380)
+        // Top bracket: tiles y 3-6 → spawn above at y=2 (40px)
+        // Bottom bracket: tiles y 23-26 → spawn below at y=27 (540px)
         const centerX = CANVAS_WIDTH / 2;
         const spawns = [
-            { x: centerX, y: 10 * TILE_SIZE }, // Below top barrier, center
-            { x: centerX, y: 20 * TILE_SIZE }, // Above bottom barrier, center (safe gap)
+            { x: centerX, y: 2 * TILE_SIZE }, // Above top bracket
+            { x: centerX, y: 27 * TILE_SIZE }, // Below bottom bracket
         ];
 
         // Assign position based on player order
@@ -578,11 +574,10 @@ class GameRoom {
             if (m.isRing) {
                 const age = now - m.placedTime;
                 if (age >= m.explosionDelay) {
-                    // Explode: deal damage only (no push)
-                    const explosionRadiusPx = m.ringRadius * TILE_SIZE;
+                    // Explode: deal damage to all players within explosion radius
                     playerList.forEach((target) => {
                         const distSq = (m.x - target.x) ** 2 + (m.y - target.y) ** 2;
-                        if (distSq < explosionRadiusPx ** 2) {
+                        if (distSq < m.ringRadius ** 2) { // ringRadius is already in pixels
                             if (m.damage > 0) {
                                 target.health = Math.max(0, target.health - m.damage);
                                 target.lastDamageTime = now;
@@ -1172,23 +1167,52 @@ wss.on("connection", (ws) => {
                         projColor = "#add8e6"; // Ice Blue
                     }
 
-                    const spreadAngles = abilityKey === "whiteBall"
-                        ? [angle - 0.28, angle, angle + 0.28]
-                        : [angle];
+                    // Configure spread based on ability type
+                    let spreadAngles = [];
+                    const fireColors = ["#FFD700", "#FFA500", "#ff4500", "#FF6347", "#FF8C00"];
+                    
+                    if (abilityKey === "whiteBall") {
+                        // 5 projectiles spread wide
+                        spreadAngles = [
+                            { angle: angle - 0.56, colorIdx: 0 },
+                            { angle: angle - 0.28, colorIdx: 0 },
+                            { angle: angle, colorIdx: 0 },
+                            { angle: angle + 0.28, colorIdx: 0 },
+                            { angle: angle + 0.56, colorIdx: 0 }
+                        ];
+                    } else if (abilityKey === "fireBall") {
+                        // 1 fireball straight ahead with fiery color
+                        spreadAngles = [
+                            { angle: angle, colorIdx: 0 }
+                        ];
+                    } else {
+                        // Snowball: single projectile
+                        spreadAngles = [{ angle: angle, colorIdx: 0 }];
+                    }
 
-                    spreadAngles.forEach((shootAngle) => {
+                    spreadAngles.forEach((angleData) => {
+                        const shootAngle = angleData.angle;
+                        const speedVariation = abilityKey === "fireBall" 
+                            ? speed * (0.7 + Math.random() * 0.6) // Vary speed for organic feel
+                            : speed;
+                        
+                        const fireColor = abilityKey === "fireBall" 
+                            ? "#FF4500" 
+                            : projColor;
+
                         room.projectiles.push({
                             ownerId: playerId,
                             type: abilityKey,
                             x: player.x + Math.cos(shootAngle) * (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
                             y: player.y + Math.sin(shootAngle) * (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
-                            dx: Math.cos(shootAngle) * speed,
-                            dy: Math.sin(shootAngle) * speed,
+                            dx: Math.cos(shootAngle) * speedVariation,
+                            dy: Math.sin(shootAngle) * speedVariation,
                             damage: ability.damage,
-                            color: projColor,
+                            color: fireColor,
                             isStun: abilityKey === "snowball",
                             isTracking: false,
                             lifetime: 3000,
+                            isFirey: abilityKey === "fireBall",
                         });
                     });
                 }
