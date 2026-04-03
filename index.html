@@ -504,16 +504,16 @@ const TARGET_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNj
 // ============================================
 
 const ALL_ABILITIES = {
-    'whiteBall': { name: 'White Ball', icon: '⚪', svgIcon: WHITE_BALL_SVG, description: 'Basic direct shot (10 Damage).', color: '#334155' },
-    'fireBall':  { name: 'Fire Ball',  icon: '🔥', svgIcon: FIREBALL_SVG,  description: 'Heavy direct shot (25 Damage).',  color: '#7c2d12' },
-    'knockback': { name: 'Knockback',  icon: '🥊', svgIcon: KNOCKBACK_SVG, description: 'Pushes opponent away.',            color: '#7f1d1d' },
-    'impulse':   { name: 'Impulse',    icon: '💫', svgIcon: IMPULSE_SVG,   description: 'Pulls opponent towards you.',      color: '#4a1d96' },
-    'snowball':  { name: 'Snowball',   icon: '❄️', svgIcon: SNOWBALL_SVG,  description: 'Stuns opponent for 1.5s.',         color: '#1e3a5f' },
-    'landmine':  { name: 'Landmine',   icon: '💣', svgIcon: LANDMINE_SVG,  description: 'Places a proximity mine.',         color: '#292524' },
-    'dash':      { name: 'Dash',       icon: '💨', svgIcon: DASH_SVG,      description: 'Quickly dashes forward.',          color: '#1e3a8a' },
-    'heal':      { name: 'Heal Zone',  icon: '🟩', svgIcon: HEAL_ICON_SVG, description: 'Creates a healing zone.',          color: '#14532d' },
-    'reflection':{ name: 'Reflection', icon: '🪞', svgIcon: REFLECTION_SVG,description: 'Reflects projectiles.',            color: '#78350f' },
-    'target':    { name: 'Target',     icon: '🎯', svgIcon: TARGET_SVG,    description: 'Fires a homing projectile.',       color: '#7f1d1d' },
+    'whiteBall': { name: 'White Ball', icon: '⚪', svgIcon: WHITE_BALL_SVG, description: 'Basic direct shot (10 Damage).', color: '#334155', cooldown: 800 },
+    'fireBall':  { name: 'Fire Ball',  icon: '🔥', svgIcon: FIREBALL_SVG,  description: 'Heavy direct shot (25 Damage).',  color: '#7c2d12', cooldown: 800 },
+    'knockback': { name: 'Knockback',  icon: '🥊', svgIcon: KNOCKBACK_SVG, description: 'Pushes opponent away.',            color: '#7f1d1d', cooldown: 800 },
+    'impulse':   { name: 'Impulse',    icon: '💫', svgIcon: IMPULSE_SVG,   description: 'Pulls opponent towards you.',      color: '#4a1d96', cooldown: 800 },
+    'snowball':  { name: 'Snowball',   icon: '❄️', svgIcon: SNOWBALL_SVG,  description: 'Stuns opponent for 1.5s.',         color: '#1e3a5f', cooldown: 10000 },
+    'landmine':  { name: 'Landmine',   icon: '💣', svgIcon: LANDMINE_SVG,  description: 'Places a proximity mine.',         color: '#292524', cooldown: 800 },
+    'dash':      { name: 'Dash',       icon: '💨', svgIcon: DASH_SVG,      description: 'Quickly dashes forward.',          color: '#1e3a8a', cooldown: 800 },
+    'heal':      { name: 'Heal Zone',  icon: '🟩', svgIcon: HEAL_ICON_SVG, description: 'Creates a healing zone.',          color: '#14532d', cooldown: 800 },
+    'reflection':{ name: 'Reflection', icon: '🪞', svgIcon: REFLECTION_SVG,description: 'Reflects projectiles.',            color: '#78350f', cooldown: 10000 },
+    'target':    { name: 'Target',     icon: '🎯', svgIcon: TARGET_SVG,    description: 'Fires a homing projectile.',       color: '#7f1d1d', cooldown: 800 },
 };
 let gameState = {
     status: 'menu',
@@ -543,6 +543,7 @@ let mouseX = 0;
 
 // Particle trail system: Map of projectile id -> array of {x, y, age, maxAge, type}
 const projectileTrails = new Map();
+const fireballParticles = new Map(); // Track fireball particles separately
 
 // Active ring effects for knockback/impulse: [{x, y, radius, maxRadius, age, maxAge, type}]
 const activeRings = [];
@@ -814,12 +815,30 @@ function updateGameStateFromBroadcast(message) {
     const activeIds = new Set();
     newProjectiles.forEach(p => {
         activeIds.add(p.id);
-        if (p.abilityType === 'fireBall' || p.abilityType === 'snowball') {
+        if (p.abilityType === 'fireBall') {
+            // Create fireball particles with velocity
+            if (!fireballParticles.has(p.id)) fireballParticles.set(p.id, []);
+            const particles = fireballParticles.get(p.id);
+            
+            // Spawn particles every other frame
+            if (Math.random() < 0.5) {
+                const angle = Math.atan2(p.dy, p.dx);
+                const backwardSpeed = Math.random() * 2 + 1.5;
+                particles.push({
+                    x: p.x,
+                    y: p.y,
+                    size: Math.random() * 6 + 6, // 6-12 size
+                    speedX: -Math.cos(angle) * backwardSpeed + (Math.random() - 0.5) * 1,
+                    speedY: -Math.sin(angle) * backwardSpeed + (Math.random() - 0.5) * 1,
+                    opacity: 1,
+                    shrinkRate: 0.94 + Math.random() * 0.04 // 0.94-0.98
+                });
+            }
+        } else if (p.abilityType === 'snowball') {
             if (!projectileTrails.has(p.id)) projectileTrails.set(p.id, []);
             const trail = projectileTrails.get(p.id);
-            const maxAge = p.abilityType === 'fireBall' ? 18 : 22;
-            // Add fewer particles for fireball (no trail effect)
-           const particleCount = 2;
+            const maxAge = 22;
+            const particleCount = 2;
             for (let i = 0; i < particleCount; i++) {
                 trail.push({
                     x: p.x + (Math.random() - 0.5) * 3,
@@ -842,9 +861,12 @@ function updateGameStateFromBroadcast(message) {
             });
         }
     });
-    // Clean up trails for removed projectiles
+    // Clean up trails and particles for removed projectiles
     for (const id of projectileTrails.keys()) {
         if (!activeIds.has(id)) projectileTrails.delete(id);
+    }
+    for (const id of fireballParticles.keys()) {
+        if (!activeIds.has(id)) fireballParticles.delete(id);
     }
     // Age all particles, remove dead ones
     for (const [id, trail] of projectileTrails.entries()) {
@@ -1073,7 +1095,10 @@ function useAbility(slotIndex) {
     if (!localPlayer || gameState.status !== 'playing') return;
     if (!Array.isArray(localPlayer.lastAbilityTime)) return;
 
-    if (Date.now() < (localPlayer.lastAbilityTime[slotIndex] || 0) + ABILITY_COOLDOWN) return;
+    const abilityKey = gameState.loadout[slotIndex];
+    const ability = ALL_ABILITIES[abilityKey];
+    const cooldown = ability?.cooldown || ABILITY_COOLDOWN;
+    if (Date.now() < (localPlayer.lastAbilityTime[slotIndex] || 0) + cooldown) return;
 
     const viewWidthInGameUnits3 = canvas.width / viewScale;
     let camY = Math.max(0, Math.min(localPlayer.y - viewHeightInGameUnits / 2, FULL_MAP_HEIGHT - viewHeightInGameUnits));
@@ -1310,7 +1335,45 @@ function drawDashTrailAndRings() {
 }
 
 function drawProjectiles() {
-    // Draw all trail particles first (behind projectiles)
+    // Draw fireball particles first
+    for (const [id, particles] of fireballParticles.entries()) {
+        particles.forEach((particle, idx) => {
+            // Update particle state
+            particle.x += particle.speedX;
+            particle.y += particle.speedY;
+            particle.size *= particle.shrinkRate;
+            particle.opacity -= 0.02;
+            
+            // Draw particle
+            if (particle.opacity > 0 && particle.size > 0.5) {
+                ctx.globalAlpha = particle.opacity;
+                
+                // Orange flame gradient
+                const gradient = ctx.createRadialGradient(
+                    particle.x - particle.size * 0.3,
+                    particle.y - particle.size * 0.3,
+                    0,
+                    particle.x,
+                    particle.y,
+                    particle.size
+                );
+                gradient.addColorStop(0, '#ffdd99');
+                gradient.addColorStop(0.4, '#ffaa33');
+                gradient.addColorStop(0.8, '#ff7700');
+                gradient.addColorStop(1, '#ff5500');
+                
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+            }
+        });
+        
+        // Remove dead particles
+        fireballParticles.set(id, particles.filter(p => p.opacity > 0 && p.size > 0.5));
+    }
+    
+    // Draw all trail particles (behind projectiles)
     for (const trail of projectileTrails.values()) {
         trail.forEach(pt => {
             const life = 1 - pt.age / pt.maxAge;
@@ -1322,12 +1385,12 @@ function drawProjectiles() {
             ctx.arc(pt.x, pt.y, size, 0, Math.PI * 2);
 
             if (pt.type === 'fireBall') {
-                // Orange fiery gradient: bright orange → deeper orange → dark orange red
+                // Pure orange fiery gradient: bright yellow-orange → bright orange → deep orange
                 const fireGradient = ctx.createRadialGradient(pt.x - size * 0.3, pt.y - size * 0.3, 0, pt.x, pt.y, size);
-                fireGradient.addColorStop(0, '#ffcc66');
-                fireGradient.addColorStop(0.3, '#ff9933');
-                fireGradient.addColorStop(0.7, '#ff6600');
-                fireGradient.addColorStop(1, '#cc3300');
+                fireGradient.addColorStop(0, '#ffdd66');
+                fireGradient.addColorStop(0.3, '#ffaa33');
+                fireGradient.addColorStop(0.7, '#ff7700');
+                fireGradient.addColorStop(1, '#ff6600');
                 ctx.fillStyle = fireGradient;
             } else if (pt.type === 'target') {
                 // Target gradient: bright red → darker red
@@ -1382,59 +1445,8 @@ function drawProjectiles() {
         const radius = p.radius || PROJECTILE_RADIUS;
 
         if (p.abilityType === 'whiteBall' || p.abilityType === 'fireBall') {
-            if (p.abilityType === 'fireBall') {
-                const time = performance.now() * 0.004;
-                
-                // Calculate direction of movement
-                const speed = Math.sqrt(p.dx * p.dx + p.dy * p.dy);
-                const trailAngle = Math.atan2(p.dy, p.dx);
-                
-                // Draw 5 big animated flame particles behind the core
-                for (let flameIdx = 0; flameIdx < 5; flameIdx++) {
-                    // Position behind the fireball
-                    const offsetDist = radius * 2;
-                    const baseX = p.x - Math.cos(trailAngle) * offsetDist;
-                    const baseY = p.y - Math.sin(trailAngle) * offsetDist;
-                    
-                    // Spread flames around the back
-                    const spreadAngle = (flameIdx / 5) * Math.PI * 2;
-                    const spreadDist = radius * 1.2;
-                    const flameX = baseX + Math.cos(spreadAngle) * spreadDist;
-                    const flameY = baseY + Math.sin(spreadAngle) * spreadDist;
-                    
-                    // Pulsing animation
-                    const pulse = 0.6 + Math.sin(time * 2 + flameIdx * 0.8) * 0.4;
-                    const flameRadius = radius * 0.8 * pulse;
-                    
-                    // Orange flame gradient
-                    const flameGradient = ctx.createRadialGradient(
-                        flameX - flameRadius * 0.3, 
-                        flameY - flameRadius * 0.3, 
-                        0, 
-                        flameX, 
-                        flameY, 
-                        flameRadius
-                    );
-                    flameGradient.addColorStop(0, 'rgba(255, 200, 100, 0.9)');
-                    flameGradient.addColorStop(0.4, 'rgba(255, 130, 30, 0.8)');
-                    flameGradient.addColorStop(0.8, 'rgba(255, 60, 0, 0.5)');
-                    flameGradient.addColorStop(1, 'rgba(220, 40, 0, 0.1)');
-                    
-                    ctx.beginPath();
-                    ctx.arc(flameX, flameY, flameRadius, 0, Math.PI * 2);
-                    ctx.fillStyle = flameGradient;
-                    ctx.fill();
-                }
-                // Strong outer glow
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, radius * 1.6, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(255, 80, 0, 0.3)';
-                ctx.fill();
-            }
-            
             ctx.beginPath();
-            // Make fireball much larger
-            const fireballRadius = p.abilityType === 'fireBall' ? radius * 2 : radius;
+            const fireballRadius = p.abilityType === 'fireBall' ? radius * 1.8 : radius;
             ctx.arc(p.x, p.y, fireballRadius, 0, Math.PI * 2);
             
             if (p.abilityType === 'fireBall') {
@@ -1455,7 +1467,7 @@ function drawProjectiles() {
                 ctx.fillStyle = p.color;
             }
             ctx.fill();
-            ctx.strokeStyle = p.abilityType === 'fireBall' ? '#cc3300' : 'black';
+            ctx.strokeStyle = p.abilityType === 'fireBall' ? '#ff9900' : 'black';
             ctx.lineWidth = p.abilityType === 'fireBall' ? 4 : 1;
             ctx.stroke();
             
@@ -1808,12 +1820,14 @@ function updateHotbarVisuals() {
         }
         const last = localPlayer.lastAbilityTime[index] || 0;
         const elapsed = Date.now() - last;
-        const pct = Math.max(0, Math.min(1, elapsed / ABILITY_COOLDOWN));
+        const ability = ALL_ABILITIES[abilityKey];
+        const cooldown = ability?.cooldown || ABILITY_COOLDOWN;
+        const pct = Math.max(0, Math.min(1, elapsed / cooldown));
         cooldownDiv.style.height = `${(1 - pct) * 100}%`;
         // Update countdown text
         const cooldownText = slot.querySelector('.hotbar-cooldown-text');
         if (cooldownText) {
-            const remaining = Math.max(0, (ABILITY_COOLDOWN - elapsed) / 1000);
+            const remaining = Math.max(0, (cooldown - elapsed) / 1000);
             cooldownText.textContent = pct < 1 ? remaining.toFixed(1) + 's' : '';
         }
     });
