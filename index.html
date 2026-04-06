@@ -95,26 +95,16 @@
 }
         /* UPDATE: Redesign the 'Updates' Button */
 #updates-btn {
-    /* The specific dark "Reconnect" green */
-    background-color: rgba(13, 66, 38, 0.85) !important; 
+    background-color: rgba(13, 66, 38, 0.85) !important;
     border: 2px solid #000000 !important;
-    border-radius: 8px; /* Clean rounded corners */
-
-    /* Center the contents */
+    border-radius: 10px;
     display: inline-flex !important;
     justify-content: center;
     align-items: center;
-    gap: 6px; /* Space between icon and text */
-
-    /* Typography & Sizing */
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    color: #ffffff !important; /* White text for contrast */
-    padding: 8px 16px !important; 
-    font-weight: 800;
-    font-size: 0.9rem !important;
-    text-transform: uppercase;
-
-    /* Interaction */
+    width: 44px;
+    height: 44px;
+    padding: 0 !important;
+    font-size: 1.3rem !important;
     transition: all 0.2s ease;
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
@@ -270,7 +260,7 @@
 
     <div id="game-screen-wrapper" class="hidden">
         <div id="game-info" class="w-full flex justify-between items-center text-white text-xl p-2 z-40 absolute top-0">
-             <button id="leave-game-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl text-sm absolute top-4 left-4 z-50">Leave Game</button>
+             <button id="leave-game-btn" title="Leave Game" class="bg-red-600 hover:bg-red-700 text-white font-bold absolute top-4 left-4 z-50 flex items-center justify-center" style="width:44px;height:44px;font-size:1.1rem;border-radius:10px;border:2px solid #000;">[&#x2192;</button>
             <div id="status-display" class="font-bold absolute top-4 right-4 text-sm bg-gray-800 p-3 rounded z-50">Waiting for another player...</div>
         </div>
         <div id="kill-counter" class="absolute bottom-4 left-4 z-50" style="background-color: rgba(13, 66, 38, 0.85); border: 2px solid #000000; color: #ffffff; padding: 12px 16px; border-radius: 8px; font-weight: bold; font-size: 1.1rem;">Kills: <span id="kill-count">0</span></div>
@@ -284,9 +274,9 @@
     <button id="updates-btn" class="menu-top-btn">
         <span class="emoji text-lg">📄</span> 
     </button>
-    <a href="https://discord.gg/Kz3Nv7mgTu" target="_blank" class="menu-top-btn">Discord</a>
 </div>
-        <div class="absolute top-6 right-6 z-50">
+        <div class="absolute top-6 right-6 z-50 flex gap-2 items-center">
+            <button id="sign-out-btn" class="rounded hidden" style="background-color:#dc2626;border:2px solid #000;color:#fff;padding:6px 12px;font-weight:bold;transition:background-color 0.1s;">Sign Out</button>
             <button id="auth-display-btn" class="rounded">Sign In / Register</button>
         </div>
         <div id="online-counter" class="absolute bottom-6 left-6 z-50" style="background-color: rgba(13, 66, 38, 0.85); border: 2px solid #000000; color: #ffffff; padding: 12px 16px; border-radius: 8px; font-weight: bold; font-size: 1.1rem;">👥 Online: <span id="online-count">0</span></div>
@@ -411,6 +401,7 @@ const modalTitle = document.getElementById('modal-title');
 const modalText = document.getElementById('modal-text');
 const modalCloseBtn = document.getElementById('modal-close-btn');
 const authDisplayBtn = document.getElementById('auth-display-btn');
+const signOutBtn = document.getElementById('sign-out-btn');
 const authModal = document.getElementById('auth-modal');
 const authModalTitle = document.getElementById('auth-modal-title');
 const authForm = document.getElementById('auth-form');
@@ -598,6 +589,13 @@ targetPasswordInput.addEventListener('keypress', (e) => {
 });
 
 authDisplayBtn.addEventListener('click', showAuthModal);
+signOutBtn.addEventListener('click', () => {
+    gameState.isAuthenticated = false;
+    gameState.authenticatedUser = null;
+    gameState.loadout = ['whiteBall', 'fireBall', 'knockback', 'dash', 'heal'];
+    updateAuthDisplay(null);
+    renderMenuLoadoutSlots();
+});
 closeAuthModal.addEventListener('click', () => authModal.classList.add('hidden'));
 toggleAuthModeBtn.addEventListener('click', toggleAuthMode);
 authForm.addEventListener('submit', handleAuth);
@@ -1945,11 +1943,13 @@ function showAuthModal() {
 
 function updateAuthDisplay(username) {
     if (username) {
-        authDisplayBtn.textContent = `Welcome, ${username} (Sign Out)`;
+        authDisplayBtn.textContent = `Welcome, ${username}`;
         authDisplayBtn.style.backgroundColor = '#10b981';
+        signOutBtn.classList.remove('hidden');
     } else {
         authDisplayBtn.textContent = 'Sign In / Register';
         authDisplayBtn.style.backgroundColor = '#fcd34d';
+        signOutBtn.classList.add('hidden');
         nameInput.disabled = false;
         nameInput.value = 'Challenger';
     }
