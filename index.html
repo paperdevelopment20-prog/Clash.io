@@ -293,7 +293,7 @@
             <div>
                 <h1 class="text-6xl font-black mb-12 tracking-tight">Clash.io</h1>
                 <div class="w-full mb-8">
-                    <label for="name-input" class="menu-label">PLAYER NAME (For Anonymous Play)</label>
+                    <label for="name-input" class="menu-label">PLAYER NAME </label>
                     <input type="text" id="name-input" maxlength="12" class="w-full p-4 text-xl text-center focus:outline-none transition-all" value="Challenger">
                 </div>
                <button id="start-button">
@@ -457,13 +457,17 @@ const MOVEMENT_DEADZONE_SQ = 10 * 10;
 
     /* --- index.html --- */
 const MAP_BARRIERS = [
-    [0, 0, 45, 1],
-    [0, 29, 45, 1],
-    [0, 0, 1, 30],
-    [44, 0, 1, 30],
-    [17, 11, 11, 8],
-    [19, 5, 7, 4],
-    [19, 21, 7, 4],
+    [0, 0, 45, 1],     // Top wall
+    [0, 29, 45, 1],    // Bottom wall
+    [0, 0, 1, 30],     // Left wall
+    [44, 0, 1, 30],    // Right wall
+    [10, 13, 25, 3],   // Center barrier
+    [18, 5, 9, 1],     // Top enclosure horizontal bar
+    [18, 3, 1, 2],     // Top enclosure left vertical
+    [26, 3, 1, 2],     // Top enclosure right vertical
+    [18, 24, 9, 1],    // Bottom enclosure horizontal bar
+    [18, 25, 1, 2],    // Bottom enclosure left vertical
+    [26, 25, 1, 2],    // Bottom enclosure right vertical
     ];
 // ============================================
 // CLEAN & SIMPLE SVG CONSTANTS
@@ -508,7 +512,7 @@ const ALL_ABILITIES = {
     'fireBall':  { name: 'Fire Ball',  icon: '🔥', svgIcon: FIREBALL_SVG,  description: 'Heavy direct shot (25 Damage).',  color: '#7c2d12', cooldown: 800 },
     'knockback': { name: 'Knockback',  icon: '🥊', svgIcon: KNOCKBACK_SVG, description: 'Pushes opponent away.',            color: '#7f1d1d', cooldown: 800 },
     'impulse':   { name: 'Impulse',    icon: '💫', svgIcon: IMPULSE_SVG,   description: 'Pulls opponent towards you.',      color: '#4a1d96', cooldown: 800 },
-    'snowball':  { name: 'Snowball',   icon: '❄️', svgIcon: SNOWBALL_SVG,  description: 'Stuns opponent for 1.5s.',         color: '#1e3a5f', cooldown: 10000 },
+    'snowball':  { name: 'Snowball',   icon: '❄️', svgIcon: SNOWBALL_SVG,  description: 'Deals 10 damage and slows for 1.5s.',  color: '#1e3a5f', cooldown: 10000 },
     'landmine':  { name: 'Landmine',   icon: '💣', svgIcon: LANDMINE_SVG,  description: 'Places a proximity mine.',         color: '#292524', cooldown: 800 },
     'dash':      { name: 'Dash',       icon: '💨', svgIcon: DASH_SVG,      description: 'Quickly dashes forward.',          color: '#1e3a8a', cooldown: 800 },
     'heal':      { name: 'Heal Zone',  icon: '🟩', svgIcon: HEAL_ICON_SVG, description: 'Creates a healing zone.',          color: '#14532d', cooldown: 800 },
@@ -699,7 +703,6 @@ function handleServerMessage(event) {
             authModal.classList.add('hidden');
             updateAuthDisplay(message.name);
             nameInput.value = message.name;
-            nameInput.disabled = true;
             renderMenuLoadoutSlots();
             showModal('Success!', `Welcome back, ${message.name}. Your progress has been loaded.`, () => {});
             break;
@@ -820,18 +823,25 @@ function updateGameStateFromBroadcast(message) {
             if (!fireballParticles.has(p.id)) fireballParticles.set(p.id, []);
             const particles = fireballParticles.get(p.id);
             
-            // Spawn particles every other frame
-            if (Math.random() < 0.5) {
-                const angle = Math.atan2(p.dy, p.dx);
-                const backwardSpeed = Math.random() * 2 + 1.5;
+            // Spawn 1-2 particles per frame spread across the back half of the core
+            const spawnCount = Math.floor(Math.random() * 2) + 1;
+            const fireAngle = Math.atan2(p.dy, p.dx);
+            const coreR = (p.radius || 5) * 2.2;
+            for (let i = 0; i < spawnCount; i++) {
+                // Spread across the back 180° arc of the core edge
+                const spreadAngle = fireAngle + Math.PI + (Math.random() - 0.5) * Math.PI;
+                const edgeX = p.x + Math.cos(spreadAngle) * coreR * (0.7 + Math.random() * 0.4);
+                const edgeY = p.y + Math.sin(spreadAngle) * coreR * (0.7 + Math.random() * 0.4);
+                const backwardSpeed = Math.random() * 2 + 1;
                 particles.push({
-                    x: p.x,
-                    y: p.y,
-                    size: Math.random() * 6 + 6, // 6-12 size
-                    speedX: -Math.cos(angle) * backwardSpeed + (Math.random() - 0.5) * 1,
-                    speedY: -Math.sin(angle) * backwardSpeed + (Math.random() - 0.5) * 1,
-                    opacity: 1,
-                    shrinkRate: 0.94 + Math.random() * 0.04 // 0.94-0.98
+                    x: edgeX,
+                    y: edgeY,
+                    size: Math.random() * 4 + 6,
+                    speedX: -Math.cos(fireAngle) * backwardSpeed + (Math.random() - 0.5) * 1.5,
+                    speedY: -Math.sin(fireAngle) * backwardSpeed + (Math.random() - 0.5) * 1.5,
+                    opacity: 0.9,
+                    age: 0,
+                    shrinkRate: 0.96 + Math.random() * 0.02
                 });
             }
         } else if (p.abilityType === 'snowball') {
@@ -944,7 +954,7 @@ function gameLoop(timestamp) {
     // Age and remove old dash ghosts
     for (let i = dashTrail.length - 1; i >= 0; i--) {
         dashTrail[i].age++;
-        if (dashTrail[i].age > 12) dashTrail.splice(i, 1);
+        if (dashTrail[i].age > 20) dashTrail.splice(i, 1);
     }
 
     // Age and remove old rings
@@ -1174,37 +1184,24 @@ function drawTiledBackground() {
 
 function drawBarriers() {
     MAP_BARRIERS.forEach(b => {
-        const pixelX = b[0] * TILE_SIZE;
-        const pixelY = b[1] * TILE_SIZE;
-        const pixelW = b[2] * TILE_SIZE;
-        const pixelH = b[3] * TILE_SIZE;
-
-        // Draw dark green tiles for barriers
-        const darkGreen = '#0d4226';
-        const startCol = Math.floor(b[0]);
-        const startRow = Math.floor(b[1]);
-        const endCol = Math.ceil(b[0] + b[2]);
-        const endRow = Math.ceil(b[1] + b[3]);
+        const startCol = b[0];
+        const startRow = b[1];
+        const endCol = b[0] + b[2];
+        const endRow = b[1] + b[3];
 
         for (let row = startRow; row < endRow; row++) {
             for (let col = startCol; col < endCol; col++) {
                 const tx = col * TILE_SIZE;
                 const ty = row * TILE_SIZE;
 
-                const clipX = Math.max(tx, pixelX);
-                const clipY = Math.max(ty, pixelY);
-                const clipW = Math.min(tx + TILE_SIZE, pixelX + pixelW) - clipX;
-                const clipH = Math.min(ty + TILE_SIZE, pixelY + pixelH) - clipY;
-                if (clipW <= 0 || clipH <= 0) continue;
+                // Dark green tile fill (matching 1v1 button color)
+                ctx.fillStyle = '#0d4226';
+                ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
 
-                // Draw dark green tile
-                ctx.fillStyle = darkGreen;
-                ctx.fillRect(clipX, clipY, clipW, clipH);
-
-                // Draw grid line
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                // Tile grid lines (matching normal tile outline style)
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
                 ctx.lineWidth = 1;
-                ctx.strokeRect(tx + 0.5, ty + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+                ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
             }
         }
     });
@@ -1284,21 +1281,35 @@ function drawPlayer(player, isLocal) {
 }
 
 function drawDashTrailAndRings() {
-    // Draw dash ghost trail — light blue
+    // Draw dash ghost trail — puffy cyan cloud blobs
     for (const ghost of dashTrail) {
-        const t = 1 - ghost.age / 12;
-        // Outer glow ring
-        ctx.globalAlpha = t * 0.25;
-        ctx.beginPath();
-        ctx.arc(ghost.x, ghost.y, PLAYER_SIZE * (1.0 + t * 0.6), 0, Math.PI * 2);
-        ctx.fillStyle = '#87ceeb';
-        ctx.fill();
-        // Inner solid trail
-        ctx.globalAlpha = t * 0.55;
-        ctx.beginPath();
-        ctx.arc(ghost.x, ghost.y, PLAYER_SIZE * (0.4 + t * 0.4), 0, Math.PI * 2);
-        ctx.fillStyle = '#5dade2';
-        ctx.fill();
+        const t = 1 - ghost.age / 20; // 1 = fresh, 0 = old
+        // Spawn a few overlapping blobs per ghost position for the puffy cloud look
+        const blobCount = 3;
+        for (let b = 0; b < blobCount; b++) {
+            const offsetX = (Math.random() - 0.5) * PLAYER_SIZE * 1.2;
+            const offsetY = (Math.random() - 0.5) * PLAYER_SIZE * 1.2;
+            const blobR = PLAYER_SIZE * (0.8 + Math.random() * 0.6) * t;
+            if (blobR < 0.5) continue;
+
+            // Fresh = bright cyan, old = white/pale
+            const innerColor = t > 0.5 ? '#00eeff' : '#aaffff';
+            const outerColor = t > 0.5 ? '#00ccdd' : '#ffffff';
+
+            const grad = ctx.createRadialGradient(
+                ghost.x + offsetX, ghost.y + offsetY, 0,
+                ghost.x + offsetX, ghost.y + offsetY, blobR
+            );
+            grad.addColorStop(0, innerColor);
+            grad.addColorStop(0.6, outerColor);
+            grad.addColorStop(1, 'rgba(200,255,255,0)');
+
+            ctx.globalAlpha = t * 0.7;
+            ctx.beginPath();
+            ctx.arc(ghost.x + offsetX, ghost.y + offsetY, blobR, 0, Math.PI * 2);
+            ctx.fillStyle = grad;
+            ctx.fill();
+        }
         ctx.globalAlpha = 1;
     }
 
@@ -1346,25 +1357,25 @@ function drawProjectiles() {
             
             // Draw particle
             if (particle.opacity > 0 && particle.size > 0.5) {
-                ctx.globalAlpha = particle.opacity;
-                
-                // Orange flame gradient
-                const gradient = ctx.createRadialGradient(
-                    particle.x - particle.size * 0.3,
-                    particle.y - particle.size * 0.3,
-                    0,
-                    particle.x,
-                    particle.y,
-                    particle.size
+                ctx.globalAlpha = particle.opacity * 0.85;
+                particle.age = (particle.age || 0) + 1;
+
+                // Young particles = yellow, older = orange/deep orange
+                const t = Math.min(particle.age / 18, 1);
+                const innerColor = t < 0.5 ? '#ffee00' : '#ffaa00';
+                const outerColor = t < 0.5 ? '#ffaa00' : '#ff5500';
+
+                const grad = ctx.createRadialGradient(
+                    particle.x, particle.y, 0,
+                    particle.x, particle.y, particle.size
                 );
-                gradient.addColorStop(0, '#ffdd99');
-                gradient.addColorStop(0.4, '#ffaa33');
-                gradient.addColorStop(0.8, '#ff7700');
-                gradient.addColorStop(1, '#ff5500');
-                
+                grad.addColorStop(0, innerColor);
+                grad.addColorStop(0.6, outerColor);
+                grad.addColorStop(1, 'rgba(255,80,0,0)');
+
                 ctx.beginPath();
                 ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-                ctx.fillStyle = gradient;
+                ctx.fillStyle = grad;
                 ctx.fill();
             }
         });
@@ -1450,25 +1461,21 @@ function drawProjectiles() {
             ctx.arc(p.x, p.y, fireballRadius, 0, Math.PI * 2);
             
             if (p.abilityType === 'fireBall') {
-                // Large, intense ORANGE fireball gradient
-                const gradient = ctx.createRadialGradient(
-                    p.x - fireballRadius * 0.3, 
-                    p.y - fireballRadius * 0.3, 
-                    0, 
-                    p.x, 
-                    p.y, 
-                    fireballRadius
+                // Warm orange-yellow fill like the image
+                const coreGrad = ctx.createRadialGradient(
+                    p.x - fireballRadius * 0.2, p.y - fireballRadius * 0.2, 0,
+                    p.x, p.y, fireballRadius
                 );
-                gradient.addColorStop(0, '#ffdd66');
-                gradient.addColorStop(0.3, '#ffaa33');
-                gradient.addColorStop(1, '#ff6600');
-                ctx.fillStyle = gradient;
+                coreGrad.addColorStop(0, '#ffe066');
+                coreGrad.addColorStop(0.6, '#ff9900');
+                coreGrad.addColorStop(1, '#ff6600');
+                ctx.fillStyle = coreGrad;
             } else {
                 ctx.fillStyle = p.color;
             }
             ctx.fill();
-            ctx.strokeStyle = p.abilityType === 'fireBall' ? '#ff9900' : 'black';
-            ctx.lineWidth = p.abilityType === 'fireBall' ? 4 : 1;
+            ctx.strokeStyle = p.abilityType === 'fireBall' ? 'rgba(0,0,0,0.35)' : 'black';
+            ctx.lineWidth = p.abilityType === 'fireBall' ? 1.5 : 1;
             ctx.stroke();
             
             // Only draw emoji for white ball, not fireball
