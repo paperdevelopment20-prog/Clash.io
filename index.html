@@ -213,15 +213,16 @@
             display: none; /* HIDE THE NUMBER */
         }
         /* MODIFIED: Gap adjustment for ability list */
-        #ability-list { grid-template-columns: repeat(5, 1fr); gap: 10px; }
-        /* MODIFIED: Ability Card Styling (Smaller & Rounded Edges) */
+        #ability-list { grid-template-columns: repeat(5, 1fr); gap: 6px; justify-items: center; }
+        /* MODIFIED: Ability Card Styling (Square & Rounded like hotbar) */
         #ability-modal .p-4 { padding: 8px; text-align: center; }
         .ability-card {
-            background-color: #6b7280; border: 2px solid #4b5563; border-radius: 8px;
+            background-color: #6b7280; border: 2px solid #4b5563; border-radius: 12px;
             cursor: pointer; transition: all 0.1s; display: flex;
-            flex-direction: column; justify-content: center; align-items: center; height: 60px; 
+            flex-direction: column; justify-content: center; align-items: center;
+            width: 80px; height: 80px; aspect-ratio: 1;
         }
-        .ability-card:hover { background-color: #4b5563; }
+        .ability-card:hover { filter: brightness(1.2); transform: scale(1.05); }
         /* MODIFIED: Smaller icon size for the 60px height (1.75rem) */
         .ability-card .text-3xl { font-size: 1.75rem; line-height: 1; }
         .ability-card .font-bold, .ability-card .text-sm { display: none; }
@@ -308,26 +309,25 @@
 
     <div id="ability-modal" class="modal hidden">
         <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-3xl border-4 border-black relative text-white">
-            <h3 class="text-3xl font-bold mb-4 text-white text-center">Select Ability for Slot <span id="modal-slot-number">1</span></h3>
+            <h3 class="text-3xl font-bold mb-4 text-gray-400 text-center">Select Ability for Slot <span id="modal-slot-number">1</span></h3>
             <div id="ability-list" class="grid gap-4"></div>
             <button id="close-ability-modal" class="absolute top-0 right-0 p-2 bg-red-600 hover:bg-red-700 text-white font-black text-lg border-2 border-black w-10 h-10 flex items-center justify-center">X</button>
         </div>
     </div>
 
     <div id="target-password-modal" class="modal hidden">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg border-4 border-black relative">
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-sm border-4 border-black relative text-white">
             <button id="close-target-modal" class="absolute top-0 right-0 p-2 bg-red-600 hover:bg-red-700 text-white font-black text-lg border-2 border-black w-10 h-10 flex items-center justify-center">X</button>
             <div class="text-center">
-                <h3 class="text-4xl font-bold mb-6 text-gray-800">Target</h3>
-                <div class="text-8xl mb-6">🎯</div>
-                <p class="text-gray-700 mb-6 text-sm leading-relaxed">Target is a ability that will track your opponent and deal 50 damage. (Note: This ability can be used in any slot.)</p>
-                <div class="mb-6">
-                    <label class="block text-gray-700 font-bold mb-2">Enter Password:</label>
-                    <input type="password" id="target-password-input" class="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:border-blue-600" placeholder="Password">
-                    <p id="target-password-error" class="text-red-600 text-sm mt-2 hidden">Incorrect password. Try again.</p>
+                <h3 class="text-3xl font-bold mb-4 text-gray-400">Target</h3>
+                <div class="text-6xl mb-4">🎯</div>
+                <p class="text-gray-400 mb-4 text-sm leading-relaxed">Tracks your opponent and deals 50 damage. Can be used in any slot.</p>
+                <div class="mb-4">
+                    <input type="password" id="target-password-input" class="w-full px-4 py-3 border-2 border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:border-gray-400 placeholder-gray-500" placeholder="Enter password">
+                    <p id="target-password-error" class="text-red-400 text-sm mt-2 hidden">Incorrect password. Try again.</p>
                 </div>
-                <button id="target-password-submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow border-2 border-black mb-2">Unlock Target</button>
-                <button id="target-password-cancel" class="w-full bg-red-400 hover:bg-red-500 text-white font-bold py-3 rounded-lg shadow border-2 border-black">Cancel</button>
+                <button id="target-password-submit" class="w-full bg-green-700 hover:bg-green-600 text-white font-bold py-3 rounded-lg border-2 border-black mb-2">Unlock Target</button>
+                <button id="target-password-cancel" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg border-2 border-black">Cancel</button>
             </div>
         </div>
     </div>
@@ -508,16 +508,16 @@ const TARGET_SVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNj
 // ============================================
 
 const ALL_ABILITIES = {
-    'whiteBall': { name: 'White Ball', icon: '⚪', svgIcon: WHITE_BALL_SVG, description: 'Basic direct shot (10 Damage).', color: '#334155', cooldown: 800 },
-    'fireBall':  { name: 'Fire Ball',  icon: '🔥', svgIcon: FIREBALL_SVG,  description: 'Heavy direct shot (25 Damage).',  color: '#7c2d12', cooldown: 800 },
-    'knockback': { name: 'Knockback',  icon: '🥊', svgIcon: KNOCKBACK_SVG, description: 'Pushes opponent away.',            color: '#7f1d1d', cooldown: 800 },
-    'impulse':   { name: 'Impulse',    icon: '💫', svgIcon: IMPULSE_SVG,   description: 'Pulls opponent towards you.',      color: '#4a1d96', cooldown: 800 },
-    'snowball':  { name: 'Snowball',   icon: '❄️', svgIcon: SNOWBALL_SVG,  description: 'Deals 10 damage and slows for 1.5s.',  color: '#1e3a5f', cooldown: 10000 },
-    'landmine':  { name: 'Landmine',   icon: '💣', svgIcon: LANDMINE_SVG,  description: 'Places a proximity mine.',         color: '#292524', cooldown: 800 },
-    'dash':      { name: 'Dash',       icon: '💨', svgIcon: DASH_SVG,      description: 'Quickly dashes forward.',          color: '#1e3a8a', cooldown: 800 },
-    'heal':      { name: 'Heal Zone',  icon: '🟩', svgIcon: HEAL_ICON_SVG, description: 'Creates a healing zone.',          color: '#14532d', cooldown: 800 },
-    'reflection':{ name: 'Reflection', icon: '🪞', svgIcon: REFLECTION_SVG,description: 'Reflects projectiles.',            color: '#78350f', cooldown: 10000 },
-    'target':    { name: 'Target',     icon: '🎯', svgIcon: TARGET_SVG,    description: 'Fires a homing projectile.',       color: '#7f1d1d', cooldown: 800 },
+    'whiteBall': { name: 'White Ball', icon: '⚪', svgIcon: '/assets/abilities/whiteball.svg', description: 'Basic direct shot (10 Damage).', color: '#334155', cooldown: 3000 },
+    'fireBall':  { name: 'Fire Ball',  icon: '🔥', svgIcon: '/assets/abilities/fireball.svg',  description: 'Heavy direct shot (25 Damage).',  color: '#7c2d12', cooldown: 3000 },
+    'knockback': { name: 'Knockback',  icon: '🥊', svgIcon: '/assets/abilities/knockback.svg', description: 'Pushes opponent away.',            color: '#7f1d1d', cooldown: 3000 },
+    'impulse':   { name: 'Impulse',    icon: '💫', svgIcon: '/assets/abilities/impulse.svg',   description: 'Pulls opponent towards you.',      color: '#4a1d96', cooldown: 3000 },
+    'snowball':  { name: 'Snowball',   icon: '❄️', svgIcon: '/assets/abilities/snowball.svg',  description: 'Deals 10 damage and slows for 1.5s.',  color: '#1e3a5f', cooldown: 3000 },
+    'landmine':  { name: 'Landmine',   icon: '💣', svgIcon: '/assets/abilities/landmine.svg',  description: 'Places a proximity mine.',         color: '#292524', cooldown: 3000 },
+    'dash':      { name: 'Dash',       icon: '💨', svgIcon: '/assets/abilities/dash.svg',      description: 'Quickly dashes forward.',          color: '#1e3a8a', cooldown: 3000 },
+    'heal':      { name: 'Heal Zone',  icon: '🟩', svgIcon: '/assets/abilities/heal.svg',      description: 'Creates a healing zone.',          color: '#14532d', cooldown: 3000 },
+    'reflection':{ name: 'Reflection', icon: '🪞', svgIcon: '/assets/abilities/reflection.svg',description: 'Reflects projectiles.',            color: '#78350f', cooldown: 3000 },
+    'target':    { name: 'Target',     icon: '🎯', svgIcon: '/assets/abilities/target.svg',    description: 'Fires a homing projectile.',       color: '#7f1d1d', cooldown: 3000 },
 };
 let gameState = {
     status: 'menu',
@@ -954,7 +954,7 @@ function gameLoop(timestamp) {
     // Age and remove old dash ghosts
     for (let i = dashTrail.length - 1; i >= 0; i--) {
         dashTrail[i].age++;
-        if (dashTrail[i].age > 20) dashTrail.splice(i, 1);
+        if (dashTrail[i].age > 120) dashTrail.splice(i, 1);
     }
 
     // Age and remove old rings
@@ -1283,7 +1283,7 @@ function drawPlayer(player, isLocal) {
 function drawDashTrailAndRings() {
     // Draw dash ghost trail — puffy cyan cloud blobs
     for (const ghost of dashTrail) {
-        const t = 1 - ghost.age / 20; // 1 = fresh, 0 = old
+        const t = 1 - ghost.age / 120; // 1 = fresh, 0 = old (2 seconds at 60fps)
         // Spawn a few overlapping blobs per ghost position for the puffy cloud look
         const blobCount = 3;
         for (let b = 0; b < blobCount; b++) {
@@ -1848,6 +1848,7 @@ function renderMenuLoadoutSlots() {
         slot.className = 'menu-loadout-slot';
         if (index === gameState.hotbarSelection) slot.classList.add('selected');
         const ability = ALL_ABILITIES[abilityKey];
+        if (ability && ability.color) slot.style.backgroundColor = ability.color;
         const icon = document.createElement('div');
         icon.className = 'text-4xl';
         icon.style.cssText = 'display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;';
@@ -1882,6 +1883,10 @@ function openAbilityModal(slotIndex) {
         const card = document.createElement('div');
         card.className = 'ability-card';
         card.innerHTML = '';
+        if (ability.color) {
+            card.style.backgroundColor = ability.color;
+            card.style.borderColor = ability.color;
+        }
 
         const iconDiv = document.createElement('div');
         iconDiv.className = 'text-3xl';
