@@ -1,0 +1,15 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Button base / outer ring -->
+  <circle cx="32" cy="34" r="24" fill="#57534e" stroke="#292524" stroke-width="3"/>
+  <!-- Button top face -->
+  <circle cx="32" cy="30" r="20" fill="#78716c"/>
+  <!-- Button inner press area -->
+  <circle cx="32" cy="30" r="14" fill="#44403c" stroke="#292524" stroke-width="2"/>
+  <!-- Red indicator light -->
+  <circle cx="32" cy="30" r="7" fill="#ef4444"/>
+  <circle cx="29" cy="27" r="2.5" fill="rgba(255,255,255,0.4)"/>
+  <!-- Side prongs -->
+  <rect x="28" y="6" width="8" height="10" rx="3" fill="#57534e" stroke="#292524" stroke-width="1.5"/>
+  <rect x="10" y="26" width="10" height="8" rx="3" fill="#57534e" stroke="#292524" stroke-width="1.5"/>
+  <rect x="44" y="26" width="10" height="8" rx="3" fill="#57534e" stroke="#292524" stroke-width="1.5"/>
+</svg>

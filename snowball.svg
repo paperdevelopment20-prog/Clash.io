@@ -1,0 +1,9 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="32" cy="32" r="24" fill="#bae6fd" stroke="#38bdf8" stroke-width="3"/>
+  <circle cx="32" cy="32" r="14" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="2"/>
+  <!-- Snowflake lines -->
+  <line x1="32" y1="20" x2="32" y2="44" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="20" y1="32" x2="44" y2="32" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="23" y1="23" x2="41" y2="41" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="41" y1="23" x2="23" y2="41" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

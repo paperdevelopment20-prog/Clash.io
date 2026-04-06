@@ -1,0 +1,8 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main flame body -->
+  <path d="M32 58 Q14 48 14 34 Q14 24 22 18 Q20 28 26 30 Q22 20 30 10 Q32 22 36 20 Q42 12 40 6 Q52 16 50 30 Q54 26 52 18 Q58 26 50 38 Q54 36 52 42 Q48 54 32 58Z" fill="#f97316"/>
+  <!-- Inner bright core -->
+  <path d="M32 50 Q22 42 22 34 Q22 28 27 24 Q26 30 30 32 Q28 26 32 18 Q34 26 37 24 Q42 28 42 36 Q44 32 42 28 Q46 34 42 42 Q40 48 32 50Z" fill="#fbbf24"/>
+  <!-- Hot center -->
+  <path d="M32 44 Q26 38 27 33 Q29 36 32 34 Q35 36 37 33 Q38 38 32 44Z" fill="#fef08a"/>
+</svg>

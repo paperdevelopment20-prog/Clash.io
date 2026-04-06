@@ -1,0 +1,12 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Center dot -->
+  <circle cx="32" cy="32" r="6" fill="#f87171"/>
+  <!-- Left arrow pointing LEFT (outward) -->
+  <polygon points="56,32 44,25 44,39" fill="#f87171"/>
+  <!-- Right arrow pointing RIGHT (outward) -->
+  <polygon points="8,32 20,25 20,39" fill="#f87171"/>
+  <!-- Top arrow pointing UP (outward) -->
+  <polygon points="32,56 25,44 39,44" fill="#f87171"/>
+  <!-- Bottom arrow pointing DOWN (outward) -->
+  <polygon points="32,8 25,20 39,20" fill="#f87171"/>
+</svg>
