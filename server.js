@@ -74,20 +74,24 @@ const REGEN_AMOUNT = 1 / 60;
 
 // Fixed map barriers
 const MAP_BARRIERS = [
-    [0, 0, 45, 1],
-    [0, 29, 45, 1],
-    [0, 0, 1, 30],
-    [44, 0, 1, 30],
-    [17, 11, 11, 8],
-    [19, 5, 7, 4],
-    [19, 21, 7, 4],
+    [0, 0, 45, 1],     // Top wall
+    [0, 29, 45, 1],    // Bottom wall
+    [0, 0, 1, 30],     // Left wall
+    [44, 0, 1, 30],    // Right wall
+    [10, 13, 25, 3],   // Center barrier
+    [18, 5, 9, 1],     // Top enclosure horizontal bar
+    [18, 3, 1, 2],     // Top enclosure left vertical
+    [26, 3, 1, 2],     // Top enclosure right vertical
+    [18, 24, 9, 1],    // Bottom enclosure horizontal bar
+    [18, 25, 1, 2],    // Bottom enclosure left vertical
+    [26, 25, 1, 2],    // Bottom enclosure right vertical
 ];
 const ALL_ABILITIES = {
     whiteBall: { name: "White Ball", damage: 10, projSpeed: 5, duration: 0, cooldown: 800 },
     fireBall: { name: "Fire Ball", damage: 25, projSpeed: 3, duration: 0, cooldown: 800 },
     knockback: { name: "Knockback", damage: 0, force: 200, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 800 },
     impulse:   { name: "Impulse",   damage: 0, force: 200, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 800 },
-    snowball: { name: "Snowball", damage: 0, projSpeed: 4, stunDuration: 1500, cooldown: 10000 },
+    snowball: { name: "Snowball", damage: 10, projSpeed: 4, slowDuration: 1500, cooldown: 10000 },
     landmine: { name: "Landmine", damage: 30, force: 0, ringRadius: 36, explosionDelay: 3000, projSpeed: 0, duration: 0, cooldown: 800 },
     dash: {
         name: "Dash",
@@ -136,6 +140,8 @@ function createPlayer(id, name, loadout, ws) {
         dashEndTime: 0,
         isStunned: false,
         stunEndTime: 0,
+        isSlowed: false,
+        slowEndTime: 0,
         isImpulsed: false,
         impulseEndTime: 0,
         lastDamageTime: Date.now(),
@@ -296,6 +302,9 @@ class GameRoom {
             this.isStarting = true;
             this.countdown = 5; // 2s delay + 3s countdown
             this.gameStatus = "starting"; // Set room status to starting
+            
+            // Start game loop immediately so players can move during countdown
+            this.startGameLoop();
 
             // Send initial status message (2 seconds delay starts here)
             this.broadcast({
@@ -320,8 +329,7 @@ class GameRoom {
                     clearInterval(this.countdownInterval);
                     this.countdownInterval = null;
                     this.isStarting = false;
-                    this.gameStatus = "playing"; // Set room status to playing
-                    this.startGameLoop(); // Start the game update loop
+                    this.gameStatus = "playing"; // Set room status to playing (game loop already running)
                     this.broadcast({ type: "matchStart" });
                     console.log(`Room ${this.id} match started.`);
                 }
@@ -380,6 +388,8 @@ class GameRoom {
         const now = Date.now();
         if (player.isStunned && now >= player.stunEndTime)
             player.isStunned = false;
+        if (player.isSlowed && now >= player.slowEndTime)
+            player.isSlowed = false;
         if (player.isProtected && now > player.protectionEndTime) {
             player.isProtected = false;
             player.isReflecting = false;
@@ -412,7 +422,7 @@ class GameRoom {
         player.dy = player.input.dy;
 
         // Normal movement (dash is handled separately in ability casting)
-        const speed = PLAYER_SPEED;
+        const speed = player.isSlowed ? PLAYER_SPEED * 0.5 : PLAYER_SPEED;
 
         let newX = player.x + player.dx * speed;
         let newY = player.y + player.dy * speed;
@@ -532,11 +542,10 @@ class GameRoom {
 
                         projectilesToRemove.push(index);
 
-                        // Apply stun effect if this is a snowball
+                        // Apply slow effect if this is a snowball
                         if (p.isStun) {
-                            target.isStunned = true;
-                            target.stunEndTime =
-                                now + ALL_ABILITIES.snowball.stunDuration;
+                            target.isSlowed = true;
+                            target.slowEndTime = now + ALL_ABILITIES.snowball.slowDuration;
                         }
 
                         // Apply damage/heal
