@@ -87,19 +87,19 @@ const MAP_BARRIERS = [
     [26, 25, 1, 2],    // Bottom enclosure right vertical
 ];
 const ALL_ABILITIES = {
-    whiteBall: { name: "White Ball", damage: 10, projSpeed: 5, duration: 0, cooldown: 800 },
-    fireBall: { name: "Fire Ball", damage: 25, projSpeed: 3, duration: 0, cooldown: 800 },
-    knockback: { name: "Knockback", damage: 0, force: 200, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 800 },
-    impulse:   { name: "Impulse",   damage: 0, force: 200, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 800 },
-    snowball: { name: "Snowball", damage: 10, projSpeed: 4, slowDuration: 1500, cooldown: 10000 },
-    landmine: { name: "Landmine", damage: 30, force: 0, ringRadius: 36, explosionDelay: 3000, projSpeed: 0, duration: 0, cooldown: 800 },
+    whiteBall: { name: "White Ball", damage: 10, projSpeed: 5, duration: 0, cooldown: 3000 },
+    fireBall: { name: "Fire Ball", damage: 25, projSpeed: 3, duration: 0, cooldown: 3000 },
+    knockback: { name: "Knockback", damage: 0, force: 200, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 3000 },
+    impulse:   { name: "Impulse",   damage: 0, force: 200, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 3000 },
+    snowball: { name: "Snowball", damage: 10, projSpeed: 4, slowDuration: 1500, cooldown: 3000 },
+    landmine: { name: "Landmine", damage: 30, force: 0, ringRadius: 36, explosionDelay: 3000, projSpeed: 0, duration: 0, cooldown: 3000 },
     dash: {
         name: "Dash",
         damage: 0,
         projSpeed: 0,
         duration: 200,
         dashDistance: 10,
-        cooldown: 800,
+        cooldown: 3000,
     },
     heal: {
         name: "Heal Zone",
@@ -107,10 +107,10 @@ const ALL_ABILITIES = {
         duration: HEALING_DURATION,
         radius: HEALING_RADIUS,
         projSpeed: 0,
-        cooldown: 800,
+        cooldown: 3000,
     },
-    reflection: { name: "Reflection", damage: 0, projSpeed: 0, duration: 3000, cooldown: 10000 },
-    target: { name: "Target", damage: 50, projSpeed: 1, duration: 0, cooldown: 800 },
+    reflection: { name: "Reflection", damage: 0, projSpeed: 0, duration: 3000, cooldown: 3000 },
+    target: { name: "Target", damage: 50, projSpeed: 1, duration: 0, cooldown: 3000 },
 };
 
 // --- GAME UTILITIES (SHARED) ---
@@ -467,36 +467,42 @@ class GameRoom {
                         p.stopped = true;
                     }
                 }
-                let knockbackHit = false;
-                playerList.forEach((target) => {
-                    if (target.id === p.ownerId) return;
-                    if (knockbackHit) return;
-                    const distSq = (p.x - target.x) ** 2 + (p.y - target.y) ** 2;
-                    if (distSq < p.ringRadius ** 2) {
-                        const angle = Math.atan2(target.y - p.y, target.x - p.x);
-                        if (p.type === "impulse") {
-                            // Stop ring here so it pins to this location and keeps pulling
-                            p.dx = 0;
-                            p.dy = 0;
-                            p.stopped = true;
-                            // Continuous gravity pull toward center every tick — ring stays alive
-                            const pullStrength = 14;
-                            target.x += Math.cos(angle) * -pullStrength;
-                            target.y += Math.sin(angle) * -pullStrength;
+                if (p.type === "impulse") {
+                    let impulseHit = false;
+                    playerList.forEach((target) => {
+                        if (target.id === p.ownerId || impulseHit) return;
+                        const distSq = (p.x - target.x) ** 2 + (p.y - target.y) ** 2;
+                        if (distSq < p.ringRadius ** 2) {
+                            const angle = Math.atan2(target.y - p.y, target.x - p.x);
+                            const dist = Math.sqrt(distSq);
+                            const pullAmount = Math.min(dist, 60); // pull toward center, capped so it doesn't overshoot
+                            target.x += Math.cos(angle) * -pullAmount;
+                            target.y += Math.sin(angle) * -pullAmount;
                             target.x = Math.max(PLAYER_SIZE, Math.min(CANVAS_WIDTH - PLAYER_SIZE, target.x));
                             target.y = Math.max(PLAYER_SIZE, Math.min(CANVAS_HEIGHT - PLAYER_SIZE, target.y));
-                        } else {
-                            // Knockback: one-shot push OUT, ring consumed
-                            target.x += Math.cos(angle) * p.force;
-                            target.y += Math.sin(angle) * p.force;
+                            target.lastDamageTime = now;
+                            impulseHit = true;
+                        }
+                    });
+                    if (impulseHit) projectilesToRemove.push(index);
+                } else {
+                    let knockbackHit = false;
+                    playerList.forEach((target) => {
+                        if (target.id === p.ownerId || knockbackHit) return;
+                        const distSq = (p.x - target.x) ** 2 + (p.y - target.y) ** 2;
+                        if (distSq < p.ringRadius ** 2) {
+                            const angle = Math.atan2(target.y - p.y, target.x - p.x);
+                            // Push player to just outside the ring edge
+                            target.x = p.x + Math.cos(angle) * (p.ringRadius + PLAYER_SIZE);
+                            target.y = p.y + Math.sin(angle) * (p.ringRadius + PLAYER_SIZE);
                             target.x = Math.max(PLAYER_SIZE, Math.min(CANVAS_WIDTH - PLAYER_SIZE, target.x));
                             target.y = Math.max(PLAYER_SIZE, Math.min(CANVAS_HEIGHT - PLAYER_SIZE, target.y));
                             target.lastDamageTime = now;
                             knockbackHit = true;
                         }
-                    }
-                });
-                if (knockbackHit) projectilesToRemove.push(index);
+                    });
+                    if (knockbackHit) projectilesToRemove.push(index);
+                }
                 return;
             }
 
