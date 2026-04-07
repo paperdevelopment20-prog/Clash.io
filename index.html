@@ -203,18 +203,17 @@
             display: none; /* HIDE THE NUMBER */
         }
         /* MODIFIED: Gap adjustment for ability list */
-        #ability-list { grid-template-columns: repeat(5, 1fr); gap: 6px; justify-items: center; }
+        #ability-list { grid-template-columns: repeat(5, 1fr); gap: 4px; justify-items: center; }
         /* MODIFIED: Ability Card Styling (Square & Rounded like hotbar) */
-        #ability-modal .p-4 { padding: 8px; text-align: center; }
+        #ability-modal .p-4 { padding: 6px; text-align: center; }
         .ability-card {
-            background-color: #6b7280; border: 2px solid #4b5563; border-radius: 12px;
+            background-color: #6b7280; border: 2px solid #4b5563; border-radius: 10px;
             cursor: pointer; transition: all 0.1s; display: flex;
             flex-direction: column; justify-content: center; align-items: center;
-            width: 80px; height: 80px; aspect-ratio: 1;
+            width: 96px; height: 96px; aspect-ratio: 1;
         }
         .ability-card:hover { filter: brightness(1.2); transform: scale(1.05); }
-        /* MODIFIED: Smaller icon size for the 60px height (1.75rem) */
-        .ability-card .text-3xl { font-size: 1.75rem; line-height: 1; }
+        .ability-card .text-3xl { font-size: 2.2rem; line-height: 1; }
         .ability-card .font-bold, .ability-card .text-sm { display: none; }
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -298,7 +297,7 @@
     </div>
 
     <div id="ability-modal" class="modal hidden">
-        <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-3xl border-4 border-black relative text-white">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-xl w-full max-w-lg border-4 border-black relative text-white">
             <h3 class="text-3xl font-bold mb-4 text-gray-400 text-center">Select Ability for Slot <span id="modal-slot-number">1</span></h3>
             <div id="ability-list" class="grid gap-4"></div>
             <button id="close-ability-modal" class="absolute top-0 right-0 p-2 bg-red-600 hover:bg-red-700 text-white font-black text-lg border-2 border-black w-10 h-10 flex items-center justify-center">X</button>
@@ -492,6 +491,7 @@ let gameState = {
     dyingPlayer: null,
     killCount: 0,
     lastAbilityUseTime: 0,
+    gameOverPending: false,
 };
 
 let socket = null;
@@ -740,7 +740,9 @@ function handleServerMessage(event) {
 
         case 'gameOver':
             const localPlayerName = gameState.isAuthenticated ? gameState.authenticatedUser : (nameInput.value.trim() || 'Challenger');
+            gameState.gameOverPending = true;
             setTimeout(() => {
+                gameState.gameOverPending = false;
                 if (message.winnerName === localPlayerName) {
                     gameState.status = 'win_screen';
                     statusDisplay.textContent = `YOU WON!`;
@@ -888,7 +890,8 @@ function updateGameStateFromBroadcast(message) {
     const localPlayerAfterUpdate = gameState.allPlayers.get(myPlayerId);
 
     // If while playing we no longer see our player, go to death screen
-    if (gameState.status === 'playing' && localPlayerBeforeUpdate && !localPlayerAfterUpdate) {
+    // But not if we're in the end delay (gameOverPending), let that timeout handle it
+    if (gameState.status === 'playing' && !gameState.gameOverPending && localPlayerBeforeUpdate && !localPlayerAfterUpdate) {
         gameState.status = 'death_screen';
     }
 
@@ -1042,8 +1045,6 @@ function updateMovementAndAim() {
     if (dx * dx + dy * dy < MOVEMENT_DEADZONE_SQ) { dx = 0; dy = 0; } 
     else { const mag = Math.sqrt(dx * dx + dy * dy); dx /= mag; dy /= mag; }
 
-    // NEW LOGIC: If the game is in the 'starting' phase, explicitly prevent movement
-    // by overriding dx/dy to 0, but allow the facingAngle to be calculated and sent.
     if (gameState.status === 'starting') {
         dx = 0;
         dy = 0;
