@@ -1,7 +1,7 @@
 const ws = require("ws");
 const express = require("express");
 const path = require("path");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 
 // Import the connectDB function
@@ -696,7 +696,7 @@ class GameRoom {
 
         // 4. Check for game over
         if (this.playerCount <= 1) {
-            this.endGame();
+            setTimeout(() => this.endGame(), 2000);
         }
     }
     // ====================================================================
