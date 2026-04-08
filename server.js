@@ -109,7 +109,7 @@ const ALL_ABILITIES = {
         projSpeed: 0,
         cooldown: 3000,
     },
-    reflection: { name: "Reflection", damage: 0, projSpeed: 0, duration: 3000, cooldown: 3000 },
+    reflection: { name: "Reflection", damage: 0, projSpeed: 0, duration: 3000, cooldown: 15000 },
     target: { name: "Target", damage: 50, projSpeed: 1, duration: 0, cooldown: 3000 },
 };
 
