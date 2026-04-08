@@ -60,7 +60,7 @@ const CANVAS_WIDTH = TILES_X * TILE_SIZE;
 const CANVAS_HEIGHT = TILES_Y * TILE_SIZE;
 const PLAYER_SIZE = 10;
 const PLAYER_SPEED = 2;
-const MAX_HEALTH = 100;
+const MAX_HEALTH = 200;
 const PROJECTILE_RADIUS = 5;
 const ABILITY_COOLDOWN = 800;
 const GAME_TICK = 1000 / 60;
@@ -88,11 +88,11 @@ const MAP_BARRIERS = [
 ];
 const ALL_ABILITIES = {
     whiteBall: { name: "White Ball", damage: 10, projSpeed: 5, duration: 0, cooldown: 3000 },
-    fireBall: { name: "Fire Ball", damage: 25, projSpeed: 3, duration: 0, cooldown: 3000 },
-    knockback: { name: "Knockback", damage: 0, force: 200, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 3000 },
-    impulse:   { name: "Impulse",   damage: 0, force: 200, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 3000 },
+    fireBall: { name: "Fire Ball", damage: 20, projSpeed: 3, duration: 0, cooldown: 3000 },
+    knockback: { name: "Knockback", damage: 0, force: 150, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 3000 },
+    impulse:   { name: "Impulse",   damage: 0, force: 150, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 3000 },
     snowball: { name: "Snowball", damage: 10, projSpeed: 4, slowDuration: 1500, cooldown: 3000 },
-    landmine: { name: "Landmine", damage: 30, force: 0, ringRadius: 36, explosionDelay: 3000, projSpeed: 0, duration: 0, cooldown: 3000 },
+    landmine: { name: "Landmine", damage: 25, force: 0, ringRadius: 36, explosionDelay: 3000, projSpeed: 0, duration: 0, cooldown: 3000 },
     dash: {
         name: "Dash",
         damage: 0,
@@ -103,7 +103,7 @@ const ALL_ABILITIES = {
     },
     heal: {
         name: "Heal Zone",
-        totalHeal: 15,
+        totalHeal: 25,
         duration: HEALING_DURATION,
         radius: HEALING_RADIUS,
         projSpeed: 0,
@@ -889,7 +889,7 @@ const wss = new ws.Server({ server: http });
 // Start HTTP server
 http.listen(PORT, "0.0.0.0", () => {
     console.log(`🎮 clashes.pro is running at http://localhost:${PORT}`);
-    console.log(`Share this link with friends: http://localhost:${PORT}`);
+    console.log(`Production server: https://clashes.pro`);
 });
 
 const gameRooms = {};
