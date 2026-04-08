@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Clash.pro</title>
+    <title>clashes.pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <meta content="Fun multiplayer fighting game with abilities and more" />
     <link rel="icon" type="image/png" href="/C.png" />
@@ -97,7 +97,7 @@
       #updates-btn {
         background-color: rgba(13, 66, 38, 0.95) !important;
         border: none !important;
-        border-radius: 14px;
+        border-radius: 10px;
         display: inline-flex !important;
         justify-content: center;
         align-items: center;
@@ -382,8 +382,8 @@
             id="leave-game-btn"
             title=""
             class="bg-red-600 hover:bg-red-700 text-white font-bold flex items-center justify-center"
-            style="width:44px;height:44px;font-size:1.1rem;border-radius:10px;border:2px solid #000;"
-          >[&#x2192;</button>
+            style="width:44px;height:44px;border-radius:10px;border:2px solid #000;"
+          ><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
           <span class="absolute top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="background:rgba(13,66,38,0.85);color:#fff;font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:0.05em;">LEAVE</span>
         </div>
         <div
@@ -462,7 +462,7 @@
       </div>
       <div class="menu-content">
         <div>
-          <h1 class="text-6xl font-black mb-12 tracking-tight">Clash.io</h1>
+          <h1 class="text-6xl font-black mb-12 tracking-tight">clashes.pro</h1>
           <div class="w-full mb-8">
             <label for="name-input" class="menu-label">PLAYER NAME</label>
             <input
@@ -1134,19 +1134,27 @@
           updateHotbarVisuals(),
           gameState.allPlayers.forEach((t) => {
             const e = t.isDashing ? 0.35 : 0.2;
-            (t.isDashing &&
-              dashTrail.push({
-                x: t.renderX,
-                y: t.renderY,
-                color: t.color,
-                age: 0,
-              }),
-              (t.renderX += (t.x - t.renderX) * e),
+            if (t.isDashing) {
+              // Spawn trail at the back edge of the player
+              const backAngle = (t.facingAngle || 0) + Math.PI;
+              const backX = t.renderX + Math.cos(backAngle) * 10;
+              const backY = t.renderY + Math.sin(backAngle) * 10;
+              for (let i = 0; i < 4; i++) {
+                dashTrail.push({
+                  x: backX + (Math.random() - 0.5) * 8,
+                  y: backY + (Math.random() - 0.5) * 8,
+                  age: 0,
+                });
+              }
+            }
+            if (!t.isDashing) t.dashTrailActive = false;
+            t.wasLastFrameDashing = t.isDashing;
+            ((t.renderX += (t.x - t.renderX) * e),
               (t.renderY += (t.y - t.renderY) * e));
           }));
         for (let t = dashTrail.length - 1; t >= 0; t--)
           (dashTrail[t].age++,
-            dashTrail[t].age > 120 && dashTrail.splice(t, 1));
+            dashTrail[t].age > 80 && dashTrail.splice(t, 1));
         for (let t = activeRings.length - 1; t >= 0; t--)
           (activeRings[t].age++,
             (activeRings[t].radius =
@@ -1265,6 +1273,19 @@
           n = ALL_ABILITIES[a],
           l = n?.cooldown || 800;
         if (Date.now() < (e.lastAbilityTime[t] || 0) + l) return;
+        // Spawn initial burst immediately when dash is pressed
+        if (a === 'dash') {
+          const spawnX = e.renderX !== undefined ? e.renderX : e.x;
+          const spawnY = e.renderY !== undefined ? e.renderY : e.y;
+          const backAngle = (e.facingAngle || 0) + Math.PI;
+          for (let i = 0; i < 8; i++) {
+            dashTrail.push({
+              x: spawnX + Math.cos(backAngle) * 10 + (Math.random() - 0.5) * 8,
+              y: spawnY + Math.sin(backAngle) * 10 + (Math.random() - 0.5) * 8,
+              age: 0,
+            });
+          }
+        }
         const o = canvas.width / viewScale;
         let i = e.y - viewHeightInGameUnits / 2,
           s = e.x - o / 2;
@@ -1291,52 +1312,31 @@
           }
       }
       function drawBarriers(camX, camY) {
-        // Draw all barriers normally
-        MAP_BARRIERS.forEach((t) => {
-          const e = t[0],
-            a = t[1],
-            n = t[0] + t[2],
-            l = t[1] + t[3];
-          for (let t = a; t < l; t++)
-            for (let a = e; a < n; a++) {
-              const e = 20 * a,
-                n = 20 * t;
-              ctx.fillStyle = "#0d4226";
-              ctx.fillRect(e, n, 20, 20);
-              ctx.strokeStyle = "rgba(0, 0, 0, 0.15)";
-              ctx.lineWidth = 1;
-              ctx.strokeRect(e, n, 20, 20);
-            }
-        });
-
-        // Draw barrier tiles outside the map bounds (visible when camera scrolls past edge)
-        const viewW = canvas.width / viewScale;
-        const viewH = canvas.height / viewScale;
-
-        // How many extra tiles to draw outside each edge
-        const extraTiles = 20;
-
-        const drawExtraTiles = (startCol, startRow, cols, rows) => {
-          for (let r = startRow; r < startRow + rows; r++) {
-            for (let c = startCol; c < startCol + cols; c++) {
-              const tx = c * TILE_SIZE;
-              const ty = r * TILE_SIZE;
-              ctx.fillStyle = "#0d4226";
-              ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-              ctx.strokeStyle = "rgba(0,0,0,0.15)";
-              ctx.lineWidth = 1;
-              ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
-            }
-          }
+        const drawTile = (tx, ty) => {
+          ctx.fillStyle = "#0d4226";
+          ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+          ctx.strokeStyle = "rgba(0,0,0,0.15)";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
         };
 
-        // Above the map
+        MAP_BARRIERS.forEach((t) => {
+          const e = t[0], a = t[1], n = t[0] + t[2], l = t[1] + t[3];
+          for (let r = a; r < l; r++)
+            for (let c = e; c < n; c++)
+              drawTile(c * TILE_SIZE, r * TILE_SIZE);
+        });
+
+        const extraTiles = 20;
+        const drawExtraTiles = (startCol, startRow, cols, rows) => {
+          for (let r = startRow; r < startRow + rows; r++)
+            for (let c = startCol; c < startCol + cols; c++)
+              drawTile(c * TILE_SIZE, r * TILE_SIZE);
+        };
+
         drawExtraTiles(-extraTiles, -extraTiles, TILES_X + extraTiles * 2, extraTiles);
-        // Below the map
         drawExtraTiles(-extraTiles, TILES_Y, TILES_X + extraTiles * 2, extraTiles);
-        // Left of the map
         drawExtraTiles(-extraTiles, 0, extraTiles, TILES_Y);
-        // Right of the map
         drawExtraTiles(TILES_X, 0, extraTiles, TILES_Y);
       }
       function drawPlayer(t, e) {
@@ -1398,7 +1398,7 @@
           (ctx.lineWidth = 2),
           ctx.strokeText(t.name, a, n + l + 15),
           ctx.fillText(t.name, a, n + l + 15));
-        const o = Date.now() - gameState.lastAbilityUseTime < 200,
+        const o = (t.id === myPlayerId) && (Date.now() - gameState.lastAbilityUseTime < 200),
           i = t.isDashing || o ? 25 : 13;
         let s = t.facingAngle || 0;
         const c = Math.PI / 3.5;
@@ -1437,31 +1437,18 @@
       }
       function drawDashTrailAndRings() {
         for (const t of dashTrail) {
-          const e = 1 - t.age / 120,
-            a = 3;
+          const e = 1 - t.age / 80,
+            a = 4;
           for (let n = 0; n < a; n++) {
-            const a = 10 * (Math.random() - 0.5) * 1.2,
-              n = 10 * (Math.random() - 0.5) * 1.2,
-              l = 10 * (0.8 + 0.6 * Math.random()) * e;
-            if (l < 0.5) continue;
-            const o = e > 0.5 ? "#00eeff" : "#aaffff",
-              i = e > 0.5 ? "#00ccdd" : "#ffffff",
-              s = ctx.createRadialGradient(
-                t.x + a,
-                t.y + n,
-                0,
-                t.x + a,
-                t.y + n,
-                l,
-              );
-            (s.addColorStop(0, o),
-              s.addColorStop(0.6, i),
-              s.addColorStop(1, "rgba(200,255,255,0)"),
-              (ctx.globalAlpha = 0.7 * e),
+            const a = (Math.random() - 0.5) * 5,
+              n = (Math.random() - 0.5) * 5,
+              l = (2 + Math.random() * 2) * e;
+            if (l < 0.3) continue;
+            (ctx.globalAlpha = 0.9 * e),
               ctx.beginPath(),
               ctx.arc(t.x + a, t.y + n, l, 0, 2 * Math.PI),
-              (ctx.fillStyle = s),
-              ctx.fill());
+              (ctx.fillStyle = "#00ffee"),
+              ctx.fill();
           }
           ctx.globalAlpha = 1;
         }
