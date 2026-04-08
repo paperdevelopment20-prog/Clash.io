@@ -97,16 +97,16 @@
       #updates-btn {
         background-color: rgba(13, 66, 38, 0.95) !important;
         border: none !important;
-        border-radius: 10px;
+        border-radius: 6px;
         display: inline-flex !important;
         justify-content: center;
         align-items: center;
-        width: 52px;
-        height: 52px;
+        width: 36px;
+        height: 36px;
         padding: 0 !important;
         transition: all 0.2s ease;
         cursor: pointer;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
         z-index: 60;
       }
       #updates-btn:hover {
@@ -542,27 +542,13 @@
       </div>
     </div>
     <div id="updates-modal" class="modal hidden">
-      <div
-        class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg border-4 border-black"
-      >
-        <h3 class="text-3xl font-bold mb-6 text-black text-center">
-          Game Updates
-        </h3>
-        <div class="overflow-y-auto max-h-60 text-left space-y-4 text-gray-700">
-          <div>
-            <p><strong>March 20, 2026</strong> &bull; Initial Release</p>
-            <p>
-              <strong>March 21, 2026</strong> &bull; Fixed Fireball and Snowball
-              Visuals
-            </p>
-          </div>
+      <div style="width:420px;background:#fff;border:3px solid #000;border-radius:8px;padding:20px;">
+        <h3 style="font-size:1.4rem;font-weight:800;text-align:center;margin-bottom:16px;">Game Updates</h3>
+        <div style="overflow-y:auto;max-height:200px;font-size:1rem;color:#374151;line-height:1.8;">
+          <p><strong>Mar 20</strong> &bull; Initial Release</p>
+          <p><strong>Mar 21</strong> &bull; Fixed Fireball and Snowball Visuals</p>
         </div>
-        <button
-          id="close-updates-modal"
-          class="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow border-2 border-black"
-        >
-          Close
-        </button>
+        <button id="close-updates-modal" style="margin-top:16px;width:100%;background:#16a34a;color:#fff;font-weight:700;font-size:1rem;padding:10px;border:2px solid #000;border-radius:5px;cursor:pointer;">Close</button>
       </div>
     </div>
     <div id="leaderboard-modal" class="modal hidden">
@@ -711,7 +697,7 @@
         FULL_MAP_HEIGHT = 600,
         GAME_WORLD_WIDTH = 900,
         PLAYER_SIZE = 10,
-        MAX_HEALTH = 100,
+        MAX_HEALTH = 200,
         PROJECTILE_RADIUS = 5,
         ABILITY_COOLDOWN = 800,
         MOVEMENT_DEADZONE_SQ = 100,
@@ -741,7 +727,7 @@
             name: "Fire Ball",
             icon: "🔥",
             svgIcon: "fireball.svg",
-            description: "Heavy direct shot (25 Damage).",
+            description: "Heavy direct shot (20 Damage).",
             color: "#7c2d12",
             cooldown: 3e3,
           },
@@ -773,7 +759,7 @@
             name: "Landmine",
             icon: "💣",
             svgIcon: "landmine.svg",
-            description: "Places a proximity mine.",
+            description: "Places a proximity mine (25 Damage).",
             color: "#292524",
             cooldown: 3e3,
           },
@@ -789,7 +775,7 @@
             name: "Heal Zone",
             icon: "🟩",
             svgIcon: "heal.svg",
-            description: "Creates a healing zone.",
+            description: "Creates a healing zone (+25 HP).",
             color: "#14532d",
             cooldown: 3e3,
           },
@@ -1134,15 +1120,18 @@
           updateHotbarVisuals(),
           gameState.allPlayers.forEach((t) => {
             const e = t.isDashing ? 0.35 : 0.2;
-            if (t.isDashing) {
-              // Spawn trail at the back edge of the player
+            if (t.isDashing && !t.dashTrailActive) {
+              // Spawn one burst of trail particles at the dash start position only
+              t.dashTrailActive = true;
+              t.dashOriginX = t.renderX;
+              t.dashOriginY = t.renderY;
               const backAngle = (t.facingAngle || 0) + Math.PI;
-              const backX = t.renderX + Math.cos(backAngle) * 10;
-              const backY = t.renderY + Math.sin(backAngle) * 10;
-              for (let i = 0; i < 4; i++) {
+              const backX = t.dashOriginX + Math.cos(backAngle) * 10;
+              const backY = t.dashOriginY + Math.sin(backAngle) * 10;
+              for (let i = 0; i < 20; i++) {
                 dashTrail.push({
-                  x: backX + (Math.random() - 0.5) * 8,
-                  y: backY + (Math.random() - 0.5) * 8,
+                  x: backX + (Math.random() - 0.5) * 20,
+                  y: backY + (Math.random() - 0.5) * 20,
                   age: 0,
                 });
               }
@@ -1433,7 +1422,10 @@
         ((ctx.fillStyle = "#ef4444"),
           ctx.fillRect(r, d, 25, 4),
           (ctx.fillStyle = "#10b981"),
-          ctx.fillRect(r, d, (t.health / 100) * 25, 4));
+          ctx.fillRect(r, d, (t.health / MAX_HEALTH) * 25, 4),
+          (ctx.strokeStyle = "rgba(0,0,0,0.6)"),
+          (ctx.lineWidth = 0.75),
+          ctx.strokeRect(r, d, 25, 4));
       }
       function drawDashTrailAndRings() {
         for (const t of dashTrail) {
@@ -1667,35 +1659,87 @@
         });
       }
       function drawHealingFields() {
-        const t = 0.002 * performance.now();
+        const now = performance.now();
         gameState.healingFields.forEach((e) => {
-          const a = 0.6 + 0.4 * Math.sin(t);
-          (ctx.beginPath(),
-            ctx.arc(e.x, e.y, 1.4 * e.radius, 0, 2 * Math.PI),
-            (ctx.fillStyle = `rgba(74, 222, 128, ${0.3 * a})`),
-            ctx.fill(),
-            ctx.beginPath(),
-            ctx.arc(e.x, e.y, e.radius, 0, 2 * Math.PI));
-          const n = ctx.createRadialGradient(
-            e.x - 0.3 * e.radius,
-            e.y - 0.3 * e.radius,
-            0,
-            e.x,
-            e.y,
-            e.radius,
-          );
-          (n.addColorStop(0, "rgba(134, 239, 172, 0.6)"),
-            n.addColorStop(1, "rgba(74, 222, 128, 0.4)"),
-            (ctx.fillStyle = n),
-            ctx.fill(),
-            (ctx.strokeStyle = `rgba(134, 239, 172, ${0.8 * a})`),
-            (ctx.lineWidth = 3),
-            ctx.stroke(),
-            (ctx.font = `bold ${16 + 4 * a}px sans-serif`),
-            (ctx.fillStyle = "rgba(255, 255, 255, 0.9)"),
-            (ctx.textAlign = "center"),
-            (ctx.textBaseline = "middle"),
-            ctx.fillText("💚", e.x, e.y));
+          const t = now * 0.001;
+          const r = e.radius;
+
+          ctx.save();
+
+          // Outer soft glow ring
+          const glow = ctx.createRadialGradient(e.x, e.y, r * 0.4, e.x, e.y, r * 1.5);
+          glow.addColorStop(0, "rgba(52, 211, 153, 0.18)");
+          glow.addColorStop(1, "rgba(52, 211, 153, 0)");
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, r * 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = glow;
+          ctx.fill();
+
+          // Rotating dashed border
+          ctx.save();
+          ctx.translate(e.x, e.y);
+          ctx.rotate(t * 0.8);
+          ctx.beginPath();
+          ctx.arc(0, 0, r, 0, Math.PI * 2);
+          ctx.setLineDash([6, 8]);
+          ctx.strokeStyle = `rgba(110, 231, 183, ${0.5 + 0.3 * Math.sin(t * 2)})`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+
+          // Counter-rotating inner ring
+          ctx.save();
+          ctx.translate(e.x, e.y);
+          ctx.rotate(-t * 1.2);
+          ctx.beginPath();
+          ctx.arc(0, 0, r * 0.65, 0, Math.PI * 2);
+          ctx.setLineDash([4, 10]);
+          ctx.strokeStyle = `rgba(167, 243, 208, ${0.4 + 0.3 * Math.sin(t * 3)})`;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+
+          // Orbiting cross/plus particles
+          const numOrbs = 5;
+          for (let i = 0; i < numOrbs; i++) {
+            const angle = (i / numOrbs) * Math.PI * 2 + t * 1.5;
+            const ox = e.x + Math.cos(angle) * r * 0.78;
+            const oy = e.y + Math.sin(angle) * r * 0.78;
+            const alpha = 0.6 + 0.4 * Math.sin(t * 3 + i);
+            ctx.fillStyle = `rgba(167, 243, 208, ${alpha})`;
+            ctx.font = `bold 10px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("+", ox, oy);
+          }
+
+          // Rising + particles (pseudo-random using sin)
+          for (let i = 0; i < 4; i++) {
+            const seed = i * 137.5;
+            const cycle = ((t * 0.6 + seed) % 3) / 3; // 0..1 loop
+            const px = e.x + (Math.sin(seed) * r * 0.7);
+            const py = e.y + r * 0.5 - cycle * r * 1.2;
+            const alpha = cycle < 0.7 ? cycle / 0.7 : (1 - cycle) / 0.3;
+            ctx.fillStyle = `rgba(52, 211, 153, ${alpha * 0.85})`;
+            ctx.font = `bold ${8 + 4 * (1 - cycle)}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("+", px, py);
+          }
+
+          // Pulsing filled core
+          const pulse = 0.5 + 0.5 * Math.sin(t * 3);
+          const core = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, r * 0.45);
+          core.addColorStop(0, `rgba(167, 243, 208, ${0.25 + 0.15 * pulse})`);
+          core.addColorStop(1, "rgba(52, 211, 153, 0)");
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, r * 0.45, 0, Math.PI * 2);
+          ctx.fillStyle = core;
+          ctx.fill();
+
+          ctx.restore();
         });
       }
       function draw() {
