@@ -118,6 +118,54 @@
       #updates-btn:active {
         transform: translateY(1px);
       }
+      #help-btn {
+        background-color: rgba(13, 66, 38, 0.95) !important;
+        border: none !important;
+        border-radius: 6px;
+        display: inline-flex !important;
+        justify-content: center;
+        align-items: center;
+        width: 36px;
+        height: 36px;
+        padding: 0 !important;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+        z-index: 60;
+      }
+      #help-btn:hover {
+        background-color: rgba(20, 100, 55, 0.95) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        color: #fff !important;
+      }
+      #help-btn:active {
+        transform: translateY(1px);
+      }
+      #help-btn {
+        background-color: rgba(13, 66, 38, 0.95) !important;
+        border: none !important;
+        border-radius: 6px;
+        display: inline-flex !important;
+        justify-content: center;
+        align-items: center;
+        width: 36px;
+        height: 36px;
+        padding: 0 !important;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+        z-index: 60;
+      }
+      #help-btn:hover {
+        background-color: rgba(20, 100, 55, 0.95) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        color: #fff !important;
+      }
+      #help-btn:active {
+        transform: translateY(1px);
+      }
       .menu-top-btn:not(#updates-btn) {
         background-color: #fff;
         border: 1px solid #000;
@@ -425,6 +473,15 @@
           </button>
           <span class="absolute top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="background:rgba(13,66,38,0.85);color:#fff;font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:0.05em;">UPDATES</span>
         </div>
+        <div class="relative group flex flex-col items-center">
+          <button id="help-btn" class="menu-top-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 16v-4M12 8h.01"/>
+            </svg>
+          </button>
+          <span class="absolute top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="background:rgba(13,66,38,0.85);color:#fff;font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:0.05em;">HELP</span>
+        </div>
       </div>
       <div class="absolute top-6 right-6 z-50 flex gap-2 items-center">
         <button
@@ -551,6 +608,38 @@
         <button id="close-updates-modal" style="margin-top:16px;width:100%;background:#16a34a;color:#fff;font-weight:700;font-size:1rem;padding:10px;border:2px solid #000;border-radius:5px;cursor:pointer;">Close</button>
       </div>
     </div>
+    <div id="help-modal" class="modal hidden">
+      <div style="width:500px;background:#fff;border:3px solid #000;border-radius:8px;padding:20px;max-height:80vh;overflow-y:auto;">
+        <h3 style="font-size:1.4rem;font-weight:800;text-align:center;margin-bottom:16px;">How to Play</h3>
+        <div style="font-size:0.95rem;color:#374151;line-height:1.8;">
+          <h4 style="font-weight:700;margin-top:12px;margin-bottom:8px;">🕹️ Section 1: How to Move and Aim</h4>
+          <p>In this game, your character is the circle in the middle of the screen. You do not need to press any buttons to walk; your character simply follows your mouse cursor.</p>
+          <p><strong>To Move:</strong> Move your mouse toward where you want to go, and your character will walk in that direction.</p>
+          <p><strong>To Stop:</strong> Keep your mouse cursor directly on top of your character.</p>
+          <p><strong>To Aim:</strong> Your character has two smaller circles (hands). These hands always point toward your mouse cursor. To aim a spell at an opponent, simply point your mouse at them.</p>
+          
+          <h4 style="font-weight:700;margin-top:12px;margin-bottom:8px;">⚔️ Section 2: Your Five Abilities</h4>
+          <p>You have five different powers shown at the bottom of your screen. To use them, press the number keys (1, 2, 3, 4, or 5) on your keyboard. After using a power, its icon will turn dark for a few seconds while it "recharges" before you can use it again.</p>
+          
+          <p><strong>The Attack Abilities</strong></p>
+          <p><strong>Key 1 - Basic Blast:</strong> This fires a small, fast white energy ball. Since it recharges the quickest, you can fire this constantly to keep your opponent busy.</p>
+          <p><strong>Key 2 - Fireball:</strong> This is your strongest attack. It is a large, orange ball of fire that deals a lot of damage. It moves slower than the basic blast, so try to use it when your opponent is close to you.</p>
+          
+          <p><strong>The Tactical & Survival Abilities</strong></p>
+          <p><strong>Key 3 - Snowball:</strong> This is a strategic tool. When it hits an opponent, it coats them in ice and slows them down. This makes them a much easier target because they cannot run away from your other attacks.</p>
+          <p><strong>Key 4 - Dash:</strong> This is your "quick move" button. It makes your character leap forward instantly. Use this to jump out of the way if someone fires a fireball at you.</p>
+          <p><strong>Key 5 - Heal Zone:</strong> This is how you fix your health. It places a green circle on the ground. As long as you stand inside the circle, your green health bar will fill back up.</p>
+          
+          <h4 style="font-weight:700;margin-top:12px;margin-bottom:8px;">🏆 Section 3: A Simple Strategy for Beginners</h4>
+          <p>The secret to winning your first match is combining your powers instead of just pressing one button. Follow this three-step plan:</p>
+          <p><strong>The Setup:</strong> Point your mouse at the enemy and press 3 (Snowball). This slows them down so they can't dodge.</p>
+          <p><strong>The Strike:</strong> While they are moving slowly, immediately press 2 (Fireball) and 1 (Basic Blast).</p>
+          <p><strong>The Recovery:</strong> If you get hit, press 4 (Dash) to jump away to a safe corner, then press 5 (Heal Zone) to get your health back.</p>
+          <p><strong>Remember:</strong> Always keep your mouse moving! A character that stands still is very easy to hit. Good luck in the arena!</p>
+        </div>
+        <button id="close-help-modal" style="margin-top:16px;width:100%;background:#16a34a;color:#fff;font-weight:700;font-size:1rem;padding:10px;border:2px solid #000;border-radius:5px;cursor:pointer;">Close</button>
+      </div>
+    </div>
     <div id="leaderboard-modal" class="modal hidden">
       <div
         class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg border-4 border-black"
@@ -659,6 +748,9 @@
         ),
         updatesModal = document.getElementById("updates-modal"),
         updatesBtn = document.getElementById("updates-btn"),
+        helpModal = document.getElementById("help-modal"),
+        helpBtn = document.getElementById("help-btn"),
+        closeHelpModal = document.getElementById("close-help-modal"),
         leaderboardModal = document.getElementById("leaderboard-modal"),
         leaderboardContent = document.getElementById("leaderboard-content"),
         closeLeaderboardModal = document.getElementById(
@@ -2003,6 +2095,12 @@
         ),
         closeUpdatesModal.addEventListener("click", () =>
           updatesModal.classList.add("hidden"),
+        ),
+        helpBtn.addEventListener("click", () =>
+          helpModal.classList.remove("hidden"),
+        ),
+        closeHelpModal.addEventListener("click", () =>
+          helpModal.classList.add("hidden"),
         ),
         closeLeaderboardModal &&
           closeLeaderboardModal.addEventListener("click", () =>
