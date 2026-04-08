@@ -97,7 +97,7 @@ const ALL_ABILITIES = {
         name: "Dash",
         damage: 0,
         projSpeed: 0,
-        duration: 200,
+        duration: 1000,
         dashDistance: 10,
         cooldown: 3000,
     },
@@ -503,9 +503,11 @@ class GameRoom {
                         if (distSq < p.ringRadius ** 2) {
                             const angle = Math.atan2(target.y - p.y, target.x - p.x);
                             const dist = Math.sqrt(distSq);
-                            const pullAmount = Math.min(dist, 60); // pull toward center, capped so it doesn't overshoot
-                            target.x += Math.cos(angle) * -pullAmount;
-                            target.y += Math.sin(angle) * -pullAmount;
+                            const pullAmount = Math.min(dist, 60);
+                            const newX = target.x + Math.cos(angle) * -pullAmount;
+                            const newY = target.y + Math.sin(angle) * -pullAmount;
+                            if (!checkCollision(newX, target.y, PLAYER_SIZE)) target.x = newX;
+                            if (!checkCollision(target.x, newY, PLAYER_SIZE)) target.y = newY;
                             target.x = Math.max(PLAYER_SIZE, Math.min(CANVAS_WIDTH - PLAYER_SIZE, target.x));
                             target.y = Math.max(PLAYER_SIZE, Math.min(CANVAS_HEIGHT - PLAYER_SIZE, target.y));
                             target.lastDamageTime = now;
@@ -520,11 +522,12 @@ class GameRoom {
                         const distSq = (p.x - target.x) ** 2 + (p.y - target.y) ** 2;
                         if (distSq < p.ringRadius ** 2) {
                             const angle = Math.atan2(target.y - p.y, target.x - p.x);
-                            // Push player to just outside the ring edge
-                            target.x = p.x + Math.cos(angle) * (p.ringRadius + PLAYER_SIZE);
-                            target.y = p.y + Math.sin(angle) * (p.ringRadius + PLAYER_SIZE);
-                            target.x = Math.max(PLAYER_SIZE, Math.min(CANVAS_WIDTH - PLAYER_SIZE, target.x));
-                            target.y = Math.max(PLAYER_SIZE, Math.min(CANVAS_HEIGHT - PLAYER_SIZE, target.y));
+                            const newX = p.x + Math.cos(angle) * (p.ringRadius + PLAYER_SIZE);
+                            const newY = p.y + Math.sin(angle) * (p.ringRadius + PLAYER_SIZE);
+                            if (!checkCollision(newX, target.y, PLAYER_SIZE)) target.x = newX;
+                            else target.x = Math.max(PLAYER_SIZE, Math.min(CANVAS_WIDTH - PLAYER_SIZE, target.x));
+                            if (!checkCollision(target.x, newY, PLAYER_SIZE)) target.y = newY;
+                            else target.y = Math.max(PLAYER_SIZE, Math.min(CANVAS_HEIGHT - PLAYER_SIZE, target.y));
                             target.lastDamageTime = now;
                             knockbackHit = true;
                         }
@@ -617,12 +620,38 @@ class GameRoom {
         this.mines.forEach((m, index) => {
             // --- RING MINES (landmine redesign) ---
             if (m.isRing) {
+                // Move mine until it hits a wall
+                if (m.isMoving) {
+                    m.x += m.dx;
+                    m.y += m.dy;
+                    if (checkCollision(m.x, m.y, PROJECTILE_RADIUS)) {
+                        m.x -= m.dx;
+                        m.y -= m.dy;
+                        m.dx = 0;
+                        m.dy = 0;
+                        m.isMoving = false;
+                    }
+                }
+
+                // Check if any player (including owner) enters the ring to arm it
+                if (!m.armed) {
+                    const triggered = playerList.some(target => {
+                        const distSq = (m.x - target.x) ** 2 + (m.y - target.y) ** 2;
+                        return distSq < m.ringRadius ** 2;
+                    });
+                    if (triggered) {
+                        m.armed = true;
+                        m.placedTime = now;
+                    }
+                    return; // don't explode until armed
+                }
+
                 const age = now - m.placedTime;
                 if (age >= m.explosionDelay) {
-                    // Explode: deal damage to all players within explosion radius
+                    // Explode
                     playerList.forEach((target) => {
                         const distSq = (m.x - target.x) ** 2 + (m.y - target.y) ** 2;
-                        if (distSq < m.ringRadius ** 2) { // ringRadius is already in pixels
+                        if (distSq < m.ringRadius ** 2) {
                             if (m.damage > 0) {
                                 target.health = Math.max(0, target.health - m.damage);
                                 target.lastDamageTime = now;
@@ -632,7 +661,7 @@ class GameRoom {
                     });
                     minesToRemove.push(index);
                 }
-                return; // no contact trigger for ring mines
+                return;
             }
 
             // Normal mine (legacy)
@@ -859,7 +888,7 @@ const wss = new ws.Server({ server: http });
 
 // Start HTTP server
 http.listen(PORT, "0.0.0.0", () => {
-    console.log(`🎮 Clash.io is running at http://localhost:${PORT}`);
+    console.log(`🎮 clashes.pro is running at http://localhost:${PORT}`);
     console.log(`Share this link with friends: http://localhost:${PORT}`);
 });
 
@@ -1296,11 +1325,15 @@ wss.on("connection", (ws) => {
                         ownerId: playerId,
                         x: player.x,
                         y: player.y,
+                        dx: Math.cos(aimAngle) * 3,
+                        dy: Math.sin(aimAngle) * 3,
                         isRing: true,
+                        isMoving: true,
+                        armed: false,
                         damage: ability.damage,
                         ringRadius: ability.ringRadius,
                         force: ability.force,
-                        placedTime: Date.now(),
+                        placedTime: null, // timer starts when player enters
                         explosionDelay: ability.explosionDelay,
                     });
                 } else if (abilityKey === "dash") {
