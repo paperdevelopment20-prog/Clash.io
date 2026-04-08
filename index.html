@@ -502,6 +502,15 @@ let viewHeightInGameUnits = 480;
 const ZOOM_FACTOR = 1.8;
 let mouseX = 0;
 
+// Screen shake
+let screenShake = { intensity: 0, duration: 0, startTime: 0 };
+
+// Interpolation: store previous and target positions per player
+const playerRenderPos = new Map(); // playerId -> {x, y, prevX, prevY, lastUpdate}
+
+// Countdown animation
+let countdownAnim = { value: '', scale: 1, startTime: 0 };
+
 // Particle trail system: Map of projectile id -> array of {x, y, age, maxAge, type}
 const projectileTrails = new Map();
 const fireballParticles = new Map(); // Track fireball particles separately
@@ -685,13 +694,14 @@ function handleServerMessage(event) {
 
         case 'playerEliminated':
             gameState.eliminatedBy = message.killerUsername;
+            gameState.gameOverPending = true;
             const dyingP = gameState.allPlayers.get(myPlayerId);
             if (dyingP) gameState.dyingPlayer = { x: dyingP.x, y: dyingP.y, color: dyingP.color, deathTime: Date.now() };
+            // Show death screen after the 2s end delay
             setTimeout(() => {
-                gameState.dyingPlayer = null;
+                gameState.gameOverPending = false;
                 gameState.status = 'death_screen';
-                statusDisplay.textContent = `GAME OVER!`;
-                draw();
+                statusDisplay.textContent = 'GAME OVER!';
             }, 2000);
             break;
 
@@ -740,20 +750,17 @@ function handleServerMessage(event) {
 
         case 'gameOver':
             const localPlayerName = gameState.isAuthenticated ? gameState.authenticatedUser : (nameInput.value.trim() || 'Challenger');
-            gameState.gameOverPending = true;
-            setTimeout(() => {
-                gameState.gameOverPending = false;
-                if (message.winnerName === localPlayerName) {
-                    gameState.status = 'win_screen';
-                    statusDisplay.textContent = `YOU WON!`;
-                    draw();
-                } else {
-                    gameState.status = 'death_screen';
-                    statusDisplay.textContent = `GAME OVER! ${message.winnerName} Wins!`;
-                    gameState.eliminatedBy = gameState.eliminatedBy || message.winnerName;
-                    draw();
-                }
-            }, 2000);
+            gameState.gameOverPending = false;
+            if (message.winnerName === localPlayerName) {
+                gameState.status = 'win_screen';
+                statusDisplay.textContent = `YOU WON!`;
+                draw();
+            } else {
+                gameState.status = 'death_screen';
+                statusDisplay.textContent = `GAME OVER! ${message.winnerName} Wins!`;
+                gameState.eliminatedBy = gameState.eliminatedBy || message.winnerName;
+                draw();
+            }
             break;
 
         case 'returnToMenu':
@@ -882,6 +889,13 @@ function updateGameStateFromBroadcast(message) {
             dy: isLocal ? (prev?.dy || 0) : (pData.dy || 0),
             wins: pData.wins || 0,
         };
+        // Screen shake when local player takes damage — removed
+        // Hit flash — removed
+        if (prev && pData.health < prev.health) {
+            playerObj.hitFlashTime = 0;
+        } else {
+            playerObj.hitFlashTime = 0;
+        }
         gameState.allPlayers.set(pData.id, playerObj);
     });
 
@@ -1173,8 +1187,14 @@ function drawBarriers() {
 }
 
 function drawPlayer(player, isLocal) {
-    const x = player.renderX !== undefined ? player.renderX : player.x;
-    const y = player.renderY !== undefined ? player.renderY : player.y;
+    // Smooth interpolation toward server position
+    const lerpFactor = 0.25;
+    if (player.renderX === undefined) { player.renderX = player.x; player.renderY = player.y; }
+    player.renderX += (player.x - player.renderX) * lerpFactor;
+    player.renderY += (player.y - player.renderY) * lerpFactor;
+
+    const x = player.renderX;
+    const y = player.renderY;
     const size = PLAYER_SIZE;
 
     if (player.isProtected) {
@@ -1182,7 +1202,6 @@ function drawPlayer(player, isLocal) {
         ctx.beginPath(); ctx.arc(x, y, size + 5, 0, Math.PI * 2); ctx.fillStyle = shieldColor; ctx.fill();
     }
     if (player.isStunned) {
-        // Blue icy aura
         ctx.beginPath();
         ctx.arc(x, y, size + 4, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(147, 210, 255, 0.35)';
@@ -1190,7 +1209,6 @@ function drawPlayer(player, isLocal) {
         ctx.strokeStyle = 'rgba(100, 180, 255, 0.8)';
         ctx.lineWidth = 2;
         ctx.stroke();
-        // Rotating snowflake stars
         const numStars = 5;
         const orbit = size + 12;
         const spin = (Date.now() / 300);
@@ -1202,7 +1220,6 @@ function drawPlayer(player, isLocal) {
             ctx.arc(sx, sy, 3, 0, Math.PI * 2);
             ctx.fillStyle = '#a0d8ff';
             ctx.fill();
-            // Small cross for snowflake feel
             ctx.strokeStyle = 'white';
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -1212,10 +1229,11 @@ function drawPlayer(player, isLocal) {
         }
     }
 
-    ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fillStyle = player.color; ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fillStyle = player.color;
+    ctx.fill();
     ctx.strokeStyle = 'black'; ctx.lineWidth = 1.5; ctx.stroke();
 
-    // Draw username below player
     ctx.font = 'bold 10px Arial';
     ctx.textAlign = 'center';
     ctx.fillStyle = 'white';
@@ -1225,7 +1243,6 @@ function drawPlayer(player, isLocal) {
     ctx.fillText(player.name, x, y + size + 15);
 
     const fistSize = size * 0.4;
-    // Extend arms when dashing OR when an ability was recently used (within 200ms)
     const recentlyUsedAbility = Date.now() - gameState.lastAbilityUseTime < 200;
     const armLength = (player.isDashing || recentlyUsedAbility) ? size * 2.5 : size * 1.3;
     let angle = player.facingAngle || 0;
@@ -1559,9 +1576,20 @@ function draw() {
     let camY = 0;
     let camX = 0;
     const viewWidthInGameUnits = canvas.width / viewScale;
+
     if (localPlayer) {
         camY = Math.max(0, Math.min(localPlayer.y - viewHeightInGameUnits / 2, FULL_MAP_HEIGHT - viewHeightInGameUnits));
         camX = Math.max(0, Math.min(localPlayer.x - viewWidthInGameUnits / 2, GAME_WORLD_WIDTH - viewWidthInGameUnits));
+    } else {
+        // Local player is gone — follow whoever is still alive
+        const spectateTarget = Array.from(gameState.allPlayers.values())[0];
+        if (spectateTarget) {
+            camY = Math.max(0, Math.min(spectateTarget.y - viewHeightInGameUnits / 2, FULL_MAP_HEIGHT - viewHeightInGameUnits));
+            camX = Math.max(0, Math.min(spectateTarget.x - viewWidthInGameUnits / 2, GAME_WORLD_WIDTH - viewWidthInGameUnits));
+        } else if (gameState.dyingPlayer) {
+            camY = Math.max(0, Math.min(gameState.dyingPlayer.y - viewHeightInGameUnits / 2, FULL_MAP_HEIGHT - viewHeightInGameUnits));
+            camX = Math.max(0, Math.min(gameState.dyingPlayer.x - viewWidthInGameUnits / 2, GAME_WORLD_WIDTH - viewWidthInGameUnits));
+        }
     }
 
     ctx.save();
@@ -1614,21 +1642,29 @@ function draw() {
     gameState.continueButtonArea = null;
 
     if (gameState.status === 'starting') {
-        // REMOVED: ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        // REMOVED: ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const text = statusDisplay.textContent;
+        const isNumber = text.match(/^\d+$/);
 
-        ctx.fillStyle = 'white';
-        // Display countdown number if it is a number (3, 2, 1)
-        if (statusDisplay.textContent.match(/^\d+$/)) {
-            ctx.font = 'bold 80px sans-serif';
-        } else {
-             // Display pre-countdown status
-            ctx.font = 'bold 40px sans-serif';
+        // Animate scale on new countdown value
+        if (countdownAnim.value !== text) {
+            countdownAnim.value = text;
+            countdownAnim.startTime = Date.now();
         }
+        const elapsed = Date.now() - countdownAnim.startTime;
+        const scale = isNumber ? Math.max(1, 2.2 - (elapsed / 180)) : 1;
 
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.scale(scale, scale);
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+        ctx.font = isNumber ? 'bold 80px Arial' : 'bold 36px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(statusDisplay.textContent, centerX, centerY);
+        ctx.lineWidth = 6;
+        ctx.strokeText(text, 0, 0);
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
 
     } else if (gameState.status === 'win_screen') {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
@@ -1999,6 +2035,13 @@ function switchToMenuScreen() {
    ========================= */
 renderMenuLoadoutSlots();
 renderHotbar();
+
+// Continuous render loop for smooth interpolation
+function renderLoop() {
+    if (gameState.status !== 'menu') draw();
+    requestAnimationFrame(renderLoop);
+}
+requestAnimationFrame(renderLoop);
 
 /* =========================
    Periodic online count refresh
