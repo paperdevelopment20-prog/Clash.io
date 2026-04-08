@@ -346,6 +346,34 @@ class GameRoom {
         });
     }
 
+    broadcastStateTo(targetWs) {
+        const stateMessage = JSON.stringify({
+            type: "state",
+            players: Object.values(this.players).map((p) => ({
+                id: p.id,
+                name: p.name,
+                x: p.x,
+                y: p.y,
+                facingAngle: p.facingAngle,
+                health: p.health,
+                color: p.color,
+                isProtected: p.isProtected,
+                isReflecting: p.isReflecting,
+                isDashing: p.isDashing,
+                isStunned: p.isStunned,
+                isImpulsed: p.isImpulsed,
+                lastAbilityTime: p.lastAbilityTime,
+                roomId: this.id,
+                wins: p.wins || 0,
+            })),
+            projectiles: this.projectiles.map((p) => ({ ...p, abilityType: p.type })),
+            mines: this.mines,
+            healingFields: this.healingFields.map((f) => ({ x: f.x, y: f.y, radius: f.radius, color: f.color })),
+            status: this.gameStatus,
+        });
+        if (targetWs && targetWs.readyState === ws.OPEN) targetWs.send(stateMessage);
+    }
+
     broadcastState() {
         const stateMessage = {
             type: "state",
@@ -694,9 +722,20 @@ class GameRoom {
         delete this.players[eliminatedId];
         this.playerCount--;
 
-        // 4. Check for game over
+        // 4. Check for game over — keep sending state to dead player's ws for 2s spectate
         if (this.playerCount <= 1) {
-            setTimeout(() => this.endGame(), 2000);
+            const deadWs = eliminatedPlayer.ws;
+            const spectateInterval = setInterval(() => {
+                if (deadWs && deadWs.readyState === ws.OPEN) {
+                    this.broadcastStateTo(deadWs);
+                } else {
+                    clearInterval(spectateInterval);
+                }
+            }, GAME_TICK);
+            setTimeout(() => {
+                clearInterval(spectateInterval);
+                this.endGame();
+            }, 2000);
         }
     }
     // ====================================================================
