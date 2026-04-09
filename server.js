@@ -872,8 +872,6 @@ const app = express();
 const http = require("http").createServer(app);
 
 // Serve static files (CSS, JS, HTML)
-const compression = require("compression");
-app.use(compression());
 app.use(express.static(path.join(__dirname), { maxAge: "1h" }));
 
 // Serve index.html for root path
