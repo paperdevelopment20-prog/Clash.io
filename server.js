@@ -80,19 +80,43 @@ const REGEN_DELAY = 10000;
 const REGEN_AMOUNT = 1 / 60;
 
 // Fixed map barriers
-const MAP_BARRIERS = [
-    [0, 0, 45, 1],     // Top wall
-    [0, 29, 45, 1],    // Bottom wall
-    [0, 0, 1, 30],     // Left wall
-    [44, 0, 1, 30],    // Right wall
-    [10, 13, 25, 3],   // Center barrier
-    [18, 5, 9, 1],     // Top enclosure horizontal bar
-    [18, 3, 1, 2],     // Top enclosure left vertical
-    [26, 3, 1, 2],     // Top enclosure right vertical
-    [18, 24, 9, 1],    // Bottom enclosure horizontal bar
-    [18, 25, 1, 2],    // Bottom enclosure left vertical
-    [26, 25, 1, 2],    // Bottom enclosure right vertical
+const MAPS = [
+    // Map 1: Original — center barrier + top/bottom enclosures
+    [
+        [0, 0, 45, 1], [0, 29, 45, 1], [0, 0, 1, 30], [44, 0, 1, 30],
+        [10, 13, 25, 3],
+        [18, 5, 9, 1], [18, 3, 1, 2], [26, 3, 1, 2],
+        [18, 24, 9, 1], [18, 25, 1, 2], [26, 25, 1, 2],
+    ],
+    // Map 2: Crossroads — open corridors through center, 4 corner rooms
+    [
+        [0, 0, 45, 1], [0, 29, 45, 1], [0, 0, 1, 30], [44, 0, 1, 30],
+        // Top-left block
+        [2, 2, 16, 10],
+        // Top-right block
+        [27, 2, 16, 10],
+        // Bottom-left block
+        [2, 18, 16, 10],
+        // Bottom-right block
+        [27, 18, 16, 10],
+    ],
+    // Map 3: Open Arena — no internal barriers
+    [
+        [0, 0, 45, 1], [0, 29, 45, 1], [0, 0, 1, 30], [44, 0, 1, 30],
+    ],
+    // Map 4: Channels — horizontal walls creating 3 lanes
+    [
+        [0, 0, 45, 1], [0, 29, 45, 1], [0, 0, 1, 30], [44, 0, 1, 30],
+        // Top channel wall (gap at x=20-24)
+        [1, 9, 19, 2], [25, 9, 19, 2],
+        // Bottom channel wall (gap at x=20-24)
+        [1, 19, 19, 2], [25, 19, 19, 2],
+        // Center blocker
+        [20, 13, 5, 4],
+    ],
 ];
+
+const MAP_BARRIERS = MAPS[0]; // default, overridden per room
 const ALL_ABILITIES = {
     whiteBall: { name: "White Ball", damage: 10, projSpeed: 5, duration: 0, cooldown: 3000 },
     fireBall: { name: "Fire Ball", damage: 20, projSpeed: 3, duration: 0, cooldown: 3000 },
@@ -165,33 +189,20 @@ function createPlayer(id, name, loadout, ws) {
 /**
  * Checks for collision against canvas boundaries and map barriers.
  */
+let _activeBarriers = MAP_BARRIERS; // set per-room before each update tick
+
 function checkCollision(x, y, size) {
-    // 1. Check canvas boundaries
-    // Keep this check to prevent players from leaving the map
-    if (
-        x - size < 0 ||
-        x + size > CANVAS_WIDTH ||
-        y - size < 0 ||
-        y + size > CANVAS_HEIGHT
-    )
+    const map = _activeBarriers;
+    if (x - size < 0 || x + size > CANVAS_WIDTH || y - size < 0 || y + size > CANVAS_HEIGHT)
         return true;
-
-    // 2. Check map barriers
-    for (const b of MAP_BARRIERS) {
+    for (const b of map) {
         const bRect = {
-            x: b[0] * TILE_SIZE,
-            y: b[1] * TILE_SIZE,
-            w: b[2] * TILE_SIZE,
-            h: b[3] * TILE_SIZE,
+            x: b[0] * TILE_SIZE, y: b[1] * TILE_SIZE,
+            w: b[2] * TILE_SIZE, h: b[3] * TILE_SIZE,
         };
-
-        // Check if player circle overlaps with barrier rectangle
         const closestX = Math.max(bRect.x, Math.min(x, bRect.x + bRect.w));
         const closestY = Math.max(bRect.y, Math.min(y, bRect.y + bRect.h));
-        const distX = x - closestX;
-        const distY = y - closestY;
-
-        // If the distance is less than the circle's size (radius), a collision occurred
+        const distX = x - closestX, distY = y - closestY;
         if (distX * distX + distY * distY < size * size) return true;
     }
     return false;
@@ -202,20 +213,22 @@ function checkCollision(x, y, size) {
 class GameRoom {
     constructor(id) {
         this.id = id;
-        this.players = {}; // Player objects within this room
+        this.players = {};
         this.projectiles = [];
         this.mines = [];
         this.healingFields = [];
         this.gameStatus = "lobby";
         this.gameInterval = null;
         this.playerCount = 0;
+        this.mapIndex = Math.floor(Math.random() * MAPS.length);
+        this.barriers = MAPS[this.mapIndex];
 
-        // NEW: Countdown properties
+        // Countdown properties
         this.countdown = 0;
         this.countdownInterval = null;
         this.isStarting = false;
 
-        console.log(`Room ${this.id} created.`);
+        console.log(`Room ${this.id} created with map ${this.mapIndex}.`);
     }
 
     addPlayer(player) {
@@ -377,6 +390,7 @@ class GameRoom {
             mines: this.mines,
             healingFields: this.healingFields.map((f) => ({ x: f.x, y: f.y, radius: f.radius, color: f.color })),
             status: this.gameStatus,
+            mapIndex: this.mapIndex,
         });
         if (targetWs && targetWs.readyState === ws.OPEN) targetWs.send(stateMessage);
     }
@@ -413,6 +427,7 @@ class GameRoom {
                 color: f.color,
             })),
             status: this.gameStatus,
+            mapIndex: this.mapIndex,
         };
         this.broadcast(stateMessage);
     }
@@ -478,7 +493,7 @@ class GameRoom {
 
     updateProjectiles() {
         const projectilesToRemove = [];
-        const playerList = Object.values(this.players);
+        const playerList = this._cachedPlayerList || Object.values(this.players);
         const now = Date.now();
 
         this.projectiles.forEach((p, index) => {
@@ -621,7 +636,7 @@ class GameRoom {
 
     updateMines() {
         const minesToRemove = [];
-        const playerList = Object.values(this.players);
+        const playerList = this._cachedPlayerList || Object.values(this.players);
         const now = Date.now();
 
         this.mines.forEach((m, index) => {
@@ -696,7 +711,7 @@ class GameRoom {
 
     updateHealingFields() {
         const fieldsToRemove = [];
-        const playerList = Object.values(this.players);
+        const playerList = this._cachedPlayerList || Object.values(this.players);
         const now = Date.now();
         const HEAL_PER_TICK =
             ALL_ABILITIES.heal.totalHeal /
@@ -817,22 +832,21 @@ class GameRoom {
 
     updateGameState() {
         if (this.gameStatus === "lobby") return;
-
+        _activeBarriers = this.barriers;
         const now = Date.now();
-        const playerList = Object.values(this.players);
+        // Cache playerList once per tick — avoid repeated Object.values() allocations
+        const playerList = this._cachedPlayerList || (this._cachedPlayerList = []);
+        playerList.length = 0;
+        for (const id in this.players) playerList.push(this.players[id]);
 
         // 1. Handle player state updates (movement, status effects)
-        playerList.forEach((player) => {
+        for (let i = 0; i < playerList.length; i++) {
+            const player = playerList[i];
             this.updatePlayerPosition(player);
-
-            // Health regeneration (if no damage taken recently)
             if (now > player.lastDamageTime + REGEN_DELAY) {
-                player.health = Math.min(
-                    MAX_HEALTH,
-                    player.health + REGEN_AMOUNT,
-                );
+                player.health = Math.min(MAX_HEALTH, player.health + REGEN_AMOUNT);
             }
-        });
+        }
 
         // 2. Handle projectile/mine/field updates
         this.updateProjectiles();
@@ -858,26 +872,16 @@ const app = express();
 const http = require("http").createServer(app);
 
 // Serve static files (CSS, JS, HTML)
-app.use(express.static(path.join(__dirname)));
+const compression = require("compression");
+app.use(compression());
+app.use(express.static(path.join(__dirname), { maxAge: "1h" }));
 
 // Serve index.html for root path
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Leaderboard API endpoint
-app.get("/api/leaderboard", async (req, res) => {
-    try {
-        const topPlayers = await User.find({})
-            .sort({ elo: -1 })
-            .limit(10)
-            .select("username elo wins -_id");
-        res.json(topPlayers);
-    } catch (error) {
-        console.error("Leaderboard fetch error:", error);
-        res.status(500).json({ error: "Failed to fetch leaderboard" });
-    }
-});
+
 
 /**
  * Updates ELO for winner and loser using standard K=32 formula.
@@ -1067,6 +1071,7 @@ class TrainingRoom extends GameRoom {
 
     updateGameState() {
         if (this.gameStatus === "lobby") return;
+        _activeBarriers = this.barriers;
         const now = Date.now();
         const playerList = Object.values(this.players);
 
@@ -1128,6 +1133,7 @@ class TrainingRoom extends GameRoom {
             mines: this.mines,
             healingFields: this.healingFields.map(f => ({ x: f.x, y: f.y, radius: f.radius, color: f.color })),
             status: this.gameStatus,
+            mapIndex: this.mapIndex,
         };
         Object.values(this.players).filter(p => !p.isBot).forEach(p => {
             if (p.ws && p.ws.readyState === ws.OPEN)
@@ -1174,6 +1180,35 @@ function endTraining(playerWs) {
         delete trainingRooms[playerWs.trainingRoomId];
     }
     playerWs.trainingRoomId = null;
+
+    // Reset player position in their real room
+    const realRoom = playerWs.roomId ? gameRooms[playerWs.roomId] : null;
+    if (realRoom && realRoom.players[playerWs.playerId]) {
+        const player = realRoom.players[playerWs.playerId];
+        const spawns = [
+            { x: CANVAS_WIDTH / 2, y: 2 * TILE_SIZE },
+            { x: CANVAS_WIDTH / 2, y: 27 * TILE_SIZE },
+        ];
+        const pos = spawns[(Object.keys(realRoom.players).indexOf(String(playerWs.playerId))) % spawns.length];
+        player.x = pos.x;
+        player.y = pos.y;
+        player.health = MAX_HEALTH;
+        player.input = { dx: 0, dy: 0 };
+
+        // Send the real room's state immediately so player sees themselves
+        realRoom.broadcastStateTo(playerWs);
+    } else if (playerWs.readyState === ws.OPEN) {
+        // No real room yet — send empty clean state
+        playerWs.send(JSON.stringify({
+            type: "state",
+            players: [],
+            projectiles: [],
+            mines: [],
+            healingFields: [],
+            status: "starting",
+            mapIndex: 0,
+        }));
+    }
 }
 
 
@@ -1476,6 +1511,8 @@ wss.on("connection", (ws) => {
         if (!room || !room.players[playerId]) return;
 
         const player = room.players[playerId];
+        // Ensure collision uses this room's barriers
+        _activeBarriers = room.barriers || MAP_BARRIERS;
 
         switch (data.type) {
             case "movement": // MODIFIED: Changed from 'input' to 'movement'
@@ -1691,8 +1728,6 @@ wss.on("connection", (ws) => {
                 }
 
                 player.lastActivityTime = Date.now();
-                break;
-                player.lastActivityTime = Date.now(); // Ability use counts as activity
                 break;
             case "ping":
                 // Simply update last activity time
