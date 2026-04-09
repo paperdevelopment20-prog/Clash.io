@@ -459,6 +459,10 @@
       <div id="player-stats" class="absolute top-16 right-4 z-50"></div>
       <canvas id="game-canvas"></canvas>
       <div id="hotbar-container"></div>
+      <div id="training-prompt" class="hidden" style="position:absolute;bottom:90px;left:50%;transform:translateX(-50%);text-align:center;z-index:50;">
+        <p style="color:rgba(255,255,255,0.7);font-size:0.75rem;margin-bottom:6px;">While you're waiting, would you like to train?</p>
+        <button id="train-btn" style="background-color:rgba(13,66,38,0.85);border:2px solid #000;color:#fff;padding:6px 20px;border-radius:6px;font-weight:700;font-size:0.85rem;cursor:pointer;">Train</button>
+      </div>
     </div>
     <div id="menu-screen">
       <div class="absolute top-6 left-6 flex gap-4 z-50">
@@ -482,8 +486,15 @@
           </button>
           <span class="absolute top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="background:rgba(13,66,38,0.85);color:#fff;font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:0.05em;">HELP</span>
         </div>
+        <div class="relative group flex flex-col items-center">
+          <button id="leaderboard-btn" class="menu-top-btn" style="background-color:rgba(13,66,38,0.95);border:none;border-radius:6px;display:inline-flex;justify-content:center;align-items:center;width:36px;height:36px;padding:0;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.35);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          </button>
+          <span class="absolute top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="background:rgba(13,66,38,0.85);color:#fff;font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:0.05em;">LEADERBOARD</span>
+        </div>
       </div>
       <div class="absolute top-6 right-6 z-50 flex gap-2 items-center">
+        <div id="elo-display" style="background-color:rgba(13,66,38,0.85);border:2px solid #000;color:#fff;padding:6px 12px;border-radius:6px;font-weight:700;font-size:0.95rem;">ELO: <span id="elo-value">1000</span></div>
         <button
           id="sign-out-btn"
           class="rounded hidden"
@@ -899,6 +910,9 @@
           loadout: ["whiteBall", "fireBall", "knockback", "dash", "heal"],
           isAuthenticated: !1,
           authenticatedUser: null,
+          elo: 1000,
+          eloDelta: 0,
+          isTraining: false,
           eliminatedBy: null,
           continueButtonArea: null,
           dyingPlayer: null,
@@ -937,11 +951,11 @@
             e = await t.json();
           0 === e.length
             ? (leaderboardContent.innerHTML =
-                '<p class="text-center text-gray-500">No wins recorded yet. Be the first!</p>')
+                '<p class="text-center text-gray-500">No players ranked yet. Be the first!</p>')
             : (leaderboardContent.innerHTML = e
                 .map(
                   (t, e) =>
-                    `\n                <div class="flex justify-between items-center p-3 ${0 === e ? "bg-yellow-100" : 1 === e ? "bg-gray-100" : 2 === e ? "bg-orange-100" : "bg-white"} rounded border border-gray-300">\n                    <span class="font-bold text-lg">${e + 1}. ${t.username}</span>\n                    <span class="text-green-600 font-bold">${t.wins} win${1 !== t.wins ? "s" : ""}</span>\n                </div>\n            `,
+                    `\n                <div class="flex justify-between items-center p-3 ${0 === e ? "bg-yellow-100" : 1 === e ? "bg-gray-100" : 2 === e ? "bg-orange-100" : "bg-white"} rounded border border-gray-300">\n                    <span class="font-bold text-lg">${e + 1}. ${t.username}</span>\n                    <span class="text-blue-600 font-bold">ELO: ${t.elo || 1000}</span>\n                </div>\n            `,
                 )
                 .join(""));
         } catch (t) {
@@ -956,10 +970,10 @@
         const e = t
           .map(
             (t) =>
-              `\n        <div class="flex justify-between text-white text-xs py-1 border-b border-gray-600 ${t.id === myPlayerId ? "bg-yellow-900 bg-opacity-50" : ""}">\n            <span class="w-20 truncate">${t.name}</span>\n            <span class="w-10 text-right text-green-400">${t.wins}</span>\n        </div>\n    `,
+              `\n        <div class="flex justify-between text-white text-xs py-1 border-b border-gray-600 ${t.id === myPlayerId ? "bg-yellow-900 bg-opacity-50" : ""}">\n            <span class="w-20 truncate">${t.name}</span>\n            <span class="w-10 text-right text-blue-400">${t.id === myPlayerId ? gameState.elo : (t.elo || 1000)}</span>\n        </div>\n    `,
           )
           .join("");
-        playerStatsDisplay.innerHTML = `<div class="bg-gray-800 bg-opacity-90 px-3 py-2 rounded-lg border border-gray-600 min-w-32"><div class="flex justify-between text-white text-xs font-bold border-b border-gray-500 pb-1 mb-1">\n        <span class="w-20">Username</span>\n        <span class="w-10 text-right">Wins</span>\n    </div>${e}</div>`;
+        playerStatsDisplay.innerHTML = `<div class="bg-gray-800 bg-opacity-90 px-3 py-2 rounded-lg border border-gray-600 min-w-32"><div class="flex justify-between text-white text-xs font-bold border-b border-gray-500 pb-1 mb-1">\n        <span class="w-20">Username</span>\n        <span class="w-10 text-right">ELO</span>\n    </div>${e}</div>`;
       }
       function connectToServer() {
         return new Promise((t, e) => {
@@ -993,6 +1007,7 @@
           case "authSuccess":
             ((gameState.isAuthenticated = !0),
               (gameState.authenticatedUser = e.name),
+              (gameState.elo = e.elo || 1000),
               (gameState.loadout = e.loadout),
               authModal.classList.add("hidden"),
               updateAuthDisplay(e.name),
@@ -1003,6 +1018,12 @@
                 `Welcome back, ${e.name}. Your progress has been loaded.`,
                 () => {},
               ));
+            break;
+          case "eloUpdate":
+            gameState.eloDelta = e.delta;
+            gameState.elo = e.elo;
+            document.getElementById("elo-value").textContent = e.elo;
+            document.getElementById("elo-display").classList.remove("hidden");
             break;
           case "authFailure":
             ((authMessage.textContent = e.message),
@@ -1035,8 +1056,30 @@
           case "status":
             statusDisplay.textContent = e.message;
             break;
+          case "trainingStart":
+            gameState.isTraining = true;
+            gameState.status = "playing";
+            document.getElementById("training-prompt").classList.add("hidden");
+            statusDisplay.textContent = "TRAINING";
+            break;
+          case "trainingRestart":
+            statusDisplay.textContent = "TRAINING";
+            break;
+          case "matchFound":
+            gameState.isTraining = false;
+            gameState.status = "starting";
+            gameState.allPlayers.clear();
+            gameState.projectiles = [];
+            gameState.mines = [];
+            gameState.healingFields = [];
+            gameState.eliminatedBy = null;
+            gameState.killCount = 0;
+            document.getElementById("kill-count").textContent = "0";
+            statusDisplay.textContent = "Match found! Get ready...";
+            break;
           case "matchStart":
             ((gameState.status = "playing"),
+              document.getElementById("training-prompt").classList.add("hidden"),
               (statusDisplay.textContent = "FIGHT!"),
               (gameState.eliminatedBy = null),
               (gameState.killCount = 0),
@@ -1071,9 +1114,7 @@
             }
             break;
           case "gameOver":
-            const n = gameState.isAuthenticated
-              ? gameState.authenticatedUser
-              : nameInput.value.trim() || "Challenger";
+            const n = nameInput.value.trim() || gameState.authenticatedUser || "Challenger";
             ((gameState.gameOverPending = !1),
               e.winnerName === n
                 ? ((gameState.status = "win_screen"),
@@ -1259,9 +1300,7 @@
           switchToMenuScreen());
       }
       async function startGame() {
-        let t = gameState.isAuthenticated
-            ? gameState.authenticatedUser
-            : nameInput.value.trim() || "Challenger",
+        let t = nameInput.value.trim() || gameState.authenticatedUser || "Challenger",
           e = gameState.loadout;
         if (t.length > 12)
           showModal("Error", "Name must be 12 characters or less.");
@@ -1286,6 +1325,7 @@
               (gameState.killCount = 0),
               (document.getElementById("kill-count").textContent = "0"),
               (statusDisplay.textContent = "Waiting for another player..."),
+              document.getElementById("training-prompt").classList.remove("hidden"),
               requestAnimationFrame(gameLoop));
           } catch (t) {
             (console.error("Failed to start game:", t),
@@ -1715,10 +1755,13 @@
           if (e.isRing) {
             const a = e.ringRadius || 50,
               n = 0.28 * a,
-              l = t - (e.placedTime || t),
-              o = Math.max(0, ((e.explosionDelay || 3e3) - l) / 1e3),
-              i = 1 - o / ((e.explosionDelay || 3e3) / 1e3),
-              s = 0.65 + 0.35 * Math.sin(t / (200 - 150 * i));
+              armed = e.armed && e.placedTime,
+              l = armed ? t - e.placedTime : 0,
+              o = armed ? Math.max(0, ((e.explosionDelay || 500) - l) / 1e3) : (e.explosionDelay || 500) / 1e3,
+              i = armed ? 1 - o / ((e.explosionDelay || 500) / 1e3) : 0,
+              s = armed
+                ? 0.65 + 0.35 * Math.sin(t / (200 - 150 * i))
+                : 0.4 + 0.2 * Math.sin(t / 400);
             return (
               ctx.beginPath(),
               ctx.arc(e.x, e.y, a, 0, 2 * Math.PI),
@@ -1726,7 +1769,7 @@
               ctx.fill(),
               ctx.beginPath(),
               ctx.arc(e.x, e.y, a, 0, 2 * Math.PI),
-              (ctx.strokeStyle = `rgba(239, 68, 68, ${s})`),
+              (ctx.strokeStyle = armed ? `rgba(239, 68, 68, ${s})` : `rgba(239, 68, 68, ${s * 0.5})`),
               (ctx.lineWidth = 3),
               ctx.stroke(),
               ctx.beginPath(),
@@ -1740,7 +1783,9 @@
               (ctx.fillStyle = "#fff"),
               (ctx.textAlign = "center"),
               (ctx.textBaseline = "middle"),
-              ctx.fillText(o.toFixed(1) + "s", e.x, e.y),
+              armed
+                ? ctx.fillText(o.toFixed(1) + "s", e.x, e.y)
+                : ctx.fillText("💣", e.x, e.y),
               void (ctx.textBaseline = "alphabetic")
             );
           }
@@ -1921,13 +1966,17 @@
         } else if ("win_screen" === gameState.status) {
           ((ctx.fillStyle = "rgba(0, 0, 0, 0.4)"),
             ctx.fillRect(0, 0, canvas.width, canvas.height),
-            (ctx.fillStyle = "rgba(0, 0, 0, 0.8)"),
+            (ctx.fillStyle = "rgba(13, 66, 38, 0.85)"),
             ctx.fillRect(s, c, 450, i),
             (ctx.fillStyle = "#22c55e"),
             (ctx.font = "bold 32px sans-serif"),
             (ctx.textAlign = "center"),
             (ctx.textBaseline = "middle"),
-            ctx.fillText("You Won!", l, c + 50));
+            ctx.fillText("You Won!", l, c + 35));
+          const eloDeltaWin = gameState.eloDelta || 0;
+          ctx.fillStyle = "#86efac";
+          ctx.font = "bold 20px sans-serif";
+          ctx.fillText(`+${eloDeltaWin} ELO`, l, c + 70);
           const t =
             mouseX > g && mouseX < g + r && mouseY > m && mouseY < m + d;
           ((ctx.fillStyle = t ? "#16a34a" : "#22c55e"),
@@ -1954,14 +2003,18 @@
         } else if ("death_screen" === gameState.status) {
           ((ctx.fillStyle = "rgba(0, 0, 0, 0.4)"),
             ctx.fillRect(0, 0, canvas.width, canvas.height),
-            (ctx.fillStyle = "rgba(0, 0, 0, 0.8)"),
+            (ctx.fillStyle = "rgba(13, 66, 38, 0.85)"),
             ctx.fillRect(s, c, 450, i),
             (ctx.fillStyle = "white"),
             (ctx.font = "bold 28px sans-serif"),
             (ctx.textAlign = "center"),
             (ctx.textBaseline = "middle"));
           const t = gameState.eliminatedBy || "The Environment";
-          ctx.fillText(`You were killed by ${t}.`, l, c + 50);
+          ctx.fillText(`You were killed by ${t}.`, l, c + 35);
+          const eloDeltaDeath = gameState.eloDelta || 0;
+          ctx.fillStyle = "#fca5a5";
+          ctx.font = "bold 20px sans-serif";
+          ctx.fillText(`${eloDeltaDeath} ELO`, l, c + 65);
           const e =
             mouseX > g && mouseX < g + r && mouseY > m && mouseY < m + d;
           ((ctx.fillStyle = e ? "#16a34a" : "#22c55e"),
@@ -2106,6 +2159,18 @@
           closeLeaderboardModal.addEventListener("click", () =>
             leaderboardModal.classList.add("hidden"),
           ),
+        document.getElementById("leaderboard-btn") &&
+          document.getElementById("leaderboard-btn").addEventListener("click", showLeaderboard),
+        document.getElementById("train-btn").addEventListener("click", () => {
+          if (!socket || socket.readyState !== WebSocket.OPEN) return;
+          const name = nameInput.value.trim() || gameState.authenticatedUser || "Challenger";
+          socket.send(JSON.stringify({
+            type: "startTraining",
+            name,
+            loadout: gameState.loadout,
+            elo: gameState.elo || 1000,
+          }));
+        }),
         closeAbilityModal.addEventListener("click", () =>
           abilityModal.classList.add("hidden"),
         ),
@@ -2134,6 +2199,7 @@
         signOutBtn.addEventListener("click", () => {
           ((gameState.isAuthenticated = !1),
             (gameState.authenticatedUser = null),
+            (gameState.elo = 1000),
             (gameState.loadout = [
               "whiteBall",
               "fireBall",
@@ -2291,13 +2357,18 @@
             toggleAuthMode());
       }
       function updateAuthDisplay(t) {
+        const eloDisplay = document.getElementById("elo-display");
+        const eloValue = document.getElementById("elo-value");
         t
           ? ((authDisplayBtn.textContent = `Welcome, ${t}`),
             (authDisplayBtn.style.backgroundColor = "#10b981"),
-            signOutBtn.classList.remove("hidden"))
+            signOutBtn.classList.remove("hidden"),
+            eloValue.textContent = gameState.elo || 1000,
+            eloDisplay.classList.remove("hidden"))
           : ((authDisplayBtn.textContent = "Sign In / Register"),
             (authDisplayBtn.style.backgroundColor = "#fcd34d"),
             signOutBtn.classList.add("hidden"),
+            eloValue.textContent = 1000,
             (nameInput.disabled = !1),
             (nameInput.value = "Challenger"));
       }
