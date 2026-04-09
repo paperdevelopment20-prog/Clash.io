@@ -793,14 +793,17 @@ class GameRoom {
         if (winner) {
             const winnerUsername = winner.ws.username || null;
             const loserUsername = this.lastLoserUsername || null;
-            updateElo(winnerUsername, loserUsername, winner.ws, this.lastLoserWs);
-
-            winner.ws.send(
-                JSON.stringify({
-                    type: "gameOver",
-                    winnerName: winnerName,
-                }),
-            );
+            // Update ELO first (async), then send gameOver after a short delay so eloUpdate arrives first
+            updateElo(winnerUsername, loserUsername, winner.ws, this.lastLoserWs).then(() => {
+                if (winner.ws && winner.ws.readyState === 1)
+                    winner.ws.send(JSON.stringify({ type: "gameOver", winnerName: winnerName }));
+            });
+            // Also send gameOver to loser (they already got playerEliminated, but need gameOver for winnerName)
+            if (this.lastLoserWs && this.lastLoserWs.readyState === 1)
+                setTimeout(() => {
+                    if (this.lastLoserWs.readyState === 1)
+                        this.lastLoserWs.send(JSON.stringify({ type: "gameOver", winnerName: winnerName }));
+                }, 100);
         }
 
         // Stop the game loop
@@ -882,37 +885,38 @@ app.get("/api/leaderboard", async (req, res) => {
 async function updateElo(winnerUsername, loserUsername, winnerWs, loserWs) {
     const K = 32;
     try {
-        const [winner, loser] = await Promise.all([
+        const [winnerDoc, loserDoc] = await Promise.all([
             winnerUsername ? User.findOne({ username: winnerUsername.toLowerCase() }) : null,
             loserUsername ? User.findOne({ username: loserUsername.toLowerCase() }) : null,
         ]);
-        const winnerElo = winner ? (winner.elo || 1000) : 1000;
-        const loserElo = loser ? (loser.elo || 1000) : 1000;
+        const winnerElo = winnerDoc ? (winnerDoc.elo || 1000) : 1000;
+        const loserElo = loserDoc ? (loserDoc.elo || 1000) : 1000;
         const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
-        const expectedLoser = 1 - expectedWinner;
         const newWinnerElo = Math.round(winnerElo + K * (1 - expectedWinner));
-        const newLoserElo = Math.max(0, Math.round(loserElo + K * (0 - expectedLoser)));
+        const newLoserElo = Math.max(0, Math.round(loserElo + K * (0 - (1 - expectedWinner))));
+        const winnerDelta = newWinnerElo - winnerElo;
+        const loserDelta = newLoserElo - loserElo;
 
-        if (winner) {
+        if (winnerDoc) {
             await User.findOneAndUpdate(
                 { username: winnerUsername.toLowerCase() },
                 { $inc: { wins: 1 }, $set: { elo: newWinnerElo } },
             );
         }
-        if (loser) {
+        if (loserDoc) {
             await User.findOneAndUpdate(
                 { username: loserUsername.toLowerCase() },
                 { $set: { elo: newLoserElo } },
             );
         }
 
-        // Notify both players of their new ELO (even guests)
+        // Notify both players — check readyState at send time
         if (winnerWs && winnerWs.readyState === 1)
-            winnerWs.send(JSON.stringify({ type: "eloUpdate", elo: newWinnerElo, delta: newWinnerElo - winnerElo }));
+            winnerWs.send(JSON.stringify({ type: "eloUpdate", elo: newWinnerElo, delta: winnerDelta }));
         if (loserWs && loserWs.readyState === 1)
-            loserWs.send(JSON.stringify({ type: "eloUpdate", elo: newLoserElo, delta: newLoserElo - loserElo }));
+            loserWs.send(JSON.stringify({ type: "eloUpdate", elo: newLoserElo, delta: loserDelta }));
 
-        console.log(`ELO: ${winnerUsername||"guest"} ${winnerElo}→${newWinnerElo}, ${loserUsername||"guest"} ${loserElo}→${newLoserElo}`);
+        console.log(`ELO: ${winnerUsername||"guest"} ${winnerElo}→${newWinnerElo} (+${winnerDelta}), ${loserUsername||"guest"} ${loserElo}→${newLoserElo} (${loserDelta})`);
     } catch (error) {
         console.error("Error updating ELO:", error);
     }
@@ -1150,6 +1154,7 @@ function startTraining(playerWs, playerName, loadout, playerElo) {
     const player = createPlayer(playerWs.playerId, playerName, loadout, playerWs);
     player.x = CANVAS_WIDTH / 2;
     player.y = 2 * TILE_SIZE;
+    player.color = "#F7C574";
     room.players[player.id] = player;
     room.playerCount++;
     room.addBot();
