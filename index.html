@@ -33,6 +33,33 @@
           background-position: -40px 0;
         }
       }
+      @keyframes bounceDown {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(5px); }
+      }
+      @keyframes bounceUp {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+      }
+      @keyframes bounceRight {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(6px); }
+      }
+      .hint-arrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background-color: rgba(13,66,38,0.9);
+        border: 2px solid #000;
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 5px 12px;
+        border-radius: 20px;
+        white-space: nowrap;
+        pointer-events: none;
+        letter-spacing: 0.03em;
+      }
       #menu-screen {
         position: fixed;
         top: 0;
@@ -487,12 +514,6 @@
           </button>
           <span class="absolute top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="background:rgba(13,66,38,0.85);color:#fff;font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:0.05em;">HELP</span>
         </div>
-        <div class="relative group flex flex-col items-center">
-          <button id="leaderboard-btn" class="menu-top-btn" style="background-color:rgba(13,66,38,0.95);border:none;border-radius:6px;display:inline-flex;justify-content:center;align-items:center;width:36px;height:36px;padding:0;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.35);">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-          </button>
-          <span class="absolute top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="background:rgba(13,66,38,0.85);color:#fff;font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:0.05em;">LEADERBOARD</span>
-        </div>
       </div>
       <div class="absolute top-6 right-6 z-50 flex gap-2 items-center">
         <div id="elo-display" style="background-color:rgba(13,66,38,0.85);border:2px solid #000;color:#fff;padding:6px 12px;border-radius:6px;font-weight:700;font-size:0.95rem;">ELO: <span id="elo-value">1000</span></div>
@@ -510,9 +531,14 @@
         >
           Sign Out
         </button>
-        <button id="auth-display-btn" class="rounded">
-          Sign In / Register
-        </button>
+        <div style="position:relative;">
+          <button id="auth-display-btn" class="rounded">
+            Sign In / Register
+          </button>
+          <div id="arrow-signin" style="position:absolute;top:calc(100% + 8px);left:0;animation:bounceUp 1s ease-in-out infinite;pointer-events:none;z-index:60;">
+            <div style="background:rgba(13,66,38,0.92);border:2px solid #000;color:#fff;font-size:0.7rem;font-weight:700;padding:6px 14px;border-radius:6px;white-space:nowrap;clip-path:polygon(0% 20%,100% 20%,100% 100%,55% 100%,50% 0%,45% 100%,0% 100%);">Sign in to save progress</div>
+          </div>
+        </div>
       </div>
       <div
         id="online-counter"
@@ -545,7 +571,12 @@
           <button id="start-button">1v1</button>
         </div>
         <div class="loadout-wrapper">
-          <div id="menu-loadout" class="flex justify-center"></div>
+          <div style="position:relative;display:inline-flex;align-items:center;">
+            <div id="arrow-loadout" style="position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%);animation:bounceRight 1s ease-in-out infinite;pointer-events:none;z-index:60;">
+              <div style="background:rgba(13,66,38,0.92);border:2px solid #000;color:#fff;font-size:0.7rem;font-weight:700;padding:6px 14px 6px 10px;border-radius:6px;white-space:nowrap;clip-path:polygon(0% 0%,85% 0%,100% 50%,85% 100%,0% 100%);">Edit your loadout</div>
+            </div>
+            <div id="menu-loadout" class="flex justify-center"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -683,27 +714,6 @@
         <button id="close-help-modal" style="margin-top:16px;width:100%;background:#16a34a;color:#fff;font-weight:700;font-size:1rem;padding:10px;border:2px solid #000;border-radius:5px;cursor:pointer;">Close</button>
       </div>
     </div>
-    <div id="leaderboard-modal" class="modal hidden">
-      <div
-        class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg border-4 border-black"
-      >
-        <h3 class="text-3xl font-bold mb-6 text-black text-center">
-          Leaderboard
-        </h3>
-        <div
-          id="leaderboard-content"
-          class="overflow-y-auto max-h-80 text-left space-y-2"
-        >
-          <p class="text-center text-gray-500">Loading...</p>
-        </div>
-        <button
-          id="close-leaderboard-modal"
-          class="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow border-2 border-black"
-        >
-          Close
-        </button>
-      </div>
-    </div>
     <div id="message-modal" class="modal hidden">
       <div
         class="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm text-center border-4 border-blue-500"
@@ -794,11 +804,6 @@
         helpModal = document.getElementById("help-modal"),
         helpBtn = document.getElementById("help-btn"),
         closeHelpModal = document.getElementById("close-help-modal"),
-        leaderboardModal = document.getElementById("leaderboard-modal"),
-        leaderboardContent = document.getElementById("leaderboard-content"),
-        closeLeaderboardModal = document.getElementById(
-          "close-leaderboard-modal",
-        ),
         closeUpdatesModal = document.getElementById("close-updates-modal"),
         messageModal = document.getElementById("message-modal"),
         modalTitle = document.getElementById("modal-title"),
@@ -848,6 +853,12 @@
           [18, 24, 9, 1],
           [18, 25, 1, 2],
           [26, 25, 1, 2],
+        ],
+        MAPS = [
+          [[0,0,45,1],[0,29,45,1],[0,0,1,30],[44,0,1,30],[10,13,25,3],[18,5,9,1],[18,3,1,2],[26,3,1,2],[18,24,9,1],[18,25,1,2],[26,25,1,2]],
+          [[0,0,45,1],[0,29,45,1],[0,0,1,30],[44,0,1,30],[2,2,16,10],[27,2,16,10],[2,18,16,10],[27,18,16,10]],
+          [[0,0,45,1],[0,29,45,1],[0,0,1,30],[44,0,1,30]],
+          [[0,0,45,1],[0,29,45,1],[0,0,1,30],[44,0,1,30],[1,9,19,2],[25,9,19,2],[1,19,19,2],[25,19,19,2],[20,13,5,4]],
         ],
         ALL_ABILITIES = {
           whiteBall: {
@@ -973,27 +984,6 @@
           (viewScale = (window.innerWidth / 900) * 1.8),
           (viewHeightInGameUnits = window.innerHeight / viewScale),
           "menu" !== gameState.status && draw());
-      }
-      async function showLeaderboard() {
-        (leaderboardModal.classList.remove("hidden"),
-          (leaderboardContent.innerHTML =
-            '<p class="text-center text-gray-500">Loading...</p>'));
-        try {
-          const t = await fetch("/api/leaderboard"),
-            e = await t.json();
-          0 === e.length
-            ? (leaderboardContent.innerHTML =
-                '<p class="text-center text-gray-500">No players ranked yet. Be the first!</p>')
-            : (leaderboardContent.innerHTML = e
-                .map(
-                  (t, e) =>
-                    `\n                <div class="flex justify-between items-center p-3 ${0 === e ? "bg-yellow-100" : 1 === e ? "bg-gray-100" : 2 === e ? "bg-orange-100" : "bg-white"} rounded border border-gray-300">\n                    <span class="font-bold text-lg">${e + 1}. ${t.username}</span>\n                    <span class="text-blue-600 font-bold">ELO: ${t.elo || 1000}</span>\n                </div>\n            `,
-                )
-                .join(""));
-        } catch (t) {
-          leaderboardContent.innerHTML =
-            '<p class="text-center text-red-500">Failed to load leaderboard.</p>';
-        }
       }
       function updatePlayerStatsDisplay() {
         if (!playerStatsDisplay) return;
@@ -1242,10 +1232,20 @@
         ((gameState.projectiles = e),
           (gameState.mines = t.mines || []),
           (gameState.healingFields = t.healingFields || []));
-        const n = gameState.allPlayers.get(myPlayerId),
-          l = new Map(gameState.allPlayers);
-        (gameState.allPlayers.clear(),
-          (t.players || []).forEach((t) => {
+        if (t.mapIndex !== undefined && MAPS[t.mapIndex]) {
+          MAP_BARRIERS.length = 0;
+          MAPS[t.mapIndex].forEach(b => MAP_BARRIERS.push(b));
+        }
+        const n = gameState.allPlayers.get(myPlayerId);
+        // Reuse a temp map instead of allocating new Map every update
+        if (!gameState._prevPlayers) gameState._prevPlayers = new Map();
+        const l = gameState._prevPlayers;
+        // Swap: copy current into prev, then rebuild current
+        const _swap = gameState.allPlayers;
+        gameState.allPlayers = l;
+        gameState._prevPlayers = _swap;
+        gameState.allPlayers.clear();
+        (t.players || []).forEach((t) => {
             const e = t.id === myPlayerId,
               a = l.get(t.id),
               n = {
@@ -1269,11 +1269,14 @@
                 dy: e ? a?.dy || 0 : t.dy || 0,
                 wins: t.wins || 0,
               };
-            (a && (t.health, a.health),
-              (n.hitFlashTime = 0),
-              gameState.allPlayers.set(t.id, n));
-          }),
-          updatePlayerStatsDisplay());
+            n.hitFlashTime = 0;
+            gameState.allPlayers.set(t.id, n);
+          });
+        // Throttle DOM update to max 5fps
+        if (Date.now() - (gameState._lastStatsUpdate || 0) > 200) {
+          gameState._lastStatsUpdate = Date.now();
+          updatePlayerStatsDisplay();
+        }
         const o = gameState.allPlayers.get(myPlayerId);
         ("playing" !== gameState.status ||
           gameState.gameOverPending ||
@@ -1311,16 +1314,21 @@
             ((t.renderX += (t.x - t.renderX) * e),
               (t.renderY += (t.y - t.renderY) * e));
           }));
-        for (let t = dashTrail.length - 1; t >= 0; t--)
-          (dashTrail[t].age++,
-            dashTrail[t].age > 80 && dashTrail.splice(t, 1));
-        for (let t = activeRings.length - 1; t >= 0; t--)
-          (activeRings[t].age++,
-            (activeRings[t].radius =
-              (activeRings[t].age / activeRings[t].maxAge) *
-              activeRings[t].maxRadius),
-            activeRings[t].age >= activeRings[t].maxAge &&
-              activeRings.splice(t, 1));
+        for (let t = dashTrail.length - 1; t >= 0; t--) {
+          dashTrail[t].age++;
+          if (dashTrail[t].age > 80) {
+            dashTrail[t] = dashTrail[dashTrail.length - 1];
+            dashTrail.pop();
+          }
+        }
+        for (let t = activeRings.length - 1; t >= 0; t--) {
+          activeRings[t].age++;
+          activeRings[t].radius = (activeRings[t].age / activeRings[t].maxAge) * activeRings[t].maxRadius;
+          if (activeRings[t].age >= activeRings[t].maxAge) {
+            activeRings[t] = activeRings[activeRings.length - 1];
+            activeRings.pop();
+          }
+        }
         ("menu" !== gameState.status && draw(),
           "finished" !== gameState.status &&
             "menu" !== gameState.status &&
@@ -1375,10 +1383,10 @@
         if (!socket || socket.readyState !== WebSocket.OPEN) return;
         socket.send(JSON.stringify({ type: "stopTraining" }));
         gameState.isTraining = false;
-        gameState.allPlayers.clear();
         gameState.projectiles = [];
         gameState.mines = [];
         gameState.healingFields = [];
+        gameState.dyingPlayer = null;
         document.getElementById("training-prompt").classList.remove("hidden");
         gameState.status = "starting";
         statusDisplay.textContent = "Waiting for another player...";
@@ -2185,7 +2193,10 @@
                 o.appendChild(t));
             } else o.textContent = l?.icon || "?";
             (n.appendChild(o),
-              n.addEventListener("click", () => openAbilityModal(a)),
+              n.addEventListener("click", () => {
+                document.getElementById("arrow-loadout") && (document.getElementById("arrow-loadout").style.display = "none");
+                openAbilityModal(a);
+              }),
               t.appendChild(n));
           }));
       }
@@ -2205,12 +2216,6 @@
         closeHelpModal.addEventListener("click", () =>
           helpModal.classList.add("hidden"),
         ),
-        closeLeaderboardModal &&
-          closeLeaderboardModal.addEventListener("click", () =>
-            leaderboardModal.classList.add("hidden"),
-          ),
-        document.getElementById("leaderboard-btn") &&
-          document.getElementById("leaderboard-btn").addEventListener("click", showLeaderboard),
         document.getElementById("train-btn").addEventListener("click", () => {
           if (!socket || socket.readyState !== WebSocket.OPEN) return;
           const name = nameInput.value.trim() || gameState.authenticatedUser || "Challenger";
@@ -2245,7 +2250,10 @@
         targetPasswordInput.addEventListener("keypress", (t) => {
           "Enter" === t.key && targetPasswordSubmit.click();
         }),
-        authDisplayBtn.addEventListener("click", showAuthModal),
+        authDisplayBtn.addEventListener("click", () => {
+          document.getElementById("arrow-signin") && (document.getElementById("arrow-signin").style.display = "none");
+          showAuthModal();
+        }),
         signOutBtn.addEventListener("click", () => {
           ((gameState.isAuthenticated = !1),
             (gameState.authenticatedUser = null),
@@ -2409,12 +2417,16 @@
       function updateAuthDisplay(t) {
         const eloDisplay = document.getElementById("elo-display");
         const eloValue = document.getElementById("elo-value");
+        const arrowSignin = document.getElementById("arrow-signin");
+        const arrowLoadout = document.getElementById("arrow-loadout");
         t
           ? ((authDisplayBtn.textContent = `Welcome, ${t}`),
             (authDisplayBtn.style.backgroundColor = "#10b981"),
             signOutBtn.classList.remove("hidden"),
             eloValue.textContent = gameState.elo || 1000,
-            eloDisplay.classList.remove("hidden"))
+            eloDisplay.classList.remove("hidden"),
+            arrowSignin && (arrowSignin.style.display = "none"),
+            arrowLoadout && (arrowLoadout.style.display = "none"))
           : ((authDisplayBtn.textContent = "Sign In / Register"),
             (authDisplayBtn.style.backgroundColor = "#fcd34d"),
             signOutBtn.classList.add("hidden"),
