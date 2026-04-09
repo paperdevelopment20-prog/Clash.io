@@ -463,6 +463,7 @@
         <p style="color:rgba(255,255,255,0.7);font-size:0.75rem;margin-bottom:6px;">While you're waiting, would you like to train?</p>
         <button id="train-btn" style="background-color:rgba(13,66,38,0.85);border:2px solid #000;color:#fff;padding:6px 20px;border-radius:6px;font-weight:700;font-size:0.85rem;cursor:pointer;">Train</button>
       </div>
+
     </div>
     <div id="menu-screen">
       <div class="absolute top-6 left-6 flex gap-4 z-50">
@@ -620,33 +621,64 @@
       </div>
     </div>
     <div id="help-modal" class="modal hidden">
-      <div style="width:500px;background:#fff;border:3px solid #000;border-radius:8px;padding:20px;max-height:80vh;overflow-y:auto;">
+      <div style="width:520px;background:#fff;border:3px solid #000;border-radius:8px;padding:20px;max-height:80vh;overflow-y:auto;">
         <h3 style="font-size:1.4rem;font-weight:800;text-align:center;margin-bottom:16px;">How to Play</h3>
-        <div style="font-size:0.95rem;color:#374151;line-height:1.8;">
-          <h4 style="font-weight:700;margin-top:12px;margin-bottom:8px;">🕹️ Section 1: How to Move and Aim</h4>
-          <p>In this game, your character is the circle in the middle of the screen. You do not need to press any buttons to walk; your character simply follows your mouse cursor.</p>
-          <p><strong>To Move:</strong> Move your mouse toward where you want to go, and your character will walk in that direction.</p>
-          <p><strong>To Stop:</strong> Keep your mouse cursor directly on top of your character.</p>
-          <p><strong>To Aim:</strong> Your character has two smaller circles (hands). These hands always point toward your mouse cursor. To aim a spell at an opponent, simply point your mouse at them.</p>
-          
-          <h4 style="font-weight:700;margin-top:12px;margin-bottom:8px;">⚔️ Section 2: Your Five Abilities</h4>
-          <p>You have five different powers shown at the bottom of your screen. To use them, press the number keys (1, 2, 3, 4, or 5) on your keyboard. After using a power, its icon will turn dark for a few seconds while it "recharges" before you can use it again.</p>
-          
-          <p><strong>The Attack Abilities</strong></p>
-          <p><strong>Key 1 - Basic Blast:</strong> This fires a small, fast white energy ball. Since it recharges the quickest, you can fire this constantly to keep your opponent busy.</p>
-          <p><strong>Key 2 - Fireball:</strong> This is your strongest attack. It is a large, orange ball of fire that deals a lot of damage. It moves slower than the basic blast, so try to use it when your opponent is close to you.</p>
-          
-          <p><strong>The Tactical & Survival Abilities</strong></p>
-          <p><strong>Key 3 - Snowball:</strong> This is a strategic tool. When it hits an opponent, it coats them in ice and slows them down. This makes them a much easier target because they cannot run away from your other attacks.</p>
-          <p><strong>Key 4 - Dash:</strong> This is your "quick move" button. It makes your character leap forward instantly. Use this to jump out of the way if someone fires a fireball at you.</p>
-          <p><strong>Key 5 - Heal Zone:</strong> This is how you fix your health. It places a green circle on the ground. As long as you stand inside the circle, your green health bar will fill back up.</p>
-          
-          <h4 style="font-weight:700;margin-top:12px;margin-bottom:8px;">🏆 Section 3: A Simple Strategy for Beginners</h4>
-          <p>The secret to winning your first match is combining your powers instead of just pressing one button. Follow this three-step plan:</p>
-          <p><strong>The Setup:</strong> Point your mouse at the enemy and press 3 (Snowball). This slows them down so they can't dodge.</p>
-          <p><strong>The Strike:</strong> While they are moving slowly, immediately press 2 (Fireball) and 1 (Basic Blast).</p>
-          <p><strong>The Recovery:</strong> If you get hit, press 4 (Dash) to jump away to a safe corner, then press 5 (Heal Zone) to get your health back.</p>
-          <p><strong>Remember:</strong> Always keep your mouse moving! A character that stands still is very easy to hit. Good luck in the arena!</p>
+        <div style="font-size:0.9rem;color:#374151;line-height:1.7;">
+
+          <h4 style="font-weight:700;margin-top:12px;margin-bottom:6px;">🕹️ Movement & Aiming</h4>
+          <p>Your character follows your mouse cursor. Move your mouse to walk — the further your cursor is from your character, the faster you move. Keep your cursor on top of your character to stop.</p>
+          <p>Your character always faces your cursor. Abilities fire in the direction you're aiming, so point at your opponent before casting.</p>
+
+          <h4 style="font-weight:700;margin-top:14px;margin-bottom:6px;">⚔️ Abilities</h4>
+          <p>You have 5 ability slots shown at the bottom of the screen. Press <strong>1–5</strong> to use them. Each ability has a 3-second cooldown after use (Reflection is 15s). You can customise your loadout from the main menu by clicking any slot.</p>
+
+          <p style="margin-top:8px;font-weight:700;">White Ball — 10 damage, fast projectile</p>
+          <p>A quick, straight-moving projectile. Great for consistent chip damage and keeping pressure on your opponent.</p>
+
+          <p style="margin-top:8px;font-weight:700;">Fireball — 20 damage, slower projectile</p>
+          <p>Deals double the damage of White Ball but travels slower. Best used at close range or when your opponent is slowed.</p>
+
+          <p style="margin-top:8px;font-weight:700;">Knockback — 0 damage, pushes opponent away</p>
+          <p>Fires a ring that launches your opponent away from it. Use it to push enemies into walls or off-position. No damage, but great for disruption.</p>
+
+          <p style="margin-top:8px;font-weight:700;">Impulse — 0 damage, pulls opponent toward you</p>
+          <p>The opposite of Knockback — pulls your opponent toward the ring. Combo it with a Fireball right after to deal big damage.</p>
+
+          <p style="margin-top:8px;font-weight:700;">Snowball — 10 damage, slows on hit</p>
+          <p>Deals damage and slows your opponent for 1.5 seconds, cutting their movement speed in half. Follow up immediately with Fireball for easy hits.</p>
+
+          <p style="margin-top:8px;font-weight:700;">Landmine — 25 damage, proximity trap</p>
+          <p>Throws a mine that slides forward and stops. It arms only when an enemy steps inside the ring, then explodes after 0.5 seconds. The owner cannot trigger it. Great for area denial and baiting opponents.</p>
+
+          <p style="margin-top:8px;font-weight:700;">Dash — instant teleport forward</p>
+          <p>Instantly moves your character forward in the direction you're facing. Use it to dodge incoming projectiles or close the gap on your opponent.</p>
+
+          <p style="margin-top:8px;font-weight:700;">Heal Zone — restores 25 HP over 5 seconds</p>
+          <p>Places a green healing circle at your feet. Stand inside it to regenerate health. You can move while healing, but leaving the circle stops the effect.</p>
+
+          <p style="margin-top:8px;font-weight:700;">Reflection — blocks and reflects projectiles for 3 seconds</p>
+          <p>Activates a shield that absorbs or reflects incoming projectiles back at your opponent. Has a 15-second cooldown — use it wisely when you expect a big attack.</p>
+
+          <p style="margin-top:8px;font-weight:700;">Target — 50 damage, homing projectile</p>
+          <p>Fires a slow-moving projectile that tracks your opponent. Deals massive damage if it connects. Hard to dodge at close range.</p>
+
+          <h4 style="font-weight:700;margin-top:14px;margin-bottom:6px;">❤️ Health & Regeneration</h4>
+          <p>You start with 200 HP. If you haven't taken damage for 10 seconds, you slowly regenerate health automatically. Use Heal Zone to speed up recovery mid-fight.</p>
+
+          <h4 style="font-weight:700;margin-top:14px;margin-bottom:6px;">📊 ELO & Ranking</h4>
+          <p>Every player starts at 1000 ELO. You gain ELO for winning and lose ELO for losing. The amount gained or lost depends on the difference between your ELO and your opponent's — beating a higher-ranked player earns more. Sign in to save your ELO permanently. Guests can still earn ELO but it resets when you leave.</p>
+
+          <h4 style="font-weight:700;margin-top:14px;margin-bottom:6px;">🤖 Training Mode</h4>
+          <p>While waiting for an opponent, a "Train" button appears at the bottom of the screen. Click it to fight a bot while you wait. The bot's difficulty scales with your ELO — the higher your rating, the harder it plays. When a real opponent is found, you're automatically moved into the real match.</p>
+
+          <h4 style="font-weight:700;margin-top:14px;margin-bottom:6px;">💡 Tips</h4>
+          <p>• Combo Snowball into Fireball — slow them first, then land the big hit.</p>
+          <p>• Use Dash to dodge, not just to chase. Reacting to a Fireball with a Dash can save your life.</p>
+          <p>• Landmines are best placed in doorways or narrow corridors where your opponent has to walk through.</p>
+          <p>• Impulse + Fireball is a deadly combo — pull them in, then blast them.</p>
+          <p>• Reflection is most powerful when your opponent has just fired a Fireball or Target at you.</p>
+          <p>• Keep moving. A stationary player is easy to hit.</p>
+
         </div>
         <button id="close-help-modal" style="margin-top:16px;width:100%;background:#16a34a;color:#fff;font-weight:700;font-size:1rem;padding:10px;border:2px solid #000;border-radius:5px;cursor:pointer;">Close</button>
       </div>
@@ -1055,6 +1087,10 @@
             break;
           case "status":
             statusDisplay.textContent = e.message;
+            // Hide training prompt as soon as a match is found (countdown starts)
+            if (e.message !== "Waiting for another player...") {
+              document.getElementById("training-prompt").classList.add("hidden");
+            }
             break;
           case "trainingStart":
             gameState.isTraining = true;
@@ -1075,6 +1111,7 @@
             gameState.eliminatedBy = null;
             gameState.killCount = 0;
             document.getElementById("kill-count").textContent = "0";
+            document.getElementById("training-prompt").classList.add("hidden");
             statusDisplay.textContent = "Match found! Get ready...";
             break;
           case "matchStart":
@@ -1323,6 +1360,7 @@
               switchToGameScreen(),
               (gameState.status = "starting"),
               (gameState.killCount = 0),
+              (gameState.eloDelta = 0),
               (document.getElementById("kill-count").textContent = "0"),
               (statusDisplay.textContent = "Waiting for another player..."),
               document.getElementById("training-prompt").classList.remove("hidden"),
@@ -1332,6 +1370,18 @@
               (startButton.disabled = !1),
               (startButton.textContent = "1V1"));
           }
+      }
+      function leaveTraining() {
+        if (!socket || socket.readyState !== WebSocket.OPEN) return;
+        socket.send(JSON.stringify({ type: "stopTraining" }));
+        gameState.isTraining = false;
+        gameState.allPlayers.clear();
+        gameState.projectiles = [];
+        gameState.mines = [];
+        gameState.healingFields = [];
+        document.getElementById("training-prompt").classList.remove("hidden");
+        gameState.status = "starting";
+        statusDisplay.textContent = "Waiting for another player...";
       }
       function leaveGame(t = !0) {
         (("death_screen" !== gameState.status &&
@@ -1976,7 +2026,7 @@
           const eloDeltaWin = gameState.eloDelta || 0;
           ctx.fillStyle = "#86efac";
           ctx.font = "bold 20px sans-serif";
-          ctx.fillText(`+${eloDeltaWin} ELO`, l, c + 70);
+          ctx.fillText(eloDeltaWin !== 0 ? `+${eloDeltaWin} ELO` : "Calculating ELO...", l, c + 70);
           const t =
             mouseX > g && mouseX < g + r && mouseY > m && mouseY < m + d;
           ((ctx.fillStyle = t ? "#16a34a" : "#22c55e"),
@@ -2014,7 +2064,7 @@
           const eloDeltaDeath = gameState.eloDelta || 0;
           ctx.fillStyle = "#fca5a5";
           ctx.font = "bold 20px sans-serif";
-          ctx.fillText(`${eloDeltaDeath} ELO`, l, c + 65);
+          ctx.fillText(eloDeltaDeath !== 0 ? `${eloDeltaDeath} ELO` : "Calculating ELO...", l, c + 65);
           const e =
             mouseX > g && mouseX < g + r && mouseY > m && mouseY < m + d;
           ((ctx.fillStyle = e ? "#16a34a" : "#22c55e"),
@@ -2142,7 +2192,7 @@
       (window.addEventListener("resize", resize),
         resize(),
         startButton.addEventListener("click", startGame),
-        leaveGameBtn.addEventListener("click", () => leaveGame(!0)),
+        leaveGameBtn.addEventListener("click", () => gameState.isTraining ? leaveTraining() : leaveGame(!0)),
         updatesBtn.addEventListener("click", () =>
           updatesModal.classList.remove("hidden"),
         ),
