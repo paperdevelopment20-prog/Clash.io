@@ -33,6 +33,10 @@ const userSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        elo: {
+            type: Number,
+            default: 1000,
+        },
     },
     { timestamps: true },
 );
@@ -41,7 +45,10 @@ const User = mongoose.model("User", userSchema);
 // END OF DATABASE SETUP
 
 // Connect to mongoDB
-connectDB();
+connectDB().then(async () => {
+    // Backfill elo for existing users who don't have it
+    await User.updateMany({ elo: { $exists: false } }, { $set: { elo: 1000 } });
+});
 
 // --- GAME CONSTANTS (MUST MATCH CLIENT) ---
 
@@ -92,7 +99,7 @@ const ALL_ABILITIES = {
     knockback: { name: "Knockback", damage: 0, force: 150, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 3000 },
     impulse:   { name: "Impulse",   damage: 0, force: 150, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 3000 },
     snowball: { name: "Snowball", damage: 10, projSpeed: 4, slowDuration: 1500, cooldown: 3000 },
-    landmine: { name: "Landmine", damage: 25, force: 0, ringRadius: 36, explosionDelay: 3000, projSpeed: 0, duration: 0, cooldown: 3000 },
+    landmine: { name: "Landmine", damage: 25, force: 0, ringRadius: 36, explosionDelay: 500, projSpeed: 0, duration: 0, cooldown: 3000 },
     dash: {
         name: "Dash",
         damage: 0,
@@ -633,9 +640,10 @@ class GameRoom {
                     }
                 }
 
-                // Check if any player (including owner) enters the ring to arm it
+                // Check if any enemy player enters the ring to arm it
                 if (!m.armed) {
                     const triggered = playerList.some(target => {
+                        if (target.id === m.ownerId) return false;
                         const distSq = (m.x - target.x) ** 2 + (m.y - target.y) ** 2;
                         return distSq < m.ringRadius ** 2;
                     });
@@ -750,6 +758,8 @@ class GameRoom {
         // 3. Remove player from the room state
         delete this.players[eliminatedId];
         this.playerCount--;
+        this.lastLoserUsername = eliminatedPlayer.ws.username || null;
+        this.lastLoserWs = eliminatedPlayer.ws;
 
         // 4. Check for game over — keep sending state to dead player's ws for 2s spectate
         if (this.playerCount <= 1) {
@@ -779,12 +789,11 @@ class GameRoom {
         const winner = Object.values(this.players)[0]; // The last remaining player
         const winnerName = winner ? winner.name : "No one";
 
-        // Notify the winner and increment their win count if authenticated
+        // Notify the winner and update ELO for authenticated users
         if (winner) {
-            // Increment wins for authenticated users
-            if (winner.ws.username) {
-                incrementPlayerWins(winner.ws.username);
-            }
+            const winnerUsername = winner.ws.username || null;
+            const loserUsername = this.lastLoserUsername || null;
+            updateElo(winnerUsername, loserUsername, winner.ws, this.lastLoserWs);
 
             winner.ws.send(
                 JSON.stringify({
@@ -856,10 +865,10 @@ app.get("/", (req, res) => {
 // Leaderboard API endpoint
 app.get("/api/leaderboard", async (req, res) => {
     try {
-        const topPlayers = await User.find({ wins: { $gt: 0 } })
-            .sort({ wins: -1 })
+        const topPlayers = await User.find({})
+            .sort({ elo: -1 })
             .limit(10)
-            .select("username wins -_id");
+            .select("username elo wins -_id");
         res.json(topPlayers);
     } catch (error) {
         console.error("Leaderboard fetch error:", error);
@@ -868,18 +877,44 @@ app.get("/api/leaderboard", async (req, res) => {
 });
 
 /**
- * Increments the win count for a player.
+ * Updates ELO for winner and loser using standard K=32 formula.
  */
-async function incrementPlayerWins(username) {
-    if (!username) return;
+async function updateElo(winnerUsername, loserUsername, winnerWs, loserWs) {
+    const K = 32;
     try {
-        await User.findOneAndUpdate(
-            { username: username.toLowerCase() },
-            { $inc: { wins: 1 } },
-        );
-        console.log(`Win recorded for ${username}.`);
+        const [winner, loser] = await Promise.all([
+            winnerUsername ? User.findOne({ username: winnerUsername.toLowerCase() }) : null,
+            loserUsername ? User.findOne({ username: loserUsername.toLowerCase() }) : null,
+        ]);
+        const winnerElo = winner ? (winner.elo || 1000) : 1000;
+        const loserElo = loser ? (loser.elo || 1000) : 1000;
+        const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
+        const expectedLoser = 1 - expectedWinner;
+        const newWinnerElo = Math.round(winnerElo + K * (1 - expectedWinner));
+        const newLoserElo = Math.max(0, Math.round(loserElo + K * (0 - expectedLoser)));
+
+        if (winner) {
+            await User.findOneAndUpdate(
+                { username: winnerUsername.toLowerCase() },
+                { $inc: { wins: 1 }, $set: { elo: newWinnerElo } },
+            );
+        }
+        if (loser) {
+            await User.findOneAndUpdate(
+                { username: loserUsername.toLowerCase() },
+                { $set: { elo: newLoserElo } },
+            );
+        }
+
+        // Notify both players of their new ELO (even guests)
+        if (winnerWs && winnerWs.readyState === 1)
+            winnerWs.send(JSON.stringify({ type: "eloUpdate", elo: newWinnerElo, delta: newWinnerElo - winnerElo }));
+        if (loserWs && loserWs.readyState === 1)
+            loserWs.send(JSON.stringify({ type: "eloUpdate", elo: newLoserElo, delta: newLoserElo - loserElo }));
+
+        console.log(`ELO: ${winnerUsername||"guest"} ${winnerElo}→${newWinnerElo}, ${loserUsername||"guest"} ${loserElo}→${newLoserElo}`);
     } catch (error) {
-        console.error(`Error recording win for ${username}:`, error);
+        console.error("Error updating ELO:", error);
     }
 }
 
@@ -910,8 +945,233 @@ function broadcastOnlineCount() {
 }
 
 /**
- * Finds or creates a suitable 1v1 room.
+ * Training room — player vs bot. Bot difficulty scales with player ELO.
  */
+class TrainingRoom extends GameRoom {
+    constructor(id, playerElo) {
+        super(id);
+        this.isTraining = true;
+        this.botId = -1;
+        this.playerElo = playerElo || 1000;
+        // Difficulty tiers based on ELO
+        if (playerElo >= 1200) this.difficulty = "hard";
+        else if (playerElo >= 1050) this.difficulty = "medium";
+        else this.difficulty = "easy";
+    }
+
+    addBot() {
+        const bot = {
+            id: this.botId,
+            name: "BOT",
+            x: CANVAS_WIDTH / 2,
+            y: 27 * TILE_SIZE,
+            dx: 0, dy: 0,
+            facingAngle: 0,
+            health: MAX_HEALTH,
+            color: "#F7C574",
+            isProtected: false, isReflecting: false,
+            isDashing: false, dashEndTime: 0,
+            isStunned: false, stunEndTime: 0,
+            isSlowed: false, slowEndTime: 0,
+            isImpulsed: false, impulseEndTime: 0,
+            lastDamageTime: Date.now(),
+            loadout: ["fireBall", "whiteBall", "knockback", "dash", "heal"],
+            lastAbilityTime: Array(5).fill(0),
+            input: { dx: 0, dy: 0 },
+            wins: 0,
+            ws: { readyState: -1, send: () => {}, username: null }, // fake ws
+            lastActivityTime: Date.now(),
+            isBot: true,
+        };
+        this.players[this.botId] = bot;
+        this.playerCount++;
+    }
+
+    updateBot() {
+        const bot = this.players[this.botId];
+        if (!bot) return;
+        const realPlayer = Object.values(this.players).find(p => !p.isBot);
+        if (!realPlayer) return;
+
+        const now = Date.now();
+        const dx = realPlayer.x - bot.x;
+        const dy = realPlayer.y - bot.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+        bot.facingAngle = angle;
+
+        // Movement — chase player, keep some distance
+        const { easy: easyDist, medium: medDist, hard: hardDist } = { easy: 120, medium: 80, hard: 50 };
+        const preferredDist = this.difficulty === "hard" ? hardDist : this.difficulty === "medium" ? medDist : easyDist;
+        const speed = this.difficulty === "hard" ? 1.8 : this.difficulty === "medium" ? 1.4 : 1.0;
+
+        if (dist > preferredDist + 20) {
+            bot.input.dx = (dx / dist) * speed;
+            bot.input.dy = (dy / dist) * speed;
+        } else if (dist < preferredDist - 20) {
+            bot.input.dx = -(dx / dist) * speed;
+            bot.input.dy = -(dy / dist) * speed;
+        } else {
+            // Strafe sideways
+            bot.input.dx = -dy / dist * speed * 0.5;
+            bot.input.dy = dx / dist * speed * 0.5;
+        }
+
+        // Shooting — fire abilities based on difficulty
+        const cooldowns = { easy: 2500, medium: 1500, hard: 800 };
+        const cd = cooldowns[this.difficulty];
+        const abilityKeys = ["fireBall", "whiteBall", "knockback"];
+        abilityKeys.forEach((key, i) => {
+            if (now - (bot.lastAbilityTime[i] || 0) > cd && dist < 400) {
+                const ability = ALL_ABILITIES[key];
+                if (!ability) return;
+                bot.lastAbilityTime[i] = now;
+                if (key === "knockback") {
+                    this.projectiles.push({
+                        id: nextPlayerId++, ownerId: bot.id,
+                        x: bot.x, y: bot.y,
+                        dx: Math.cos(angle) * ability.projSpeed,
+                        dy: Math.sin(angle) * ability.projSpeed,
+                        damage: ability.damage, type: "knockback",
+                        isRing: true, ringRadius: ability.ringRadius,
+                        stopped: false, stopAfter: ability.stopAfter,
+                        createdAt: now, lifetime: 2000,
+                    });
+                } else {
+                    this.projectiles.push({
+                        id: nextPlayerId++, ownerId: bot.id,
+                        x: bot.x, y: bot.y,
+                        dx: Math.cos(angle) * ability.projSpeed,
+                        dy: Math.sin(angle) * ability.projSpeed,
+                        damage: ability.damage, type: key,
+                    });
+                }
+            }
+        });
+
+        // Heal when low (medium/hard only)
+        if (this.difficulty !== "easy" && bot.health < 80 && now - (bot.lastAbilityTime[4] || 0) > 5000) {
+            bot.lastAbilityTime[4] = now;
+            this.healingFields.push({
+                ownerId: bot.id, x: bot.x, y: bot.y,
+                radius: ALL_ABILITIES.heal.radius,
+                startTime: now, duration: ALL_ABILITIES.heal.duration,
+                color: bot.color,
+            });
+        }
+    }
+
+    updateGameState() {
+        if (this.gameStatus === "lobby") return;
+        const now = Date.now();
+        const playerList = Object.values(this.players);
+
+        this.updateBot(); // Set bot input before position update
+        playerList.forEach(player => {
+            this.updatePlayerPosition(player);
+            if (now > player.lastDamageTime + REGEN_DELAY)
+                player.health = Math.min(MAX_HEALTH, player.health + REGEN_AMOUNT);
+        });
+
+        this.updateProjectiles();
+        this.updateMines();
+        this.updateHealingFields();
+        this.broadcastState();
+    }
+
+    // Override handleElimination — if real player dies, restart immediately
+    handleElimination(eliminatedId, killerId) {
+        if (eliminatedId === this.botId) {
+            // Bot died — respawn it
+            const bot = this.players[this.botId];
+            if (bot) {
+                bot.health = MAX_HEALTH;
+                bot.x = CANVAS_WIDTH / 2;
+                bot.y = 27 * TILE_SIZE;
+            }
+            return;
+        }
+        // Real player died — restart training
+        const player = this.players[eliminatedId];
+        if (player) {
+            player.health = MAX_HEALTH;
+            player.x = CANVAS_WIDTH / 2;
+            player.y = 2 * TILE_SIZE;
+            if (player.ws && player.ws.readyState === ws.OPEN)
+                player.ws.send(JSON.stringify({ type: "trainingRestart" }));
+        }
+    }
+
+    broadcastState() {
+        const bot = this.players[this.botId];
+        const stateMsg = {
+            type: "state",
+            players: Object.values(this.players).filter(p => !p.isBot).map(p => ({
+                id: p.id, name: p.name, x: p.x, y: p.y,
+                facingAngle: p.facingAngle, health: p.health, color: p.color,
+                isProtected: p.isProtected, isReflecting: p.isReflecting,
+                isDashing: p.isDashing, isStunned: p.isStunned,
+                isImpulsed: p.isImpulsed, lastAbilityTime: p.lastAbilityTime,
+                roomId: this.id, wins: p.wins || 0,
+            })).concat(bot ? [{
+                id: bot.id, name: bot.name, x: bot.x, y: bot.y,
+                facingAngle: bot.facingAngle, health: bot.health, color: bot.color,
+                isProtected: false, isReflecting: false, isDashing: false,
+                isStunned: false, isImpulsed: false, lastAbilityTime: bot.lastAbilityTime,
+                roomId: this.id, wins: 0,
+            }] : []),
+            projectiles: this.projectiles.map(p => ({ ...p, abilityType: p.type })),
+            mines: this.mines,
+            healingFields: this.healingFields.map(f => ({ x: f.x, y: f.y, radius: f.radius, color: f.color })),
+            status: this.gameStatus,
+        };
+        Object.values(this.players).filter(p => !p.isBot).forEach(p => {
+            if (p.ws && p.ws.readyState === ws.OPEN)
+                p.ws.send(JSON.stringify(stateMsg));
+        });
+    }
+}
+
+const trainingRooms = {};
+
+function startTraining(playerWs, playerName, loadout, playerElo) {
+    // Clean up any existing training room for this player
+    if (playerWs.trainingRoomId && trainingRooms[playerWs.trainingRoomId]) {
+        const old = trainingRooms[playerWs.trainingRoomId];
+        delete old.players[playerWs.playerId];
+        clearInterval(old.gameInterval);
+        delete trainingRooms[playerWs.trainingRoomId];
+    }
+
+    const room = new TrainingRoom(nextRoomId++, playerElo);
+    trainingRooms[room.id] = room;
+    playerWs.trainingRoomId = room.id;
+
+    const player = createPlayer(playerWs.playerId, playerName, loadout, playerWs);
+    player.x = CANVAS_WIDTH / 2;
+    player.y = 2 * TILE_SIZE;
+    room.players[player.id] = player;
+    room.playerCount++;
+    room.addBot();
+    room.gameStatus = "playing";
+    room.startGameLoop();
+
+    playerWs.send(JSON.stringify({ type: "trainingStart" }));
+}
+
+function endTraining(playerWs) {
+    if (!playerWs.trainingRoomId) return;
+    const room = trainingRooms[playerWs.trainingRoomId];
+    if (room) {
+        clearInterval(room.gameInterval);
+        room.gameInterval = null;
+        room.gameStatus = "finished";
+        delete trainingRooms[playerWs.trainingRoomId];
+    }
+    playerWs.trainingRoomId = null;
+}
+
+
 function findOrCreateRoom() {
     // Look for an existing room that needs 1 more player, and is not currently starting
     for (const id in gameRooms) {
@@ -974,6 +1234,7 @@ async function handleAuthRequest(data, ws) {
                     type: "authSuccess",
                     name: newUser.username,
                     loadout: newUser.loadout,
+                    elo: newUser.elo || 1000,
                 }),
             );
         } catch (error) {
@@ -996,6 +1257,7 @@ async function handleAuthRequest(data, ws) {
                         type: "authSuccess",
                         name: user.username,
                         loadout: user.loadout,
+                        elo: user.elo || 1000,
                     }),
                 );
             } else {
@@ -1120,6 +1382,17 @@ wss.on("connection", (ws) => {
             return;
         }
 
+        if (data.type === "startTraining") {
+            const playerName = data.name ? data.name.trim() : "Anonymous";
+            startTraining(ws, playerName, data.loadout || [], data.elo || 1000);
+            return;
+        }
+
+        if (data.type === "stopTraining") {
+            endTraining(ws);
+            return;
+        }
+
         if (data.type === "joinGame") {
             // MODIFIED: Changed from 'join' to 'joinGame'
             const playerName = data.name ? data.name.trim() : "Anonymous";
@@ -1168,11 +1441,32 @@ wss.on("connection", (ws) => {
 
             room.addPlayer(newPlayer);
             console.log(`Player ${playerName} joined Room ${room.id}.`);
+
+            // If this room now has 2 players, notify any training player to return
+            if (room.playerCount === 2) {
+                Object.values(room.players).forEach(p => {
+                    if (p.ws && p.ws.trainingRoomId && p.ws.readyState === ws.OPEN) {
+                        endTraining(p.ws);
+                        p.ws.send(JSON.stringify({ type: "matchFound" }));
+                    }
+                });
+            }
+
             broadcastOnlineCount();
             return;
         }
 
         // --- In-Game Logic (Requires player to be in a room) ---
+
+        // Route to training room if player is in training (either no real room, or not yet in real room)
+        if (ws.trainingRoomId && trainingRooms[ws.trainingRoomId]) {
+            const tRoom = trainingRooms[ws.trainingRoomId];
+            if (tRoom.players[playerId]) {
+                room = tRoom;
+            }
+        }
+
+        if (!room && ws.roomId) room = gameRooms[ws.roomId];
 
         if (!room || !room.players[playerId]) return;
 
@@ -1360,7 +1654,7 @@ wss.on("connection", (ws) => {
                         Math.min(CANVAS_HEIGHT - PLAYER_SIZE, player.y),
                     );
                     player.isDashing = true;
-                    player.dashEndTime = Date.now() + ability.duration;
+                    player.dashEndTime = Date.now() + 200;
                 } else if (abilityKey === "heal") {
                     room.healingFields.push({
                         ownerId: playerId,
