@@ -181,6 +181,7 @@ function createPlayer(id, name, loadout, ws) {
         lastAbilityTime: Array(loadout.length).fill(0),
         input: { dx: 0, dy: 0 },
         wins: 0,
+        elo: 1000,
         ws: ws, // Store the WebSocket object for broadcasting
         lastActivityTime: Date.now(), // NEW: Initialize activity time
     };
@@ -775,6 +776,7 @@ class GameRoom {
         this.playerCount--;
         this.lastLoserUsername = eliminatedPlayer.ws.username || null;
         this.lastLoserWs = eliminatedPlayer.ws;
+        this.lastLoserElo = eliminatedPlayer.elo || 1000;
 
         // 4. Check for game over — keep sending state to dead player's ws for 2s spectate
         if (this.playerCount <= 1) {
@@ -809,7 +811,7 @@ class GameRoom {
             const winnerUsername = winner.ws.username || null;
             const loserUsername = this.lastLoserUsername || null;
             // Update ELO first (async), then send gameOver after a short delay so eloUpdate arrives first
-            updateElo(winnerUsername, loserUsername, winner.ws, this.lastLoserWs).then(() => {
+            updateElo(winnerUsername, loserUsername, winner.ws, this.lastLoserWs, winner.elo || 1000, this.lastLoserElo || 1000).then(() => {
                 if (winner.ws && winner.ws.readyState === 1)
                     winner.ws.send(JSON.stringify({ type: "gameOver", winnerName: winnerName }));
             });
@@ -884,18 +886,20 @@ app.get("/", (req, res) => {
 /**
  * Updates ELO for winner and loser using standard K=32 formula.
  */
-async function updateElo(winnerUsername, loserUsername, winnerWs, loserWs) {
+async function updateElo(winnerUsername, loserUsername, winnerWs, loserWs, winnerCurrentElo, loserCurrentElo) {
     const K = 32;
     try {
         const [winnerDoc, loserDoc] = await Promise.all([
             winnerUsername ? User.findOne({ username: winnerUsername.toLowerCase() }) : null,
             loserUsername ? User.findOne({ username: loserUsername.toLowerCase() }) : null,
         ]);
-        const winnerElo = winnerDoc ? (winnerDoc.elo || 1000) : 1000;
-        const loserElo = loserDoc ? (loserDoc.elo || 1000) : 1000;
+        // Use DB elo if available, fall back to passed-in current elo, then 1000
+        const winnerElo = winnerDoc ? (winnerDoc.elo || 1000) : (winnerCurrentElo || 1000);
+        const loserElo = loserDoc ? (loserDoc.elo || 1000) : (loserCurrentElo || 1000);
         const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
+        const expectedLoser = 1 - expectedWinner;
         const newWinnerElo = Math.round(winnerElo + K * (1 - expectedWinner));
-        const newLoserElo = Math.max(0, Math.round(loserElo + K * (0 - (1 - expectedWinner))));
+        const newLoserElo = Math.max(0, Math.round(loserElo + K * (0 - expectedLoser)));
         const winnerDelta = newWinnerElo - winnerElo;
         const loserDelta = newLoserElo - loserElo;
 
@@ -912,7 +916,6 @@ async function updateElo(winnerUsername, loserUsername, winnerWs, loserWs) {
             );
         }
 
-        // Notify both players — check readyState at send time
         if (winnerWs && winnerWs.readyState === 1)
             winnerWs.send(JSON.stringify({ type: "eloUpdate", elo: newWinnerElo, delta: winnerDelta }));
         if (loserWs && loserWs.readyState === 1)
@@ -1471,6 +1474,7 @@ wss.on("connection", (ws) => {
                     .then((user) => {
                         if (user) {
                             newPlayer.wins = user.wins || 0;
+                            newPlayer.elo = user.elo || 1000;
                         }
                         room.broadcastState();
                     })
