@@ -571,13 +571,44 @@
           <button id="start-button">1v1</button>
         </div>
         <div class="loadout-wrapper">
-          <div style="position:relative;display:inline-flex;align-items:center;">
+          <div style="position:relative;display:flex;justify-content:center;align-items:center;width:100%;">
             <div id="arrow-loadout" style="position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%);animation:bounceRight 1s ease-in-out infinite;pointer-events:none;z-index:60;">
               <div style="background:rgba(13,66,38,0.92);border:2px solid #000;color:#fff;font-size:0.7rem;font-weight:700;padding:6px 14px 6px 10px;border-radius:6px;white-space:nowrap;clip-path:polygon(0% 0%,85% 0%,100% 50%,85% 100%,0% 100%);">Edit your loadout</div>
             </div>
             <div id="menu-loadout" class="flex justify-center"></div>
+            <!-- Skin selector — same row, pushed right -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-left:48px;margin-top:24px;position:absolute;right:-80px;">
+              <div id="skin-preview-btn" onclick="openSkinModal()" class="menu-loadout-slot" style="background:#111;border:2px solid #000;cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;outline:2px solid #999;outline-offset:3px;">
+                <canvas id="skin-preview-canvas" width="60" height="60" style="display:block;width:60px;height:60px;"></canvas>
+              </div>
+              <span style="font-size:0.65rem;font-weight:800;color:#000;">SKIN</span>
+            </div>
           </div>
         </div>
+      </div>
+    </div>
+    <div id="skin-modal" class="modal hidden">
+      <div class="bg-gray-800 p-4 rounded-lg shadow-xl w-full max-w-sm border-4 border-black relative text-white">
+        <h3 class="text-3xl font-bold mb-4 text-gray-400 text-center">Select Skin</h3>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;justify-items:center;">
+          <!-- Default skin -->
+          <div onclick="selectSkin('default')" id="skincard-default" style="width:80px;height:80px;border-radius:10px;border:3px solid #fcd34d;background:#1a1a2e;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;transition:all 0.1s;">
+            <svg width="70" height="56" viewBox="0 0 70 56">
+              <!-- hands -->
+              <circle cx="7" cy="28" r="6" fill="#F7C574" stroke="#000" stroke-width="1.5"/>
+              <circle cx="63" cy="28" r="6" fill="#F7C574" stroke="#000" stroke-width="1.5"/>
+              <!-- body -->
+              <circle cx="35" cy="28" r="18" fill="#F7C574" stroke="#000" stroke-width="2"/>
+            </svg>
+            <span style="font-size:0.6rem;font-weight:700;color:#fff;text-shadow:0 1px 2px #000;">Default</span>
+          </div>
+          <!-- Galaxy skin (skin.svg) -->
+          <div onclick="selectSkin('galaxy')" id="skincard-galaxy" style="width:80px;height:80px;border-radius:10px;border:2px solid #555;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;background:#0a0014;transition:all 0.1s;outline:2px solid #999;outline-offset:3px;">
+            <img src="/skin.svg" width="60" height="60" style="display:block;"/>
+            <span style="font-size:0.6rem;font-weight:700;color:#fff;">Galaxy</span>
+          </div>
+        </div>
+        <button onclick="document.getElementById('skin-modal').classList.add('hidden')" class="absolute top-0 right-0 p-2 bg-red-600 hover:bg-red-700 text-white font-black text-lg border-2 border-black w-10 h-10 flex items-center justify-center">X</button>
       </div>
     </div>
     <div id="ability-modal" class="modal hidden">
@@ -642,11 +673,29 @@
       </div>
     </div>
     <div id="updates-modal" class="modal hidden">
-      <div style="width:420px;background:#fff;border:3px solid #000;border-radius:8px;padding:20px;">
+      <div style="width:440px;background:#fff;border:3px solid #000;border-radius:8px;padding:20px;">
         <h3 style="font-size:1.4rem;font-weight:800;text-align:center;margin-bottom:16px;">Game Updates</h3>
-        <div style="overflow-y:auto;max-height:200px;font-size:1rem;color:#374151;line-height:1.8;">
+        <div style="overflow-y:auto;max-height:340px;font-size:0.88rem;color:#374151;line-height:1.9;">
           <p><strong>Mar 20</strong> &bull; Initial Release</p>
-          <p><strong>Mar 21</strong> &bull; Fixed Fireball and Snowball Visuals</p>
+          <p><strong>Mar 21</strong> &bull; Fixed Fireball and Snowball visuals</p>
+          <p><strong>Mar 22</strong> &bull; Added Dash ability — instant forward teleport</p>
+          <p><strong>Mar 22</strong> &bull; Added Landmine — proximity trap with 0.5s countdown</p>
+          <p><strong>Mar 23</strong> &bull; Dash trail now stays at origin instead of following player</p>
+          <p><strong>Mar 23</strong> &bull; Landmine only arms when an enemy enters the ring</p>
+          <p><strong>Mar 24</strong> &bull; Added ELO ranking system — all players start at 1000</p>
+          <p><strong>Mar 24</strong> &bull; ELO badge shown on menu, updates after every match</p>
+          <p><strong>Mar 24</strong> &bull; Win/death screens now show ELO gained or lost</p>
+          <p><strong>Mar 25</strong> &bull; Added Training Mode — fight a bot while waiting for a match</p>
+          <p><strong>Mar 25</strong> &bull; Bot difficulty scales with your ELO</p>
+          <p><strong>Mar 25</strong> &bull; Leave training anytime to return to the queue</p>
+          <p><strong>Mar 26</strong> &bull; Added 3 new maps — Crossroads, Open Arena, Channels</p>
+          <p><strong>Mar 26</strong> &bull; Maps are randomly selected each match</p>
+          <p><strong>Mar 27</strong> &bull; Performance improvements — faster game loop, less memory usage</p>
+          <p><strong>Mar 27</strong> &bull; Gzip compression added for faster load times</p>
+          <p><strong>Mar 28</strong> &bull; Updated Help page with accurate ability descriptions and tips</p>
+          <p><strong>Mar 28</strong> &bull; Added onboarding arrows for new players</p>
+          <p><strong>Mar 29</strong> &bull; Removed leaderboard</p>
+          <p><strong>Mar 29</strong> &bull; Player display name now uses the name input, not account username</p>
         </div>
         <button id="close-updates-modal" style="margin-top:16px;width:100%;background:#16a34a;color:#fff;font-weight:700;font-size:1rem;padding:10px;border:2px solid #000;border-radius:5px;cursor:pointer;">Close</button>
       </div>
@@ -840,7 +889,10 @@
         MAX_HEALTH = 200,
         PROJECTILE_RADIUS = 5,
         ABILITY_COOLDOWN = 800,
-        MOVEMENT_DEADZONE_SQ = 100,
+        SKINS = {
+          default: { name: "Default", color: "#F7C574", handColor: "#F7C574", galaxy: false },
+          galaxy: { name: "Galaxy", color: "#1a0533", handColor: "#a855f7", galaxy: true },
+        },
         MAP_BARRIERS = [
           [0, 0, 45, 1],
           [0, 29, 45, 1],
@@ -956,6 +1008,7 @@
           elo: 1000,
           eloDelta: 0,
           isTraining: false,
+          selectedSkin: "default",
           eliminatedBy: null,
           continueButtonArea: null,
           dyingPlayer: null,
@@ -1492,9 +1545,9 @@
       }
       function drawBarriers(camX, camY) {
         const drawTile = (tx, ty) => {
-          ctx.fillStyle = "#0d4226";
+          ctx.fillStyle = "rgba(13, 66, 38, 0.55)";
           ctx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-          ctx.strokeStyle = "rgba(0,0,0,0.15)";
+          ctx.strokeStyle = "rgba(0,0,0,0.1)";
           ctx.lineWidth = 1;
           ctx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
         };
@@ -1509,8 +1562,12 @@
         const extraTiles = 20;
         const drawExtraTiles = (startCol, startRow, cols, rows) => {
           for (let r = startRow; r < startRow + rows; r++)
-            for (let c = startCol; c < startCol + cols; c++)
+            for (let c = startCol; c < startCol + cols; c++) {
+              // Draw green base first so transparency looks consistent
+              ctx.fillStyle = "#2ad676";
+              ctx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
               drawTile(c * TILE_SIZE, r * TILE_SIZE);
+            }
         };
 
         drawExtraTiles(-extraTiles, -extraTiles, TILES_X + extraTiles * 2, extraTiles);
@@ -1518,13 +1575,73 @@
         drawExtraTiles(-extraTiles, 0, extraTiles, TILES_Y);
         drawExtraTiles(TILES_X, 0, extraTiles, TILES_Y);
       }
+      function openSkinModal() {
+        document.getElementById("skin-modal").classList.remove("hidden");
+      }
+
+      const GALAXY_SVG = `<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="gp" cx="60%" cy="35%" r="70%"><stop offset="0%" stop-color="#e040fb"/><stop offset="40%" stop-color="#7c3aed"/><stop offset="75%" stop-color="#1e3a8a"/><stop offset="100%" stop-color="#0d9488"/></radialGradient></defs><circle cx="30" cy="30" r="26" fill="url(#gp)"/><circle cx="18" cy="14" r="1.5" fill="white" opacity="0.9"/><circle cx="38" cy="12" r="1" fill="white" opacity="0.8"/><circle cx="44" cy="26" r="1" fill="white" opacity="0.7"/><circle cx="12" cy="32" r="2" fill="white" opacity="0.9"/><circle cx="42" cy="40" r="1.5" fill="white" opacity="0.7"/><circle cx="24" cy="44" r="1" fill="white" opacity="0.8"/><circle cx="20" cy="38" r="1.5" fill="white" opacity="0.7"/><path d="M30 20 L31.5 28.5 L40 30 L31.5 31.5 L30 40 L28.5 31.5 L20 30 L28.5 28.5 Z" fill="white"/></svg>`;
+
+      const GALAXY_BODY_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="gb" cx="75%" cy="20%" r="110%"><stop offset="0%" stop-color="#e8008a"/><stop offset="30%" stop-color="#8b0fa8"/><stop offset="60%" stop-color="#2a1275"/><stop offset="100%" stop-color="#0a7ea4"/></radialGradient><clipPath id="gc"><circle cx="50" cy="50" r="49"/></clipPath></defs><circle cx="50" cy="50" r="49" fill="url(#gb)"/><g clip-path="url(#gc)"><circle cx="27" cy="18" r="2.2" fill="#dde8ff" opacity="0.85"/><circle cx="44" cy="13" r="1.4" fill="#dde8ff" opacity="0.75"/><circle cx="20" cy="32" r="4.5" fill="#dde8ff" opacity="0.88"/><circle cx="33" cy="27" r="1.8" fill="#dde8ff" opacity="0.7"/><circle cx="56" cy="22" r="1.4" fill="#dde8ff" opacity="0.72"/><circle cx="65" cy="35" r="1.6" fill="#dde8ff" opacity="0.65"/><circle cx="30" cy="45" r="4.2" fill="#dde8ff" opacity="0.85"/><circle cx="48" cy="44" r="4.0" fill="#dde8ff" opacity="0.82"/><circle cx="18" cy="52" r="5.5" fill="#dde8ff" opacity="0.9"/><circle cx="60" cy="50" r="1.8" fill="#dde8ff" opacity="0.65"/><circle cx="36" cy="58" r="1.6" fill="#dde8ff" opacity="0.68"/><circle cx="50" cy="60" r="1.5" fill="#dde8ff" opacity="0.65"/><circle cx="28" cy="65" r="1.4" fill="#dde8ff" opacity="0.6"/><circle cx="42" cy="70" r="1.8" fill="#dde8ff" opacity="0.62"/><path d="M42 24 L44.5 36 L57 38 L44.5 40 L42 52 L39.5 40 L27 38 L39.5 36 Z" fill="white"/></g></svg>`;
+
+      const GALAXY_HAND_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="gh" cx="75%" cy="20%" r="110%"><stop offset="0%" stop-color="#e8008a"/><stop offset="30%" stop-color="#8b0fa8"/><stop offset="60%" stop-color="#2a1275"/><stop offset="100%" stop-color="#0a7ea4"/></radialGradient><clipPath id="ghc"><circle cx="50" cy="50" r="49"/></clipPath></defs><circle cx="50" cy="50" r="49" fill="url(#gh)" stroke="#7c3aed" stroke-width="3"/><g clip-path="url(#ghc)"><circle cx="35" cy="32" r="4" fill="#dde8ff" opacity="0.4"/><circle cx="60" cy="42" r="3" fill="#dde8ff" opacity="0.3"/><circle cx="44" cy="64" r="3" fill="#dde8ff" opacity="0.35"/></g></svg>`;
+
+      // Pre-load SVG images for canvas rendering
+      const _galaxyBodyImg = new Image();
+      _galaxyBodyImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(GALAXY_BODY_SVG);
+      const _galaxyHandImg = new Image();
+      _galaxyHandImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(GALAXY_HAND_SVG);
+
+      // skin.svg — preloaded for in-game use
+      const _skinBodyImg = new Image();
+      _skinBodyImg.src = '/skin.svg';
+      // Hand SVG matching skin.svg gradients
+      const SKIN_HAND_SVG = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 100 100"><defs><linearGradient id="sh_b"><stop offset="0" style="stop-color:#e21a89;stop-opacity:1"/><stop offset="1" style="stop-color:#000;stop-opacity:0"/></linearGradient><linearGradient id="sh_a"><stop offset="0" style="stop-color:#2aaabe;stop-opacity:1"/><stop offset="1" style="stop-color:#0d2f3b;stop-opacity:0"/></linearGradient><linearGradient xlink:href="#sh_b" id="sh_c" x1="80%" x2="20%" y1="0%" y2="80%" gradientUnits="objectBoundingBox"/><radialGradient xlink:href="#sh_a" id="sh_d" cx="40%" cy="90%" r="80%" gradientUnits="objectBoundingBox"/></defs><circle cx="50" cy="50" r="48" style="fill:#14146c"/><circle cx="50" cy="50" r="48" style="fill:url(#sh_c)"/><circle cx="50" cy="50" r="48" style="fill:url(#sh_d)"/><circle cx="52" cy="46" r="5" style="fill:#dee3f7;fill-opacity:0.8"/><circle cx="34" cy="34" r="3.5" style="fill:#dee3f7;fill-opacity:0.6"/><circle cx="64" cy="60" r="3" style="fill:#dee3f7;fill-opacity:0.55"/></svg>`;
+      const _skinHandImg = new Image();
+      _skinHandImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(SKIN_HAND_SVG);
+
+      function drawSkinPreview(name) {
+        const c = document.getElementById("skin-preview-canvas");
+        if (!c) return;
+        const x = c.getContext("2d");
+        const W = 60, H = 60;
+        const cx = W / 2, cy = H / 2, r = 17;
+        x.clearRect(0, 0, W, H);
+        x.fillStyle = name === "galaxy" ? "#0a0014" : "#1a1a2e";
+        x.fillRect(0, 0, W, H);
+        if (name === "galaxy") {
+          const hr = 5, hd = r + hr + 1;
+          [[cx - hd, cy], [cx + hd, cy]].forEach(([hx, hy]) => {
+            x.drawImage(_skinHandImg, hx - hr, hy - hr, hr*2, hr*2);
+          });
+          x.drawImage(_skinBodyImg, cx - r, cy - r, r*2, r*2);
+        } else {
+          x.beginPath(); x.arc(cx, cy, r, 0, 2*Math.PI);
+          x.fillStyle = "#F7C574"; x.fill();
+          x.strokeStyle = "#000"; x.lineWidth = 2; x.stroke();
+          [[cx-r-5, cy], [cx+r+5, cy]].forEach(([hx, hy]) => {
+            x.beginPath(); x.arc(hx, hy, 5, 0, 2*Math.PI);
+            x.fillStyle = "#F7C574"; x.fill();
+            x.strokeStyle = "#000"; x.lineWidth = 1.5; x.stroke();
+          });
+        }
+      }
+
+      function selectSkin(name) {
+        gameState.selectedSkin = name;
+        drawSkinPreview(name);
+        document.getElementById("skincard-default").style.border = name === "default" ? "3px solid #fcd34d" : "2px solid #555";
+        document.getElementById("skincard-galaxy").style.border = name === "galaxy" ? "3px solid #2aaabe" : "2px solid #555";
+        document.getElementById("skin-modal").classList.add("hidden");
+      }
+
       function drawPlayer(t, e) {
+        const isGalaxy = e && gameState.selectedSkin === "galaxy";
+        const bodyColor = isGalaxy ? null : t.color;
+        const handColor = t.color;
         (void 0 === t.renderX && ((t.renderX = t.x), (t.renderY = t.y)),
           (t.renderX += 0.25 * (t.x - t.renderX)),
           (t.renderY += 0.25 * (t.y - t.renderY)));
-        const a = t.renderX,
-          n = t.renderY,
-          l = 10;
+        const a = t.renderX, n = t.renderY, l = 10;
         if (t.isProtected) {
           const e = t.isReflecting
             ? "rgba(252, 211, 77, 0.5)"
@@ -1563,50 +1680,48 @@
               ctx.stroke());
           }
         }
-        (ctx.beginPath(),
-          ctx.arc(a, n, l, 0, 2 * Math.PI),
-          (ctx.fillStyle = t.color),
-          ctx.fill(),
-          (ctx.strokeStyle = "black"),
-          (ctx.lineWidth = 1.5),
-          ctx.stroke(),
-          (ctx.font = "bold 10px Arial"),
-          (ctx.textAlign = "center"),
-          (ctx.fillStyle = "white"),
-          (ctx.strokeStyle = "black"),
-          (ctx.lineWidth = 2),
-          ctx.strokeText(t.name, a, n + l + 15),
-          ctx.fillText(t.name, a, n + l + 15));
+        ctx.beginPath();
+        ctx.arc(a, n, l, 0, 2 * Math.PI);
+        if (!isGalaxy) {
+          ctx.fillStyle = bodyColor;
+          ctx.fill();
+          ctx.strokeStyle = "black";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = "transparent"; ctx.fill();
+          ctx.drawImage(_skinBodyImg, a - l, n - l, l*2, l*2);
+          ctx.strokeStyle = "black";
+          ctx.lineWidth = 0.25;
+          ctx.stroke();
+        }
+        ctx.font = "bold 10px Arial";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "white";
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 2;
+        ctx.strokeText(t.name, a, n + l + 15);
+        ctx.fillText(t.name, a, n + l + 15);
         const o = (t.id === myPlayerId) && (Date.now() - gameState.lastAbilityUseTime < 200),
           i = t.isDashing || o ? 25 : 13;
         let s = t.facingAngle || 0;
         const c = Math.PI / 3.5;
-        (ctx.beginPath(),
-          ctx.arc(
-            a + i * Math.cos(s + c),
-            n + i * Math.sin(s + c),
-            4,
-            0,
-            2 * Math.PI,
-          ),
-          (ctx.fillStyle = t.color),
-          ctx.fill(),
-          (ctx.strokeStyle = "black"),
-          (ctx.lineWidth = 1),
-          ctx.stroke(),
-          ctx.beginPath(),
-          ctx.arc(
-            a + i * Math.cos(s - c),
-            n + i * Math.sin(s - c),
-            4,
-            0,
-            2 * Math.PI,
-          ),
-          (ctx.fillStyle = t.color),
-          ctx.fill(),
-          (ctx.strokeStyle = "black"),
-          (ctx.lineWidth = 1),
-          ctx.stroke());
+        // Draw hands
+        [[s + c], [s - c]].forEach(([angle]) => {
+          const hx = a + i * Math.cos(angle);
+          const hy = n + i * Math.sin(angle);
+          if (isGalaxy) {
+            ctx.drawImage(_skinHandImg, hx - 4, hy - 4, 8, 8);
+          } else {
+            ctx.beginPath();
+            ctx.arc(hx, hy, 4, 0, 2 * Math.PI);
+            ctx.fillStyle = handColor;
+            ctx.fill();
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        });
         const r = a - 12.5,
           d = n - l - 8;
         ((ctx.fillStyle = "#ef4444"),
@@ -1617,6 +1732,7 @@
           (ctx.lineWidth = 0.75),
           ctx.strokeRect(r, d, 25, 4));
       }
+
       function drawDashTrailAndRings() {
         for (const t of dashTrail) {
           const e = 1 - t.age / 80,
@@ -2482,6 +2598,7 @@
           requestAnimationFrame(renderLoop));
       }
       (renderMenuLoadoutSlots(),
+        drawSkinPreview("default"),
         renderHotbar(),
         requestAnimationFrame(renderLoop),
         setInterval(() => {
