@@ -181,7 +181,7 @@ function createPlayer(id, name, loadout, ws) {
         lastAbilityTime: Array(loadout.length).fill(0),
         input: { dx: 0, dy: 0 },
         wins: 0,
-        elo: 1000,
+        elo: ws.guestElo || 1000,
         ws: ws, // Store the WebSocket object for broadcasting
         lastActivityTime: Date.now(), // NEW: Initialize activity time
     };
@@ -229,6 +229,17 @@ class GameRoom {
         this.countdownInterval = null;
         this.isStarting = false;
 
+        // Poison gas properties
+        this.matchStartTime = null;
+        this.poisonGasActive = false;
+        this.poisonGasRadius = CANVAS_WIDTH / 2; // Start at full map
+        this.poisonGasCenter = { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 };
+        this.poisonGasDamageInterval = 500; // Damage every 500ms
+        this.lastPoisonGasDamageTime = 0;
+        
+        // Track if a player left early (for ELO calculation)
+        this.playerLeftEarly = false;
+
         console.log(`Room ${this.id} created with map ${this.mapIndex}.`);
     }
 
@@ -263,6 +274,36 @@ class GameRoom {
     removePlayer(playerId) {
         const player = this.players[playerId];
         if (!player) return;
+
+        // If game is in progress and player leaves EARLY (not from normal game end), they lose ELO
+        // Check if there's still an opponent (meaning this is an early leave, not a normal game end)
+        const hasOpponent = this.playerCount > 1;
+        
+        if (this.gameStatus === "playing" && hasOpponent && player.ws) {
+            const K = 32;
+            const leaverElo = player.elo || 1000;
+            // Penalty for leaving: lose 50% of K factor (16 ELO)
+            const newLeaverElo = Math.round(leaverElo - K / 2);
+            
+            // For registered players, update database
+            if (player.ws.username) {
+                User.findOneAndUpdate(
+                    { username: player.ws.username.toLowerCase() },
+                    { $set: { elo: newLeaverElo } },
+                ).catch(err => console.error("Error updating leaver ELO:", err));
+            }
+            
+            // For guest players, update websocket ELO
+            player.ws.guestElo = newLeaverElo;
+            
+            console.log(`Player ${player.name} left during game. ELO: ${leaverElo} → ${newLeaverElo} (-16)`);
+            
+            // Update lastLoserElo so endGame uses the correct ELO
+            this.lastLoserElo = newLeaverElo;
+            this.lastLoserWs = player.ws;
+            this.lastLoserUsername = player.ws.username || null;
+            this.playerLeftEarly = true;
+        }
 
         delete this.players[playerId];
         this.playerCount--;
@@ -351,6 +392,7 @@ class GameRoom {
                     this.countdownInterval = null;
                     this.isStarting = false;
                     this.gameStatus = "playing"; // Set room status to playing (game loop already running)
+                    this.matchStartTime = Date.now(); // Record match start time
                     this.broadcast({ type: "matchStart" });
                     console.log(`Room ${this.id} match started.`);
                 }
@@ -392,6 +434,15 @@ class GameRoom {
             healingFields: this.healingFields.map((f) => ({ x: f.x, y: f.y, radius: f.radius, color: f.color })),
             status: this.gameStatus,
             mapIndex: this.mapIndex,
+            poisonGas: this.poisonGasActive ? {
+                active: true,
+                centerX: this.poisonGasCenter.x,
+                centerY: this.poisonGasCenter.y,
+                radius: this.poisonGasRadius,
+            } : { active: false },
+            // Send numeric state for client (2 = InProgress, 3 = Gas)
+            state: this.poisonGasActive ? 3 : 2,
+            timeLeft: this.poisonGasActive ? Math.max(0, this.poisonGasRadius) : null,
         });
         if (targetWs && targetWs.readyState === ws.OPEN) targetWs.send(stateMessage);
     }
@@ -429,6 +480,15 @@ class GameRoom {
             })),
             status: this.gameStatus,
             mapIndex: this.mapIndex,
+            poisonGas: this.poisonGasActive ? {
+                active: true,
+                centerX: this.poisonGasCenter.x,
+                centerY: this.poisonGasCenter.y,
+                radius: this.poisonGasRadius,
+            } : { active: false },
+            // Send numeric state for client (2 = InProgress, 3 = Gas)
+            state: this.poisonGasActive ? 3 : 2,
+            timeLeft: this.poisonGasActive ? Math.max(0, this.poisonGasRadius) : null,
         };
         this.broadcast(stateMessage);
     }
@@ -810,11 +870,21 @@ class GameRoom {
         if (winner) {
             const winnerUsername = winner.ws.username || null;
             const loserUsername = this.lastLoserUsername || null;
-            // Update ELO first (async), then send gameOver after a short delay so eloUpdate arrives first
-            updateElo(winnerUsername, loserUsername, winner.ws, this.lastLoserWs, winner.elo || 1000, this.lastLoserElo || 1000).then(() => {
+            
+            // Only call updateElo if a player didn't leave early
+            // If a player left early, the ELO penalty was already applied in removePlayer
+            if (!this.playerLeftEarly) {
+                // Update ELO first (async), then send gameOver after a short delay so eloUpdate arrives first
+                updateElo(winnerUsername, loserUsername, winner.ws, this.lastLoserWs, winner.elo || 1000, this.lastLoserElo || 1000).then(() => {
+                    if (winner.ws && winner.ws.readyState === 1)
+                        winner.ws.send(JSON.stringify({ type: "gameOver", winnerName: winnerName }));
+                });
+            } else {
+                // Player left early, just send gameOver without updating ELO
                 if (winner.ws && winner.ws.readyState === 1)
                     winner.ws.send(JSON.stringify({ type: "gameOver", winnerName: winnerName }));
-            });
+            }
+            
             // Also send gameOver to loser (they already got playerEliminated, but need gameOver for winnerName)
             if (this.lastLoserWs && this.lastLoserWs.readyState === 1)
                 setTimeout(() => {
@@ -836,6 +906,16 @@ class GameRoom {
         if (this.gameStatus === "lobby") return;
         _activeBarriers = this.barriers;
         const now = Date.now();
+        
+        // Check if poison gas should activate (after 2 minutes = 120000ms)
+        if (this.matchStartTime && !this.poisonGasActive && now - this.matchStartTime > 120000) {
+            this.poisonGasActive = true;
+            this.broadcast({
+                type: "status",
+                message: "Poison gas is closing in!",
+            });
+        }
+        
         // Cache playerList once per tick — avoid repeated Object.values() allocations
         const playerList = this._cachedPlayerList || (this._cachedPlayerList = []);
         playerList.length = 0;
@@ -850,12 +930,41 @@ class GameRoom {
             }
         }
 
-        // 2. Handle projectile/mine/field updates
+        // 2. Handle poison gas damage
+        if (this.poisonGasActive) {
+            if (now - this.lastPoisonGasDamageTime > this.poisonGasDamageInterval) {
+                this.lastPoisonGasDamageTime = now;
+                
+                // Shrink poison gas radius over time (takes 60 seconds to reach center)
+                const timeSincePoisonStart = now - this.matchStartTime - 120000;
+                const shrinkRate = this.poisonGasRadius / 60000; // Full radius to 0 in 60 seconds
+                this.poisonGasRadius = Math.max(50, this.poisonGasRadius - shrinkRate * this.poisonGasDamageInterval);
+                
+                // Apply damage to players in poison gas
+                for (let i = 0; i < playerList.length; i++) {
+                    const player = playerList[i];
+                    const dx = player.x - this.poisonGasCenter.x;
+                    const dy = player.y - this.poisonGasCenter.y;
+                    const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distanceFromCenter > this.poisonGasRadius) {
+                        player.health -= 5; // 5 damage per tick (every 500ms = 10 damage per second)
+                        player.lastDamageTime = now;
+                        
+                        if (player.health <= 0) {
+                            this.handleElimination(player.id, null); // null killer = poison gas
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Handle projectile/mine/field updates
         this.updateProjectiles();
         this.updateMines();
         this.updateHealingFields();
 
-        // 3. Broadcast new state
+        // 4. Broadcast new state
         this.broadcastState();
     }
 
@@ -899,7 +1008,7 @@ async function updateElo(winnerUsername, loserUsername, winnerWs, loserWs, winne
         const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
         const expectedLoser = 1 - expectedWinner;
         const newWinnerElo = Math.round(winnerElo + K * (1 - expectedWinner));
-        const newLoserElo = Math.max(0, Math.round(loserElo + K * (0 - expectedLoser)));
+        const newLoserElo = Math.round(loserElo + K * (0 - expectedLoser));
         const winnerDelta = newWinnerElo - winnerElo;
         const loserDelta = newLoserElo - loserElo;
 
@@ -908,12 +1017,19 @@ async function updateElo(winnerUsername, loserUsername, winnerWs, loserWs, winne
                 { username: winnerUsername.toLowerCase() },
                 { $inc: { wins: 1 }, $set: { elo: newWinnerElo } },
             );
+        } else if (winnerWs) {
+            // For guest players, store ELO on the websocket object
+            winnerWs.guestElo = newWinnerElo;
         }
+        
         if (loserDoc) {
             await User.findOneAndUpdate(
                 { username: loserUsername.toLowerCase() },
                 { $set: { elo: newLoserElo } },
             );
+        } else if (loserWs) {
+            // For guest players, store ELO on the websocket object
+            loserWs.guestElo = newLoserElo;
         }
 
         if (winnerWs && winnerWs.readyState === 1)
@@ -1468,7 +1584,7 @@ wss.on("connection", (ws) => {
                 ws,
             );
 
-            // Fetch wins for authenticated players
+            // Set initial ELO from client (for guests) or fetch from database (for registered)
             if (data.isAuth && data.name) {
                 User.findOne({ username: data.name.toLowerCase() })
                     .then((user) => {
@@ -1476,13 +1592,22 @@ wss.on("connection", (ws) => {
                             newPlayer.wins = user.wins || 0;
                             newPlayer.elo = user.elo || 1000;
                         }
-                        room.broadcastState();
+                        room.addPlayer(newPlayer);
+                        console.log(`Player ${playerName} joined Room ${room.id}.`);
                     })
-                    .catch((err) => console.error("Error fetching wins:", err));
+                    .catch((err) => {
+                        console.error("Error fetching wins:", err);
+                        room.addPlayer(newPlayer);
+                        console.log(`Player ${playerName} joined Room ${room.id}.`);
+                    });
+            } else {
+                // For guest players, use the ELO sent by the client
+                if (data.elo) {
+                    newPlayer.elo = data.elo;
+                }
+                room.addPlayer(newPlayer);
+                console.log(`Player ${playerName} joined Room ${room.id}.`);
             }
-
-            room.addPlayer(newPlayer);
-            console.log(`Player ${playerName} joined Room ${room.id}.`);
 
             // If this room now has 2 players, notify any training player to return
             if (room.playerCount === 2) {
