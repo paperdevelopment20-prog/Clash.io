@@ -577,7 +577,7 @@
             </div>
             <div id="menu-loadout" class="flex justify-center"></div>
             <!-- Skin selector — same row, pushed right -->
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-left:48px;margin-top:24px;position:absolute;right:-80px;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-left:48px;margin-top:24px;position:absolute;right:-140px;">
               <div id="skin-preview-btn" onclick="openSkinModal()" class="menu-loadout-slot" style="background:#111;border:2px solid #000;cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;outline:2px solid #999;outline-offset:3px;">
                 <canvas id="skin-preview-canvas" width="60" height="60" style="display:block;width:60px;height:60px;"></canvas>
               </div>
@@ -1000,12 +1000,13 @@
           projectiles: [],
           mines: [],
           healingFields: [],
+          poisonGas: { active: false, centerX: 0, centerY: 0, radius: 0 },
           keys: {},
           hotbarSelection: 0,
           loadout: ["whiteBall", "fireBall", "knockback", "dash", "heal"],
           isAuthenticated: !1,
           authenticatedUser: null,
-          elo: 1000,
+          elo: parseInt(localStorage.getItem("guestElo")) || 1000,
           eloDelta: 0,
           isTraining: false,
           selectedSkin: "default",
@@ -1084,6 +1085,7 @@
               (gameState.authenticatedUser = e.name),
               (gameState.elo = e.elo || 1000),
               (gameState.loadout = e.loadout),
+              document.getElementById("elo-value").textContent = gameState.elo,
               authModal.classList.add("hidden"),
               updateAuthDisplay(e.name),
               (nameInput.value = e.name),
@@ -1097,6 +1099,10 @@
           case "eloUpdate":
             gameState.eloDelta = e.delta;
             gameState.elo = e.elo;
+            // Save guest ELO to localStorage for persistence
+            if (!gameState.isAuthenticated) {
+              localStorage.setItem("guestElo", e.elo);
+            }
             document.getElementById("elo-value").textContent = e.elo;
             document.getElementById("elo-display").classList.remove("hidden");
             break;
@@ -1284,7 +1290,8 @@
         }
         ((gameState.projectiles = e),
           (gameState.mines = t.mines || []),
-          (gameState.healingFields = t.healingFields || []));
+          (gameState.healingFields = t.healingFields || []),
+          (gameState.poisonGas = t.poisonGas || { active: false }));
         if (t.mapIndex !== undefined && MAPS[t.mapIndex]) {
           MAP_BARRIERS.length = 0;
           MAPS[t.mapIndex].forEach(b => MAP_BARRIERS.push(b));
@@ -1321,6 +1328,7 @@
                 dx: e ? a?.dx || 0 : t.dx || 0,
                 dy: e ? a?.dy || 0 : t.dy || 0,
                 wins: t.wins || 0,
+                elo: t.elo || 1000,
               };
             n.hitFlashTime = 0;
             gameState.allPlayers.set(t.id, n);
@@ -1416,6 +1424,7 @@
                   name: t,
                   loadout: e,
                   isAuth: gameState.isAuthenticated,
+                  elo: gameState.elo,
                 }),
               ),
               switchToGameScreen(),
@@ -2053,6 +2062,35 @@
           ctx.restore();
         });
       }
+      function drawPoisonGas() {
+        if (!gameState.poisonGas || !gameState.poisonGas.active) return;
+
+        const centerX = gameState.poisonGas.centerX;
+        const centerY = gameState.poisonGas.centerY;
+        const radius = gameState.poisonGas.radius;
+
+        // Draw red circle border
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(255, 0, 0, 0.8)";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Draw semi-transparent red fill
+        ctx.fillStyle = "rgba(255, 0, 0, 0.1)";
+        ctx.fill();
+
+        // Draw pulsing outer glow
+        const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.005);
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius + 10 * pulse, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255, 0, 0, ${0.3 * pulse})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.restore();
+      }
       function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const t = gameState.allPlayers.get(myPlayerId);
@@ -2083,6 +2121,7 @@
             drawPlayer(t, t.id === myPlayerId),
           ),
           drawDashTrailAndRings(),
+          drawPoisonGas(),
           gameState.dyingPlayer)
         ) {
           const t = Date.now() - gameState.dyingPlayer.deathTime,
@@ -2150,7 +2189,8 @@
           const eloDeltaWin = gameState.eloDelta || 0;
           ctx.fillStyle = "#86efac";
           ctx.font = "bold 20px sans-serif";
-          ctx.fillText(eloDeltaWin !== 0 ? `+${eloDeltaWin} ELO` : "Calculating ELO...", l, c + 70);
+          const winEloText = eloDeltaWin !== 0 ? (eloDeltaWin > 0 ? `+${eloDeltaWin} ELO` : `${eloDeltaWin} ELO`) : "Calculating ELO...";
+          ctx.fillText(winEloText, l, c + 70);
           const t =
             mouseX > g && mouseX < g + r && mouseY > m && mouseY < m + d;
           ((ctx.fillStyle = t ? "#16a34a" : "#22c55e"),
@@ -2188,7 +2228,9 @@
           const eloDeltaDeath = gameState.eloDelta || 0;
           ctx.fillStyle = "#fca5a5";
           ctx.font = "bold 20px sans-serif";
-          ctx.fillText(eloDeltaDeath !== 0 ? `${eloDeltaDeath} ELO` : "Calculating ELO...", l, c + 65);
+          const deathEloText = eloDeltaDeath !== 0 ? (eloDeltaDeath > 0 ? `+${eloDeltaDeath} ELO` : `${eloDeltaDeath} ELO`) : "Calculating ELO...";
+          ctx.fillText(deathEloText, l, c + 65);
+          console.log(`Death screen - eloDelta: ${eloDeltaDeath}, text: ${deathEloText}`);
           const e =
             mouseX > g && mouseX < g + r && mouseY > m && mouseY < m + d;
           ((ctx.fillStyle = e ? "#16a34a" : "#22c55e"),
@@ -2373,7 +2415,7 @@
         signOutBtn.addEventListener("click", () => {
           ((gameState.isAuthenticated = !1),
             (gameState.authenticatedUser = null),
-            (gameState.elo = 1000),
+            (gameState.elo = parseInt(localStorage.getItem("guestElo")) || 1000),
             (gameState.loadout = [
               "whiteBall",
               "fireBall",
