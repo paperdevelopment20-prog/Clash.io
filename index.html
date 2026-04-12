@@ -588,8 +588,8 @@
       </div>
     </div>
     <div id="skin-modal" class="modal hidden">
-      <div class="bg-gray-700 p-4 rounded-lg shadow-xl w-full max-w-sm border-4 border-black relative text-white">
-        <h3 class="text-3xl font-bold mb-4 text-black text-center">Select Skin</h3>
+      <div class="bg-gray-800 p-4 rounded-lg shadow-xl w-full max-w-sm border-4 border-black relative text-white">
+        <h3 class="text-3xl font-bold mb-4 text-gray-400 text-center">Select Skin</h3>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;justify-items:center;">
           <!-- Default skin -->
           <div onclick="selectSkin('default')" id="skincard-default" style="width:80px;height:80px;border-radius:10px;border:3px solid #fcd34d;background:#1a1a2e;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;transition:all 0.1s;">
@@ -604,7 +604,7 @@
           </div>
           <!-- Galaxy skin (skin.svg) -->
           <div onclick="selectSkin('galaxy')" id="skincard-galaxy" style="width:80px;height:80px;border-radius:10px;border:2px solid #555;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;background:#0a0014;transition:all 0.1s;outline:2px solid #999;outline-offset:3px;">
-            <img src="/skin.svg" width="60" height="60" style="display:block;"/>
+            <img src="./skin.svg" width="60" height="60" style="display:block;"/>
             <span style="font-size:0.6rem;font-weight:700;color:#fff;">Galaxy</span>
           </div>
         </div>
@@ -613,9 +613,9 @@
     </div>
     <div id="ability-modal" class="modal hidden">
       <div
-        class="bg-gray-700 p-4 rounded-lg shadow-xl w-full max-w-lg border-4 border-black relative text-white"
+        class="bg-gray-800 p-4 rounded-lg shadow-xl w-full max-w-lg border-4 border-black relative text-white"
       >
-        <h3 class="text-3xl font-bold mb-4 text-black text-center">
+        <h3 class="text-3xl font-bold mb-4 text-gray-400 text-center">
           Select Ability for Slot <span id="modal-slot-number">1</span>
         </h3>
         <div id="ability-list" class="grid gap-4"></div>
@@ -1548,7 +1548,7 @@
 
       // skin.svg — preloaded for in-game use
       const _skinBodyImg = new Image();
-      _skinBodyImg.src = '/skin.svg';
+      _skinBodyImg.src = './skin.svg';
       // Hand SVG matching skin.svg gradients
       const SKIN_HAND_SVG = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 100 100"><defs><linearGradient id="sh_b"><stop offset="0" style="stop-color:#e21a89;stop-opacity:1"/><stop offset="1" style="stop-color:#000;stop-opacity:0"/></linearGradient><linearGradient id="sh_a"><stop offset="0" style="stop-color:#2aaabe;stop-opacity:1"/><stop offset="1" style="stop-color:#0d2f3b;stop-opacity:0"/></linearGradient><linearGradient xlink:href="#sh_b" id="sh_c" x1="80%" x2="20%" y1="0%" y2="80%" gradientUnits="objectBoundingBox"/><radialGradient xlink:href="#sh_a" id="sh_d" cx="40%" cy="90%" r="80%" gradientUnits="objectBoundingBox"/></defs><circle cx="50" cy="50" r="48" style="fill:#14146c"/><circle cx="50" cy="50" r="48" style="fill:url(#sh_c)"/><circle cx="50" cy="50" r="48" style="fill:url(#sh_d)"/><circle cx="52" cy="46" r="5" style="fill:#dee3f7;fill-opacity:0.8"/><circle cx="34" cy="34" r="3.5" style="fill:#dee3f7;fill-opacity:0.6"/><circle cx="64" cy="60" r="3" style="fill:#dee3f7;fill-opacity:0.55"/></svg>`;
       const _skinHandImg = new Image();
