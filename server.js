@@ -8,8 +8,8 @@ const app = express();
 // This allows the server to read JSON data
 app.use(express.json()); 
 
-// Serve static files
-app.use(express.static('public'));
+// Serve static files from root directory (SVG, CSS, JS, HTML)
+app.use(express.static(path.join(__dirname)));
 
 // Import the connectDB function
 const connectDB = require("./dbconn");
@@ -61,7 +61,8 @@ connectDB().then(async () => {
 
 // --- GAME CONSTANTS (MUST MATCH CLIENT) ---
 // --- GAME CONSTANTS (MUST MATCH CLIENT) ---
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;  // Changed from 5000 to 5001
+
 /* Around line 238 in index.html */
 const TILE_SIZE = 20;
 const TILES_X = 45; // (45 * 20 = 900px width)
