@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" href="/C.png" />
     <style>
       body {
-        font-family:
+        font-family:   
           ui-sans-serif,
           system-ui,
           -apple-system,
@@ -578,7 +578,7 @@
             <div id="menu-loadout" class="flex justify-center"></div>
             <!-- Skin selector — same row, pushed right -->
             <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-left:48px;margin-top:24px;position:absolute;right:-140px;">
-              <div id="skin-preview-btn" onclick="openSkinModal()" class="menu-loadout-slot" style="background:#111;border:2px solid #000;cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;outline:2px solid #999;outline-offset:3px;">
+              <div id="skin-preview-btn" onclick="openSkinModal()" class="menu-loadout-slot" style="background:#d3d3d3;border:2px solid #000;cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;outline:2px solid #999;outline-offset:3px;">
                 <canvas id="skin-preview-canvas" width="60" height="60" style="display:block;width:60px;height:60px;"></canvas>
               </div>
               <span style="font-size:0.65rem;font-weight:800;color:#000;">SKIN</span>
@@ -588,8 +588,8 @@
       </div>
     </div>
     <div id="skin-modal" class="modal hidden">
-      <div class="bg-gray-800 p-4 rounded-lg shadow-xl w-full max-w-sm border-4 border-black relative text-white">
-        <h3 class="text-3xl font-bold mb-4 text-gray-400 text-center">Select Skin</h3>
+      <div class="bg-gray-700 p-4 rounded-lg shadow-xl w-full max-w-sm border-4 border-black relative text-white">
+        <h3 class="text-3xl font-bold mb-4 text-black text-center">Select Skin</h3>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;justify-items:center;">
           <!-- Default skin -->
           <div onclick="selectSkin('default')" id="skincard-default" style="width:80px;height:80px;border-radius:10px;border:3px solid #fcd34d;background:#1a1a2e;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;transition:all 0.1s;">
@@ -613,9 +613,9 @@
     </div>
     <div id="ability-modal" class="modal hidden">
       <div
-        class="bg-gray-800 p-4 rounded-lg shadow-xl w-full max-w-lg border-4 border-black relative text-white"
+        class="bg-gray-700 p-4 rounded-lg shadow-xl w-full max-w-lg border-4 border-black relative text-white"
       >
-        <h3 class="text-3xl font-bold mb-4 text-gray-400 text-center">
+        <h3 class="text-3xl font-bold mb-4 text-black text-center">
           Select Ability for Slot <span id="modal-slot-number">1</span>
         </h3>
         <div id="ability-list" class="grid gap-4"></div>
@@ -627,51 +627,7 @@
         </button>
       </div>
     </div>
-    <div id="target-password-modal" class="modal hidden">
-      <div
-        class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-sm border-4 border-black relative text-white"
-      >
-        <button
-          id="close-target-modal"
-          class="absolute top-0 right-0 p-2 bg-red-600 hover:bg-red-700 text-white font-black text-lg border-2 border-black w-10 h-10 flex items-center justify-center"
-        >
-          X
-        </button>
-        <div class="text-center">
-          <h3 class="text-3xl font-bold mb-4 text-gray-400">Target</h3>
-          <div class="text-6xl mb-4">🎯</div>
-          <p class="text-gray-400 mb-4 text-sm leading-relaxed">
-            Tracks your opponent and deals 50 damage. Can be used in any slot.
-          </p>
-          <div class="mb-4">
-            <input
-              type="password"
-              id="target-password-input"
-              class="w-full px-4 py-3 border-2 border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:border-gray-400 placeholder-gray-500"
-              placeholder="Enter password"
-            />
-            <p
-              id="target-password-error"
-              class="text-red-400 text-sm mt-2 hidden"
-            >
-              Incorrect password. Try again.
-            </p>
-          </div>
-          <button
-            id="target-password-submit"
-            class="w-full bg-green-700 hover:bg-green-600 text-white font-bold py-3 rounded-lg border-2 border-black mb-2"
-          >
-            Unlock Target
-          </button>
-          <button
-            id="target-password-cancel"
-            class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg border-2 border-black"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
+
     <div id="updates-modal" class="modal hidden">
       <div style="width:440px;background:#fff;border:3px solid #000;border-radius:8px;padding:20px;">
         <h3 style="font-size:1.4rem;font-weight:800;text-align:center;margin-bottom:16px;">Game Updates</h3>
@@ -838,16 +794,6 @@
         closeAbilityModal = document.getElementById("close-ability-modal"),
         modalSlotNumber = document.getElementById("modal-slot-number"),
         abilityList = document.getElementById("ability-list"),
-        targetPasswordModal = document.getElementById("target-password-modal"),
-        closeTargetModal = document.getElementById("close-target-modal"),
-        targetPasswordInput = document.getElementById("target-password-input"),
-        targetPasswordError = document.getElementById("target-password-error"),
-        targetPasswordSubmit = document.getElementById(
-          "target-password-submit",
-        ),
-        targetPasswordCancel = document.getElementById(
-          "target-password-cancel",
-        ),
         updatesModal = document.getElementById("updates-modal"),
         updatesBtn = document.getElementById("updates-btn"),
         helpModal = document.getElementById("help-modal"),
@@ -2387,27 +2333,6 @@
         closeAbilityModal.addEventListener("click", () =>
           abilityModal.classList.add("hidden"),
         ),
-        closeTargetModal.addEventListener("click", () => {
-          (targetPasswordModal.classList.add("hidden"),
-            abilityModal.classList.remove("hidden"));
-        }),
-        targetPasswordCancel.addEventListener("click", () => {
-          (targetPasswordModal.classList.add("hidden"),
-            abilityModal.classList.remove("hidden"));
-        }),
-        targetPasswordSubmit.addEventListener("click", () => {
-          targetPasswordInput.value === TARGET_PASSWORD
-            ? ((gameState.loadout[modalTargetSlot] = "target"),
-              targetPasswordModal.classList.add("hidden"),
-              renderMenuLoadoutSlots(),
-              renderHotbar())
-            : (targetPasswordError.classList.remove("hidden"),
-              (targetPasswordInput.value = ""),
-              targetPasswordInput.focus());
-        }),
-        targetPasswordInput.addEventListener("keypress", (t) => {
-          "Enter" === t.key && targetPasswordSubmit.click();
-        }),
         authDisplayBtn.addEventListener("click", () => {
           document.getElementById("arrow-signin") && (document.getElementById("arrow-signin").style.display = "none");
           showAuthModal();
@@ -2498,11 +2423,10 @@
               a.appendChild(l),
               a.addEventListener("click", () => {
                 "target" === t
-                  ? (abilityModal.classList.add("hidden"),
-                    (targetPasswordInput.value = ""),
-                    targetPasswordError.classList.add("hidden"),
-                    targetPasswordModal.classList.remove("hidden"),
-                    targetPasswordInput.focus())
+                  ? ((gameState.loadout[modalTargetSlot] = t),
+                    abilityModal.classList.add("hidden"),
+                    renderMenuLoadoutSlots(),
+                    renderHotbar())
                   : ((gameState.loadout[modalTargetSlot] = t),
                     abilityModal.classList.add("hidden"),
                     renderMenuLoadoutSlots(),
