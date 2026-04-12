@@ -3,6 +3,13 @@ const express = require("express");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
+const app = express();
+
+// This allows the server to read JSON data
+app.use(express.json()); 
+
+// Serve static files
+app.use(express.static('public'));
 
 // Import the connectDB function
 const connectDB = require("./dbconn");
@@ -979,7 +986,7 @@ class GameRoom {
 // --- GLOBAL SERVER STATE AND HANDLERS (OUTSIDE GameRoom) ---
 
 // Create Express app and HTTP server for serving static files
-const app = express();
+
 const http = require("http").createServer(app);
 
 // Serve static files (CSS, JS, HTML)
@@ -990,6 +997,10 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "index.html"));
 });
 
+// Serve success.html for successful purchases
+app.get("/success", (req, res) => {
+    res.sendFile(path.join(__dirname, "success.html"));
+});
 
 
 /**
