@@ -8,6 +8,8 @@
     <meta name ="description" content="Fun multiplayer fighting game with abilities and more" />
     <link rel="icon" type="image/png" href="/C.png" />
     <link rel="apple-touch-icon" href="/C.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#1f2937" />
     <style>
       body {
         font-family:   
@@ -2575,5 +2577,12 @@
         (window.__gameState = gameState),
         (window.__socket = () => socket));
     </script>
-  </body>
+    <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/service-worker.js");
+      });
+    }
+  </script>
+</body>
 </html>
