@@ -1665,7 +1665,10 @@
         (updateMovementAndAim(),
           updateHotbarVisuals(),
           gameState.allPlayers.forEach((t) => {
-            const e = t.isDashing ? 0.35 : 0.2;
+            // Local player snaps instantly — no lag on own movement
+            // Remote players use a higher lerp for snappier tracking
+            const isLocal = t.id === myPlayerId;
+            const e = isLocal ? 1.0 : (t.isDashing ? 0.6 : 0.45);
             if (t.isDashing && !t.dashTrailActive) {
               // Spawn one burst of trail particles at the dash start position only
               t.dashTrailActive = true;
@@ -1968,9 +1971,7 @@
         const isGalaxy = e && gameState.selectedSkin === "galaxy";
         const bodyColor = isGalaxy ? null : t.color;
         const handColor = t.color;
-        (void 0 === t.renderX && ((t.renderX = t.x), (t.renderY = t.y)),
-          (t.renderX += 0.25 * (t.x - t.renderX)),
-          (t.renderY += 0.25 * (t.y - t.renderY)));
+        (void 0 === t.renderX && ((t.renderX = t.x), (t.renderY = t.y)));
         const a = t.renderX, n = t.renderY, l = 10;
         if (t.isProtected) {
           const e = t.isReflecting
