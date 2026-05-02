@@ -2,17 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
     <title>clashes.pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <meta name ="description" content="Fun multiplayer fighting game with abilities and more" />
     <link rel="icon" type="image/png" href="/C.png" />
     <link rel="apple-touch-icon" href="/C.png" />
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#1f2937" />
+    <meta name="theme-color" content="#2dad66" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Clashes" />
     <style>
       body {
-        font-family:   
+        font-family:
           ui-sans-serif,
           system-ui,
           -apple-system,
@@ -366,8 +369,8 @@
         text-align: center;
       }
       .ability-card {
-        background-color: #6b7280;
-        border: 2px solid #4b5563;
+        background-color: #3d2817;
+        border: 2px solid #d32f2f;
         border-radius: 10px;
         cursor: pointer;
         transition: all 0.1s;
@@ -378,10 +381,12 @@
         width: 96px;
         height: 96px;
         aspect-ratio: 1;
+        box-shadow: 0 0 8px rgba(211, 47, 47, 0.4);
       }
       .ability-card:hover {
         filter: brightness(1.2);
         transform: scale(1.05);
+        box-shadow: 0 0 12px rgba(211, 47, 47, 0.6);
       }
       .ability-card .text-3xl {
         font-size: 2.2rem;
@@ -446,6 +451,176 @@
         border-radius: 4px;
         transition: background-color 0.1s;
       }
+      /* Mobile-specific styles */
+      @media (max-width: 768px) {
+        body {
+          touch-action: none;
+        }
+        #hotbar-container {
+          bottom: 4px;
+          gap: 2px;
+          padding: 2px 4px;
+        }
+        .hotbar-slot {
+          width: 40px !important;
+          height: 40px !important;
+          border-radius: 3px;
+        }
+        .hotbar-slot-number {
+          font-size: 0.45rem;
+          padding: 0px 3px;
+          min-width: 14px;
+        }
+        .hotbar-icon {
+          font-size: 0.9rem;
+        }
+        #menu-screen h1 {
+          font-size: 1.5rem;
+        }
+        #start-button {
+          width: 240px !important;
+          height: 32px !important;
+          font-size: 0.85rem !important;
+        }
+        .menu-loadout-slot {
+          width: 45px;
+          height: 45px;
+        }
+        .menu-label {
+          font-size: 0.85rem;
+        }
+        #name-input {
+          font-size: 0.9rem;
+          padding: 6px;
+        }
+        #elo-display {
+          font-size: 0.75rem;
+          padding: 3px 6px;
+        }
+        #auth-display-btn {
+          padding: 3px 6px;
+          font-size: 0.65rem;
+        }
+        #sign-out-btn {
+          padding: 3px 6px;
+          font-size: 0.65rem;
+        }
+        #leave-game-btn {
+          width: 36px !important;
+          height: 36px !important;
+        }
+        #kill-counter {
+          font-size: 0.8rem;
+          padding: 6px 10px;
+        }
+        #online-counter {
+          font-size: 0.8rem;
+          padding: 6px 10px;
+        }
+        .ability-card {
+          width: 70px;
+          height: 70px;
+        }
+        .ability-card .text-3xl {
+          font-size: 1.5rem;
+        }
+        #mobile-joystick {
+          width: 100px !important;
+          height: 100px !important;
+        }
+        #joystick-thumb {
+          width: 50px !important;
+          height: 50px !important;
+        }
+      }
+
+      @media (max-width: 480px) {
+        #hotbar-container {
+          bottom: 4px;
+          gap: 2px;
+          padding: 2px 4px;
+        }
+        .hotbar-slot {
+          width: 40px !important;
+          height: 40px !important;
+        }
+        .hotbar-slot-number {
+          font-size: 0.5rem;
+        }
+        .hotbar-icon {
+          font-size: 1rem;
+        }
+        #menu-screen h1 {
+          font-size: 1.5rem;
+          margin-bottom: 8px;
+        }
+        #start-button {
+          width: 240px !important;
+          height: 32px !important;
+          font-size: 0.85rem !important;
+          margin-bottom: 1rem !important;
+        }
+        .menu-content {
+          padding: 0.5rem;
+          min-height: 50vh;
+          max-width: 300px;
+        }
+        #name-input {
+          font-size: 0.95rem;
+          padding: 6px;
+        }
+        .menu-label {
+          font-size: 0.9rem;
+          margin-bottom: 4px;
+        }
+        #elo-display {
+          font-size: 0.75rem;
+          padding: 3px 6px;
+        }
+        #auth-display-btn {
+          padding: 3px 6px;
+          font-size: 0.65rem;
+        }
+        #sign-out-btn {
+          padding: 3px 6px;
+          font-size: 0.65rem;
+        }
+        #kill-counter {
+          font-size: 0.85rem;
+          padding: 6px 10px;
+          bottom: 2px;
+          left: 2px;
+        }
+        #online-counter {
+          font-size: 0.85rem;
+          padding: 6px 10px;
+          bottom: 2px;
+          left: 2px;
+        }
+        #player-stats {
+          font-size: 0.75rem;
+          top: 12px;
+          right: 2px;
+        }
+        .ability-card {
+          width: 70px;
+          height: 70px;
+        }
+        .ability-card .text-3xl {
+          font-size: 1.5rem;
+        }
+        /* Portrait mode joystick */
+        #mobile-joystick {
+          width: 100px !important;
+          height: 100px !important;
+          bottom: 20px !important;
+          left: 20px !important;
+        }
+        #joystick-thumb {
+          width: 50px !important;
+          height: 50px !important;
+        }
+      }
     </style>
   </head>
   <body>
@@ -459,9 +634,9 @@
             id="leave-game-btn"
             title=""
             class="bg-red-600 hover:bg-red-700 text-white font-bold flex items-center justify-center"
-            style="width:44px;height:44px;border-radius:10px;border:2px solid #000;"
+            style="width: 44px; height: 44px; border-radius: 10px; border: 2px solid #000;"
           ><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
-          <span class="absolute top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="background:rgba(13,66,38,0.85);color:#fff;font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:0.05em;">LEAVE</span>
+          <span class="absolute top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="background: rgba(13,66,38,0.85); color: #fff; font-size: 0.6rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; white-space: nowrap; letter-spacing: 0.05em;">LEAVE</span>
         </div>
         <div
           id="status-display"
@@ -488,9 +663,20 @@
       <div id="player-stats" class="absolute top-16 right-4 z-50"></div>
       <canvas id="game-canvas"></canvas>
       <div id="hotbar-container"></div>
-      <div id="training-prompt" class="hidden" style="position:absolute;bottom:90px;left:50%;transform:translateX(-50%);text-align:center;z-index:50;">
-        <p style="color:rgba(255,255,255,0.7);font-size:0.75rem;margin-bottom:6px;">While you're waiting, would you like to train?</p>
-        <button id="train-btn" style="background-color:rgba(13,66,38,0.85);border:2px solid #000;color:#fff;padding:6px 20px;border-radius:6px;font-weight:700;font-size:0.85rem;cursor:pointer;">Train</button>
+
+      <!-- SPECTATE HUD -->
+      <div id="spectate-hud" class="hidden" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:12px;">
+        <button id="spectate-prev" onclick="spectateSwitch(-1)" style="background:#1a1a2e;border:2px solid #e94560;color:#e94560;font-size:1.2rem;font-weight:900;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">◀</button>
+        <div id="spectate-name-box" style="background:rgba(26,26,46,0.92);border:2px solid #e94560;color:#fff;font-weight:700;font-size:0.95rem;padding:8px 20px;border-radius:8px;min-width:140px;text-align:center;">
+          👁 <span id="spectate-name-label">—</span>
+        </div>
+        <button id="spectate-next" onclick="spectateSwitch(1)" style="background:#1a1a2e;border:2px solid #e94560;color:#e94560;font-size:1.2rem;font-weight:900;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">▶</button>
+        <button onclick="stopSpectating()" style="background:#e94560;border:none;color:#fff;font-weight:700;font-size:0.8rem;padding:8px 14px;border-radius:8px;cursor:pointer;margin-left:8px;">✕ Stop</button>
+      </div>
+
+      <div id="training-prompt" class="hidden" style="position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 50;">
+        <p style="color: rgba(255,255,255,0.7); font-size: 0.75rem; margin-bottom: 6px;">While you're waiting, would you like to train?</p>
+        <button id="train-btn" style="background-color: rgba(13,66,38,0.85); border: 2px solid #000; color: #fff; padding: 6px 20px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">Train</button>
       </div>
 
     </div>
@@ -505,7 +691,7 @@
               <line x1="7" y1="17" x2="17" y2="17" stroke="#0d4226" stroke-width="2.5" stroke-linecap="round"/>
             </svg>
           </button>
-          <span class="absolute top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="background:rgba(13,66,38,0.85);color:#fff;font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:0.05em;">UPDATES</span>
+          <span class="absolute top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="background: rgba(13,66,38,0.85); color: #fff; font-size: 0.6rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; white-space: nowrap; letter-spacing: 0.05em;">UPDATES</span>
         </div>
         <div class="relative group flex flex-col items-center">
           <button id="help-btn" class="menu-top-btn">
@@ -514,11 +700,17 @@
               <path d="M12 16v-4M12 8h.01"/>
             </svg>
           </button>
-          <span class="absolute top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="background:rgba(13,66,38,0.85);color:#fff;font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:0.05em;">HELP</span>
+          <span class="absolute top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="background: rgba(13,66,38,0.85); color: #fff; font-size: 0.6rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; white-space: nowrap; letter-spacing: 0.05em;">HELP</span>
+        </div>
+        <div id="mod-btn-wrapper" class="relative group flex flex-col items-center hidden">
+          <button id="mod-btn" onclick="document.getElementById('mod-panel').classList.remove('hidden'); modRefreshRooms();" style="background-color:#e94560;border:none;border-radius:6px;display:inline-flex;justify-content:center;align-items:center;width:36px;height:36px;padding:0;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.35);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </button>
+          <span class="absolute top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style="background: #e94560; color: #fff; font-size: 0.6rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; white-space: nowrap; letter-spacing: 0.05em;">MOD</span>
         </div>
       </div>
       <div class="absolute top-6 right-6 z-50 flex gap-2 items-center">
-        <div id="elo-display" style="background-color:rgba(13,66,38,0.85);border:2px solid #000;color:#fff;padding:6px 12px;border-radius:6px;font-weight:700;font-size:0.95rem;">ELO: <span id="elo-value">1000</span></div>
+        <div id="elo-display" style="background-color: rgba(13,66,38,0.85); border: 2px solid #000; color: #fff; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.95rem;">ELO: <span id="elo-value">1000</span></div>
         <button
           id="sign-out-btn"
           class="rounded hidden"
@@ -533,12 +725,12 @@
         >
           Sign Out
         </button>
-        <div style="position:relative;">
+        <div style="position: relative;">
           <button id="auth-display-btn" class="rounded">
             Sign In / Register
           </button>
-          <div id="arrow-signin" style="position:absolute;top:calc(100% + 8px);left:0;animation:bounceUp 1s ease-in-out infinite;pointer-events:none;z-index:60;">
-            <div style="background:rgba(13,66,38,0.92);border:2px solid #000;color:#fff;font-size:0.7rem;font-weight:700;padding:6px 14px;border-radius:6px;white-space:nowrap;clip-path:polygon(0% 20%,100% 20%,100% 100%,55% 100%,50% 0%,45% 100%,0% 100%);">Sign in to save progress</div>
+          <div id="arrow-signin" style="position: absolute; top: calc(100% + 8px); left: 0; animation: bounceUp 1s ease-in-out infinite; pointer-events: none; z-index: 60;">
+            <div style="background: rgba(13,66,38,0.92); border: 2px solid #000; color: #fff; font-size: 0.7rem; font-weight: 700; padding: 6px 14px; border-radius: 6px; white-space: nowrap; clip-path: polygon(0% 20%,100% 20%,100% 100%,55% 100%,50% 0%,45% 100%,0% 100%);">Sign in to save progress</div>
           </div>
         </div>
       </div>
@@ -573,28 +765,28 @@
           <button id="start-button">1v1</button>
         </div>
         <div class="loadout-wrapper">
-          <div style="position:relative;display:flex;justify-content:center;align-items:center;width:100%;">
-            <div id="arrow-loadout" style="position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%);animation:bounceRight 1s ease-in-out infinite;pointer-events:none;z-index:60;">
-              <div style="background:rgba(13,66,38,0.92);border:2px solid #000;color:#fff;font-size:0.7rem;font-weight:700;padding:6px 14px 6px 10px;border-radius:6px;white-space:nowrap;clip-path:polygon(0% 0%,85% 0%,100% 50%,85% 100%,0% 100%);">Edit your loadout</div>
+          <div style="position: relative; display: flex; justify-content: center; align-items: center; width: 100%;">
+            <div id="arrow-loadout" style="position: absolute; right: calc(100% + 10px); top: 50%; transform: translateY(-50%); animation: bounceRight 1s ease-in-out infinite; pointer-events: none; z-index: 60;">
+              <div style="background: rgba(13,66,38,0.92); border: 2px solid #000; color: #fff; font-size: 0.7rem; font-weight: 700; padding: 6px 14px 6px 10px; border-radius: 6px; white-space: nowrap; clip-path: polygon(0% 0%,85% 0%,100% 50%,85% 100%,0% 100%);">Edit your loadout</div>
             </div>
             <div id="menu-loadout" class="flex justify-center"></div>
             <!-- Skin selector — same row, pushed right -->
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-left:48px;margin-top:24px;position:absolute;right:-140px;">
-              <div id="skin-preview-btn" onclick="openSkinModal()" class="menu-loadout-slot" style="background:#d3d3d3;border:2px solid #000;cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;outline:2px solid #999;outline-offset:3px;">
-                <canvas id="skin-preview-canvas" width="60" height="60" style="display:block;width:60px;height:60px;"></canvas>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; margin-left: 48px; margin-top: 24px; position: absolute; right: -140px;">
+              <div id="skin-preview-btn" onclick="openSkinModal()" class="menu-loadout-slot" style="background: #d3d3d3; border: 2px solid #000; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0; outline: 2px solid #999; outline-offset: 3px;">
+                <canvas id="skin-preview-canvas" width="60" height="60" style="display: block; width: 60px; height: 60px;"></canvas>
               </div>
-              <span style="font-size:0.65rem;font-weight:800;color:#000;">SKIN</span>
+              <span style="font-size: 0.65rem; font-weight: 800; color: #000;">SKIN</span>
             </div>
           </div>
         </div>
       </div>
     </div>
     <div id="skin-modal" class="modal hidden">
-      <div class="bg-gray-800 p-4 rounded-lg shadow-xl w-full max-w-sm border-4 border-black relative text-white">
-        <h3 class="text-3xl font-bold mb-4 text-gray-400 text-center">Select Skin</h3>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;justify-items:center;">
+      <div style="background: #555555; border: 4px solid #000; border-radius: 12px; padding: 20px; max-width: 500px; width: 100%; position: relative; color: #fff;">
+        <h3 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; text-align: center; color: #fff">Select Skin</h3>
+        <div style="display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; justify-items: center;">
           <!-- Default skin -->
-          <div onclick="selectSkin('default')" id="skincard-default" style="width:80px;height:80px;border-radius:10px;border:3px solid #fcd34d;background:#1a1a2e;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;transition:all 0.1s;">
+          <div onclick="selectSkin('default')" id="skincard-default" style="width: 80px; height: 80px; border-radius: 10px; border: 3px solid #d32f2f; background: #3d2817; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px; transition: all 0.1s; box-shadow: 0 0 8px rgba(211, 47, 47, 0.4);">
             <svg width="70" height="56" viewBox="0 0 70 56">
               <!-- hands -->
               <circle cx="7" cy="28" r="6" fill="#F7C574" stroke="#000" stroke-width="1.5"/>
@@ -602,31 +794,59 @@
               <!-- body -->
               <circle cx="35" cy="28" r="18" fill="#F7C574" stroke="#000" stroke-width="2"/>
             </svg>
-            <span style="font-size:0.6rem;font-weight:700;color:#fff;text-shadow:0 1px 2px #000;">Default</span>
+            <span style="font-size: 0.6rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000;">Default</span>
           </div>
           <!-- Galaxy skin (skin.svg) -->
-          <div onclick="selectSkin('galaxy')" id="skincard-galaxy" style="width:80px;height:80px;border-radius:10px;border:2px solid #555;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;background:#0a0014;transition:all 0.1s;outline:2px solid #999;outline-offset:3px;">
-            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="60" height="60" viewBox="0 0 23.812 23.813"><defs><linearGradient id="b"><stop offset="0" style="stop-color:#e21a89;stop-opacity:1"/><stop offset="1" style="stop-color:#000;stop-opacity:0"/></linearGradient><linearGradient id="a"><stop offset="0" style="stop-color:#2aaabe;stop-opacity:1"/><stop offset="1" style="stop-color:#0d2f3b;stop-opacity:0"/></linearGradient><linearGradient xlink:href="#b" id="c" x1="18.194" x2="7.641" y1=".26" y2="16.46" gradientTransform="translate(12.535 11.787)" gradientUnits="userSpaceOnUse"/><radialGradient xlink:href="#a" id="d" cx="8.921" cy="22.672" r="11.906" fx="8.921" fy="22.672" gradientTransform="matrix(1.33364 1.09389 -.71843 .87588 20.836 2.47)" gradientUnits="userSpaceOnUse"/></defs><g transform="translate(-12.535 -11.787)"><circle cx="24.441" cy="23.693" r="11.906" style="fill:#14146c;fill-opacity:1;stroke:none;stroke-width:.260903;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"/><circle cx="24.441" cy="23.693" r="11.906" style="display:inline;fill:url(#c);fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.260903;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"/><circle cx="24.441" cy="23.693" r="11.906" style="display:inline;fill:url(#d);stroke:none;stroke-width:.260903;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"/><circle cx="24.03" cy="23.874" r=".655" style="fill:#dee3f7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.510759;stroke-opacity:1"/><circle cx="16.187" cy="26.594" r=".655" style="fill:#dee3f7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.510759;stroke-opacity:1"/><circle cx="17.65" cy="18.386" r=".655" style="fill:#dee3f7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.510759;stroke-opacity:1"/><circle cx="22.265" cy="20.003" r=".423" style="fill:#dee3f7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.330178;stroke-opacity:1"/><circle cx="28.965" cy="23.806" r=".655" style="fill:#dee3f7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.510759;stroke-opacity:1"/><path fill="#fff" fill-rule="evenodd" d="M24.898 20.626s.982-.148 1.32-.487c.33-.334.545-1.378.545-1.378s.158 1.039.49 1.372c.335.336 1.375.493 1.375.493s-1.042.137-1.382.473c-.352.346-.506 1.444-.506 1.444s-.187-1.098-.55-1.447c-.334-.32-1.292-.47-1.292-.47" style="fill:#fff;fill-opacity:1;stroke-width:.155391"/><circle cx="31.71" cy="26.322" r=".423" style="fill:#dee3f7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.330178;stroke-opacity:1"/><circle cx="25.82" cy="29.082" r=".423" style="fill:#dee3f7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.330178;stroke-opacity:1"/><circle cx="22.053" cy="32.041" r=".423" style="fill:#dee3f7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.330178;stroke-opacity:1"/><circle cx="21.59" cy="27.312" r=".423" style="fill:#dee3f7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.330178;stroke-opacity:1"/><circle cx="28.205" cy="16.166" r=".423" style="fill:#dee3f7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.330178;stroke-opacity:1"/><circle cx="21.416" cy="15.206" r=".423" style="fill:#dee3f7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.330178;stroke-opacity:1"/><circle cx="29.527" cy="29.395" r=".423" style="fill:#dee3f7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.330178;stroke-opacity:1"/><circle cx="18.68" cy="22.318" r=".423" style="fill:#dee3f7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.330178;stroke-opacity:1"/><circle cx="32.796" cy="22.426" r=".423" style="fill:#dee3f7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.330178;stroke-opacity:1"/></g></svg>
-            <span style="font-size:0.6rem;font-weight:700;color:#fff;">Galaxy</span>
+          <div onclick="selectSkin('galaxy')" id="skincard-galaxy" style="width: 80px; height: 80px; border-radius: 10px; border: 2px solid #d32f2f; cursor: pointer; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; background: #3d2817; transition: all 0.1s; box-shadow: 0 0 8px rgba(211, 47, 47, 0.4);">
+            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="60" height="60" viewBox="0 0 23.812 23.813"><defs><linearGradient id="b"><stop offset="0" style="stop-color: #e21a89; stop-opacity: 1"/><stop offset="1" style="stop-color: #000; stop-opacity: 0"/></linearGradient><linearGradient id="a"><stop offset="0" style="stop-color: #2aaabe; stop-opacity: 1"/><stop offset="1" style="stop-color: #0d2f3b; stop-opacity: 0"/></linearGradient><linearGradient xlink:href="#b" id="c" x1="18.194" x2="7.641" y1=".26" y2="16.46" gradientTransform="translate(12.535 11.787)" gradientUnits="userSpaceOnUse"/><radialGradient xlink:href="#a" id="d" cx="8.921" cy="22.672" r="11.906" fx="8.921" fy="22.672" gradientTransform="matrix(1.33364 1.09389 -.71843 .87588 20.836 2.47)" gradientUnits="userSpaceOnUse"/></defs><g transform="translate(-12.535 -11.787)"><circle cx="24.441" cy="23.693" r="11.906" style="fill: #14146c; fill-opacity: 1; stroke: none; stroke-width: .260903; stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10; stroke-dasharray: none; stroke-opacity: 1"/><circle cx="24.441" cy="23.693" r="11.906" style="display: inline; fill: url(#c); fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .260903; stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10; stroke-dasharray: none; stroke-opacity: 1"/><circle cx="24.441" cy="23.693" r="11.906" style="display: inline; fill: url(#d); stroke: none; stroke-width: .260903; stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10; stroke-dasharray: none; stroke-opacity: 1"/><circle cx="24.03" cy="23.874" r=".655" style="fill: #dee3f7; fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .510759; stroke-opacity: 1"/><circle cx="16.187" cy="26.594" r=".655" style="fill: #dee3f7; fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .510759; stroke-opacity: 1"/><circle cx="17.65" cy="18.386" r=".655" style="fill: #dee3f7; fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .510759; stroke-opacity: 1"/><circle cx="22.265" cy="20.003" r=".423" style="fill: #dee3f7; fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .330178; stroke-opacity: 1"/><circle cx="28.965" cy="23.806" r=".655" style="fill: #dee3f7; fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .510759; stroke-opacity: 1"/><path fill="#fff" fill-rule="evenodd" d="M24.898 20.626s.982-.148 1.32-.487c.33-.334.545-1.378.545-1.378s.158 1.039.49 1.372c.335.336 1.375.493 1.375.493s-1.042.137-1.382.473c-.352.346-.506 1.444-.506 1.444s-.187-1.098-.55-1.447c-.334-.32-1.292-.47-1.292-.47" style="fill: #fff; fill-opacity: 1; stroke-width: .155391"/><circle cx="31.71" cy="26.322" r=".423" style="fill: #dee3f7; fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .330178; stroke-opacity: 1"/><circle cx="25.82" cy="29.082" r=".423" style="fill: #dee3f7; fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .330178; stroke-opacity: 1"/><circle cx="22.053" cy="32.041" r=".423" style="fill: #dee3f7; fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .330178; stroke-opacity: 1"/><circle cx="21.59" cy="27.312" r=".423" style="fill: #dee3f7; fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .330178; stroke-opacity: 1"/><circle cx="28.205" cy="16.166" r=".423" style="fill: #dee3f7; fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .330178; stroke-opacity: 1"/><circle cx="21.416" cy="15.206" r=".423" style="fill: #dee3f7; fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .330178; stroke-opacity: 1"/><circle cx="29.527" cy="29.395" r=".423" style="fill: #dee3f7; fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .330178; stroke-opacity: 1"/><circle cx="18.68" cy="22.318" r=".423" style="fill: #dee3f7; fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .330178; stroke-opacity: 1"/><circle cx="32.796" cy="22.426" r=".423" style="fill: #dee3f7; fill-opacity: 1; fill-rule: nonzero; stroke: none; stroke-width: .330178; stroke-opacity: 1"/></g></svg>
+            <span style="font-size: 0.6rem; font-weight: 700; color: #fff;">Galaxy</span>
           </div>
         </div>
-        <button onclick="document.getElementById('skin-modal').classList.add('hidden')" class="absolute top-0 right-0 p-2 bg-red-600 hover:bg-red-700 text-white font-black text-lg border-2 border-black w-10 h-10 flex items-center justify-center">X</button>
+        <button onclick="document.getElementById('skin-modal').classList.add('hidden')" style="position:absolute;top:0;right:0;padding:8px;background:#d32f2f;color:#fff;font-weight:800;font-size:1.2rem;border:2px solid #000;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:4px;">X</button>
+      </div>
+    </div>
       </div>
     </div>
     <div id="ability-modal" class="modal hidden">
-      <div
-        class="bg-gray-800 p-4 rounded-lg shadow-xl w-full max-w-lg border-4 border-black relative text-white"
-      >
-        <h3 class="text-3xl font-bold mb-4 text-gray-400 text-center">
+      <div style="background: #555555; border: 4px solid #000; border-radius: 12px; padding: 20px; max-width: 600px; width: 100%; position: relative; color: #fff;">
+        <h3 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; text-align: center; color: #fff">
           Select Ability for Slot <span id="modal-slot-number">1</span>
         </h3>
         <div id="ability-list" class="grid gap-4"></div>
         <button
           id="close-ability-modal"
-          class="absolute top-0 right-0 p-2 bg-red-600 hover:bg-red-700 text-white font-black text-lg border-2 border-black w-10 h-10 flex items-center justify-center"
+          style="position:absolute;top:0;right:0;padding:8px;background:#d32f2f;color:#fff;font-weight:800;font-size:1.2rem;border:2px solid #000;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:4px;"
         >
           X
         </button>
+      </div>
+    </div>
+    <!-- MOD PANEL -->
+    <div id="mod-panel" class="modal hidden">
+      <div style="background: #1a1a2e; border: 3px solid #e94560; border-radius: 12px; padding: 24px; width: 560px; max-width: 95vw; max-height: 80vh; overflow-y: auto; position: relative; color: #fff;">
+        <button onclick="document.getElementById('mod-panel').classList.add('hidden')" style="position:absolute;top:8px;right:8px;background:#e94560;border:none;color:#fff;font-weight:800;font-size:1rem;width:32px;height:32px;border-radius:6px;cursor:pointer;">✕</button>
+        <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:4px;color:#e94560;">🛡 Mod Panel</h2>
+        <p style="font-size:0.75rem;color:#aaa;margin-bottom:16px;">Logged in as Paper[Dev]</p>
+
+        <!-- Ban section -->
+        <div style="background:#16213e;border-radius:8px;padding:14px;margin-bottom:16px;">
+          <h3 style="font-size:0.9rem;font-weight:700;margin-bottom:10px;color:#e94560;">Ban Player</h3>
+          <div style="display:flex;gap:8px;">
+            <input id="mod-ban-input" type="text" placeholder="Username to ban" style="flex:1;padding:8px 10px;border-radius:6px;border:2px solid #e94560;background:#0f3460;color:#fff;font-size:0.85rem;outline:none;" />
+            <button onclick="modBanPlayer()" style="background:#e94560;border:none;color:#fff;font-weight:700;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:0.85rem;">Ban</button>
+          </div>
+        </div>
+
+        <!-- Active matches -->
+        <div style="background:#16213e;border-radius:8px;padding:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <h3 style="font-size:0.9rem;font-weight:700;color:#e94560;">Active Matches</h3>
+            <button onclick="modRefreshRooms()" style="background:#0f3460;border:2px solid #e94560;color:#e94560;font-weight:700;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:0.75rem;">↻ Refresh</button>
+          </div>
+          <div id="mod-room-list" style="font-size:0.82rem;color:#ccc;">
+            <p style="color:#666;">Click Refresh to load active matches.</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -735,6 +955,13 @@
         </button>
       </div>
     </div>
+    <div id="settings-modal" class="modal hidden">
+      <div style="width:100%;max-width:400px;background:#fff;border:4px solid #000;border-radius:12px;padding:30px;text-align:center;">
+        <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:20px;color:#000;">Settings</h2>
+
+        <button id="close-settings-modal" style="margin-top:20px;width:100%;background:#16a34a;color:#fff;font-weight:700;font-size:1rem;padding:10px;border:2px solid #000;border-radius:5px;cursor:pointer;">Close</button>
+      </div>
+    </div>
     <div id="auth-modal" class="modal hidden">
       <div
         class="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm text-center border-4 border-black"
@@ -783,6 +1010,23 @@
       </div>
     </div>
     <script>
+      // Console warning
+      console.log(
+        "%c⚠ WARNING",
+        "color: red; font-size: 2rem; font-weight: 900;"
+      );
+      console.log(
+        "%cDo NOT copy and paste anything in here.\nMods will be notified and your account can be permanently banned.",
+        "color: orange; font-size: 1rem; font-weight: 700; line-height: 1.8;"
+      );
+
+      // Register service worker for PWA support
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .catch((err) => console.warn('SW registration failed:', err));
+        });
+      }
       const menuScreen = document.getElementById("menu-screen"),
         gameScreenWrapper = document.getElementById("game-screen-wrapper"),
         canvas = document.getElementById("game-canvas"),
@@ -818,6 +1062,42 @@
         toggleAuthModeBtn = document.getElementById("toggle-auth-mode-btn"),
         closeAuthModal = document.getElementById("close-auth-modal");
       let isIntentionalDisconnect = !1;
+      
+      // Frame rate optimization
+      const FPS_TARGET = 60; // Can be set to 120 for high-refresh displays
+      const FRAME_TIME = 1000 / FPS_TARGET;
+      let lastFrameTime = 0;
+      let deltaTime = 0;
+      
+      // Allow changing FPS target at runtime
+      const setFPSTarget = (fps) => {
+        if (fps === 60 || fps === 120) {
+          window.FPS_TARGET = fps;
+          window.FRAME_TIME = 1000 / fps;
+          console.log(`FPS target set to ${fps}`);
+        }
+      };
+      
+      // Expose to console for testing: setFPSTarget(120)
+      window.setFPSTarget = setFPSTarget;
+      
+      // Session persistence
+      const saveSession = (username) => {
+        localStorage.setItem("gameSession", JSON.stringify({
+          username: username,
+          timestamp: Date.now()
+        }));
+      };
+      
+      const getStoredSession = () => {
+        const session = localStorage.getItem("gameSession");
+        return session ? JSON.parse(session) : null;
+      };
+      
+      const clearSession = () => {
+        localStorage.removeItem("gameSession");
+      };
+      
       const getServerURL = () => {
           if (
             "localhost" === window.location.hostname ||
@@ -954,6 +1234,9 @@
           loadout: ["whiteBall", "fireBall", "knockback", "dash", "heal"],
           isAuthenticated: !1,
           authenticatedUser: null,
+          isMod: false,
+          modSpectating: false,
+          spectateTargetId: null,
           elo: parseInt(localStorage.getItem("guestElo")) || 1000,
           eloDelta: 0,
           isTraining: false,
@@ -970,7 +1253,7 @@
         authMode = "login",
         viewScale = 1,
         viewHeightInGameUnits = 480;
-      const ZOOM_FACTOR = 1.8;
+      const ZOOM_FACTOR = 1;
       let mouseX = 0,
         screenShake = { intensity: 0, duration: 0, startTime: 0 };
       const playerRenderPos = new Map();
@@ -983,6 +1266,8 @@
       function resize() {
         ((canvas.width = window.innerWidth),
           (canvas.height = window.innerHeight),
+          (canvas.style.width = window.innerWidth + "px"),
+          (canvas.style.height = window.innerHeight + "px"),
           (viewScale = (window.innerWidth / 900) * 1.8),
           (viewHeightInGameUnits = window.innerHeight / viewScale),
           "menu" !== gameState.status && draw());
@@ -1033,16 +1318,32 @@
               (gameState.authenticatedUser = e.name),
               (gameState.elo = e.elo || 1000),
               (gameState.loadout = e.loadout),
+              (gameState.isMod = e.isMod || false),
+              saveSession(e.name),
               document.getElementById("elo-value").textContent = gameState.elo,
               authModal.classList.add("hidden"),
               updateAuthDisplay(e.name),
               (nameInput.value = e.name),
               renderMenuLoadoutSlots(),
+              e.isMod && initModPanel(),
               showModal(
                 "Success!",
                 `Welcome back, ${e.name}. Your progress has been loaded.`,
                 () => {},
               ));
+            break;
+          case "restoreSession":
+            // Silent session restoration - no modal shown
+            ((gameState.isAuthenticated = !0),
+              (gameState.authenticatedUser = e.name),
+              (gameState.elo = e.elo || 1000),
+              (gameState.loadout = e.loadout),
+              (gameState.isMod = e.isMod || false),
+              document.getElementById("elo-value").textContent = gameState.elo,
+              updateAuthDisplay(e.name),
+              (nameInput.value = e.name),
+              renderMenuLoadoutSlots(),
+              e.isMod && initModPanel());
             break;
           case "eloUpdate":
             gameState.eloDelta = e.delta;
@@ -1064,6 +1365,35 @@
             break;
           case "onlineCount":
             document.getElementById("online-count").textContent = e.count;
+            break;
+          case "modRoomList":
+            renderModRoomList(e.rooms);
+            break;
+          case "modSpectateState":
+            // Only process if we're actively spectating
+            if (gameState.modSpectating) {
+              updateSpectateState(e);
+            }
+            break;
+          case "modSpectateStart":
+            gameState.modSpectating = true;
+            gameState.status = "spectating";
+            gameState.spectateTargetId = null;
+            document.getElementById("mod-panel").classList.add("hidden");
+            document.getElementById("game-screen-wrapper").classList.remove("hidden");
+            document.getElementById("menu-screen").classList.add("hidden");
+            document.getElementById("spectate-hud").classList.remove("hidden");
+            resize();
+            lastFrameTime = 0;
+            break;
+          case "modBanSuccess":
+            showModal("Ban Applied", `${e.username} has been banned.`, () => {});
+            break;
+          case "modError":
+            showModal("Mod Error", e.message, () => {});
+            break;
+          case "banned":
+            showModal("Banned", e.message, () => { location.reload(); });
             break;
           case "playerEliminated":
             ((gameState.eliminatedBy = e.killerUsername),
@@ -1087,15 +1417,28 @@
             // Hide training prompt as soon as a match is found (countdown starts)
             if (e.message !== "Waiting for another player...") {
               document.getElementById("training-prompt").classList.add("hidden");
+            } else if (!gameState.isTraining) {
+              document.getElementById("training-prompt").classList.remove("hidden");
             }
             break;
           case "trainingStart":
             gameState.isTraining = true;
             gameState.status = "playing";
+            gameState.projectiles = [];
+            gameState.mines = [];
+            gameState.healingFields = [];
+            gameState.dyingPlayer = null;
+            gameState.gameOverPending = false;
             document.getElementById("training-prompt").classList.add("hidden");
             statusDisplay.textContent = "TRAINING";
             break;
           case "trainingRestart":
+            // Player died in training — reset client state cleanly
+            gameState.projectiles = [];
+            gameState.mines = [];
+            gameState.healingFields = [];
+            gameState.dyingPlayer = null;
+            gameState.gameOverPending = false;
             statusDisplay.textContent = "TRAINING";
             break;
           case "matchFound":
@@ -1106,6 +1449,8 @@
             gameState.mines = [];
             gameState.healingFields = [];
             gameState.eliminatedBy = null;
+            gameState.dyingPlayer = null;
+            gameState.gameOverPending = false;
             gameState.killCount = 0;
             document.getElementById("kill-count").textContent = "0";
             document.getElementById("training-prompt").classList.add("hidden");
@@ -1287,17 +1632,36 @@
           updatePlayerStatsDisplay();
         }
         const o = gameState.allPlayers.get(myPlayerId);
-        ("playing" !== gameState.status ||
-          gameState.gameOverPending ||
-          !n ||
-          o ||
-          (gameState.status = "death_screen"),
-          "starting" === t.status && (gameState.status = "starting"),
-          "playing" === t.status &&
-            "starting" === gameState.status &&
-            (gameState.status = "playing"));
+        // Don't update game status from broadcast when spectating
+        if (!gameState.modSpectating) {
+          ("playing" !== gameState.status ||
+            gameState.gameOverPending ||
+            !n ||
+            o ||
+            (gameState.status = "death_screen"),
+            "starting" === t.status && (gameState.status = "starting"),
+            "playing" === t.status &&
+              "starting" === gameState.status &&
+              (gameState.status = "playing"));
+        }
       }
       function gameLoop(t) {
+        // Frame rate limiting for consistent 60fps or 120fps
+        if (lastFrameTime === 0) lastFrameTime = t;
+        const elapsed = t - lastFrameTime;
+        const targetFrameTime = window.FRAME_TIME || FRAME_TIME;
+        
+        if (elapsed < targetFrameTime) {
+          // Not enough time has passed, skip this frame
+          if ("finished" !== gameState.status && "menu" !== gameState.status) {
+            requestAnimationFrame(gameLoop);
+          }
+          return;
+        }
+        
+        deltaTime = elapsed / 1000; // Convert to seconds
+        lastFrameTime = t;
+        
         (updateMovementAndAim(),
           updateHotbarVisuals(),
           gameState.allPlayers.forEach((t) => {
@@ -1354,6 +1718,13 @@
           switchToMenuScreen());
       }
       async function startGame() {
+        // Clear any active spectate session before joining a game
+        if (gameState.modSpectating) {
+          gameState.modSpectating = false;
+          gameState.spectateTargetId = null;
+          gameState.allPlayers.clear();
+          document.getElementById("spectate-hud").classList.add("hidden");
+        }
         let t = nameInput.value.trim() || gameState.authenticatedUser || "Challenger",
           e = gameState.loadout;
         if (t.length > 12)
@@ -1393,10 +1764,12 @@
         if (!socket || socket.readyState !== WebSocket.OPEN) return;
         socket.send(JSON.stringify({ type: "stopTraining" }));
         gameState.isTraining = false;
+        gameState.allPlayers.clear();
         gameState.projectiles = [];
         gameState.mines = [];
         gameState.healingFields = [];
         gameState.dyingPlayer = null;
+        gameState.gameOverPending = false;
         document.getElementById("training-prompt").classList.remove("hidden");
         gameState.status = "starting";
         statusDisplay.textContent = "Waiting for another player...";
@@ -2040,8 +2413,26 @@
         ctx.restore();
       }
       function draw() {
+        // Use high-quality rendering
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const t = gameState.allPlayers.get(myPlayerId);
+
+        // Use spectate-specific state when spectating
+        const activePlayers = gameState.modSpectating && gameState.spectatePlayers
+          ? gameState.spectatePlayers
+          : gameState.allPlayers;
+        const activeProjectiles = gameState.modSpectating ? (gameState.spectateProjectiles || []) : gameState.projectiles;
+        const activeMines = gameState.modSpectating ? (gameState.spectateMines || []) : gameState.mines;
+        const activeHealingFields = gameState.modSpectating ? (gameState.spectateHealingFields || []) : gameState.healingFields;
+        const activePoisonGas = gameState.modSpectating ? (gameState.spectatePoisonGas || { active: false }) : gameState.poisonGas;
+
+        const t = gameState.modSpectating
+          ? (gameState.spectateTargetId
+              ? activePlayers.get(gameState.spectateTargetId)
+              : Array.from(activePlayers.values())[0])
+          : gameState.allPlayers.get(myPlayerId);
         let e = 0,
           a = 0;
         const n = canvas.width / viewScale;
@@ -2052,10 +2443,26 @@
         };
         if (t) calcCam(t);
         else {
-          const t = Array.from(gameState.allPlayers.values())[0];
+          const t = Array.from(activePlayers.values())[0];
           if (t) calcCam(t);
           else if (gameState.dyingPlayer) calcCam(gameState.dyingPlayer);
         }
+
+        // When spectating, temporarily swap spectate data into gameState for draw calls
+        let _savedPlayers, _savedProjectiles, _savedMines, _savedHealingFields, _savedPoisonGas;
+        if (gameState.modSpectating) {
+          _savedPlayers = gameState.allPlayers;
+          _savedProjectiles = gameState.projectiles;
+          _savedMines = gameState.mines;
+          _savedHealingFields = gameState.healingFields;
+          _savedPoisonGas = gameState.poisonGas;
+          gameState.allPlayers = activePlayers;
+          gameState.projectiles = activeProjectiles;
+          gameState.mines = activeMines;
+          gameState.healingFields = activeHealingFields;
+          gameState.poisonGas = activePoisonGas;
+        }
+
         if (
           (ctx.save(),
           ctx.scale(viewScale, viewScale),
@@ -2066,7 +2473,7 @@
           drawHealingFields(),
           drawProjectiles(),
           gameState.allPlayers.forEach((t) =>
-            drawPlayer(t, t.id === myPlayerId),
+            drawPlayer(t, !gameState.modSpectating && t.id === myPlayerId),
           ),
           drawDashTrailAndRings(),
           drawPoisonGas(),
@@ -2093,6 +2500,16 @@
             (ctx.globalAlpha = 1));
         }
         ctx.restore();
+
+        // Restore gameState after spectate draw
+        if (gameState.modSpectating) {
+          gameState.allPlayers = _savedPlayers;
+          gameState.projectiles = _savedProjectiles;
+          gameState.mines = _savedMines;
+          gameState.healingFields = _savedHealingFields;
+          gameState.poisonGas = _savedPoisonGas;
+        }
+
         const l = canvas.width / 2,
           o = canvas.height / 2,
           i = 100,
@@ -2306,6 +2723,8 @@
               t.appendChild(n));
           }));
       }
+      
+      // Mobile mode toggle via settings
       (window.addEventListener("resize", resize),
         resize(),
         startButton.addEventListener("click", startGame),
@@ -2342,6 +2761,8 @@
         signOutBtn.addEventListener("click", () => {
           ((gameState.isAuthenticated = !1),
             (gameState.authenticatedUser = null),
+            (gameState.isMod = false),
+            clearSession(),
             (gameState.elo = parseInt(localStorage.getItem("guestElo")) || 1000),
             (gameState.loadout = [
               "whiteBall",
@@ -2350,6 +2771,7 @@
               "dash",
               "heal",
             ]),
+            document.getElementById("mod-btn-wrapper").classList.add("hidden"),
             updateAuthDisplay(null),
             renderMenuLoadoutSlots());
         }),
@@ -2424,15 +2846,10 @@
               (l.textContent = e.name),
               a.appendChild(l),
               a.addEventListener("click", () => {
-                "target" === t
-                  ? ((gameState.loadout[modalTargetSlot] = t),
-                    abilityModal.classList.add("hidden"),
-                    renderMenuLoadoutSlots(),
-                    renderHotbar())
-                  : ((gameState.loadout[modalTargetSlot] = t),
-                    abilityModal.classList.add("hidden"),
-                    renderMenuLoadoutSlots(),
-                    renderHotbar());
+                (gameState.loadout[modalTargetSlot] = t),
+                  abilityModal.classList.add("hidden"),
+                  renderMenuLoadoutSlots(),
+                  renderHotbar();
               }),
               abilityList.appendChild(a));
           }),
@@ -2559,15 +2976,39 @@
       }
       function switchToMenuScreen() {
         (gameScreenWrapper.classList.add("hidden"),
-          menuScreen.classList.remove("hidden"));
+          menuScreen.classList.remove("hidden"),
+          document.getElementById("mobile-joystick").classList.add("hidden"));
       }
       function renderLoop() {
-        ("menu" !== gameState.status && draw(),
-          requestAnimationFrame(renderLoop));
+        if (gameState.status !== "menu") {
+          draw();
+          if (gameState.modSpectating) drawSpectateHUD();
+        } else if (gameState.modSpectating) {
+          // Safety: if somehow status got reset to menu but still spectating, draw anyway
+          draw();
+          drawSpectateHUD();
+        }
+        requestAnimationFrame(renderLoop);
       }
       (renderMenuLoadoutSlots(),
         drawSkinPreview("default"),
         renderHotbar(),
+        // Restore session if available
+        (() => {
+          const storedSession = getStoredSession();
+          if (storedSession && storedSession.username) {
+            // Auto-login with stored username
+            connectToServer().then(() => {
+              socket.send(JSON.stringify({
+                type: "restoreSession",
+                username: storedSession.username
+              }));
+            }).catch(err => {
+              console.error("Failed to restore session:", err);
+              clearSession();
+            });
+          }
+        })(),
         requestAnimationFrame(renderLoop),
         setInterval(() => {
           socket &&
@@ -2576,13 +3017,122 @@
         }, 5e3),
         (window.__gameState = gameState),
         (window.__socket = () => socket));
+
+      // --- MOD PANEL FUNCTIONS ---
+      function initModPanel() {
+        document.getElementById("mod-btn-wrapper").classList.remove("hidden");
+      }
+
+      function modRefreshRooms() {
+        const sock = window.__socket ? window.__socket() : socket;
+        if (sock && sock.readyState === WebSocket.OPEN) {
+          sock.send(JSON.stringify({ type: "modGetRooms" }));
+        }
+      }
+
+      function modSpectate(roomId) {
+        const sock = window.__socket ? window.__socket() : socket;
+        if (sock && sock.readyState === WebSocket.OPEN) {
+          sock.send(JSON.stringify({ type: "modSpectate", roomId }));
+        }
+      }
+
+      function spectateSwitch(dir) {
+        const players = Array.from((gameState.spectatePlayers || gameState.allPlayers).values());
+        if (players.length === 0) return;
+        const currentIdx = players.findIndex(p => p.id === gameState.spectateTargetId);
+        const nextIdx = (currentIdx + dir + players.length) % players.length;
+        gameState.spectateTargetId = players[nextIdx].id;
+        document.getElementById("spectate-name-label").textContent = players[nextIdx].name;
+      }
+
+      function stopSpectating() {
+        gameState.modSpectating = false;
+        gameState.spectateTargetId = null;
+        gameState.status = "menu";
+        gameState.allPlayers.clear();
+        if (gameState.spectatePlayers) gameState.spectatePlayers.clear();
+        document.getElementById("spectate-hud").classList.add("hidden");
+        document.getElementById("game-screen-wrapper").classList.add("hidden");
+        document.getElementById("menu-screen").classList.remove("hidden");
+        // Tell server to stop sending spectate updates
+        const sock = window.__socket ? window.__socket() : socket;
+        if (sock && sock.readyState === WebSocket.OPEN) {
+          sock.send(JSON.stringify({ type: "modStopSpectate" }));
+        }
+      }
+
+      function updateSpectateState(t) {
+        // Update spectate-specific player map (separate from main game)
+        if (!gameState.spectatePlayers) gameState.spectatePlayers = new Map();
+        gameState.spectatePlayers.clear();
+        (t.players || []).forEach(p => {
+          const prev = gameState.spectatePlayers.get(p.id);
+          gameState.spectatePlayers.set(p.id, {
+            id: p.id, name: p.name,
+            x: p.x, y: p.y,
+            renderX: prev ? prev.renderX : p.x,
+            renderY: prev ? prev.renderY : p.y,
+            facingAngle: p.facingAngle, health: p.health, color: p.color,
+            isProtected: p.isReflecting, isReflecting: p.isReflecting,
+            isDashing: p.isDashing, isStunned: p.isStunned, isImpulsed: p.isImpulsed,
+            lastAbilityTime: p.lastAbilityTime || [],
+            wins: p.wins || 0, elo: p.elo || 1000,
+          });
+        });
+        gameState.spectateProjectiles = t.projectiles || [];
+        gameState.spectateMines = t.mines || [];
+        gameState.spectateHealingFields = t.healingFields || [];
+        gameState.spectatePoisonGas = t.poisonGas || { active: false };
+        gameState.spectateMapIndex = t.mapIndex;
+        // Sync map barriers for drawing
+        if (t.mapIndex !== undefined && MAPS[t.mapIndex]) {
+          MAP_BARRIERS.length = 0;
+          MAPS[t.mapIndex].forEach(b => MAP_BARRIERS.push(b));
+        }
+      }
+
+      function drawSpectateHUD() {
+        // Update the name label to always reflect current target
+        const players = Array.from((gameState.spectatePlayers || gameState.allPlayers).values());
+        if (players.length === 0) return;
+        if (!gameState.spectateTargetId || !(gameState.spectatePlayers || gameState.allPlayers).has(gameState.spectateTargetId)) {
+          gameState.spectateTargetId = players[0].id;
+        }
+        const target = (gameState.spectatePlayers || gameState.allPlayers).get(gameState.spectateTargetId);
+        if (target) {
+          document.getElementById("spectate-name-label").textContent = target.name;
+        }
+      }
+
+      function modBanPlayer() {
+        const username = document.getElementById("mod-ban-input").value.trim();
+        if (!username) return;
+        if (!confirm(`Ban "${username}"? This cannot be undone easily.`)) return;
+        const sock = window.__socket ? window.__socket() : socket;
+        sock.send(JSON.stringify({ type: "modBan", username }));
+        document.getElementById("mod-ban-input").value = "";
+      }
+
+      function renderModRoomList(rooms) {
+        const el = document.getElementById("mod-room-list");
+        if (!rooms || rooms.length === 0) {
+          el.innerHTML = '<p style="color:#666;">No active matches right now.</p>';
+          return;
+        }
+        el.innerHTML = rooms.map(r => `
+          <div style="background:#0f3460;border-radius:6px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <span style="color:#e94560;font-weight:700;">Room ${r.id}</span>
+              <span style="color:#aaa;margin-left:8px;font-size:0.75rem;">[${r.status}]</span>
+              <div style="margin-top:4px;">
+                ${r.players.map(p => `<span style="background:#16213e;padding:2px 8px;border-radius:4px;margin-right:4px;font-size:0.75rem;">${p.name}${p.username ? ' (' + p.username + ')' : ''} — ELO ${p.elo}</span>`).join('')}
+              </div>
+            </div>
+            <button onclick="modSpectate('${r.id}')" style="background:#e94560;border:none;color:#fff;font-weight:700;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.8rem;white-space:nowrap;">👁 Spectate</button>
+          </div>
+        `).join('');
+      }
     </script>
-    <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/service-worker.js");
-      });
-    }
-  </script>
-</body>
+  </body>
 </html>

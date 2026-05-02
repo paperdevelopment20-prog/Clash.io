@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 const app = express();
 
 // This allows the server to read JSON data
-app.use(express.json()); 
+app.use(express.json());
 
 // Serve static files from root directory (SVG, CSS, JS, HTML)
 app.use(express.static(path.join(__dirname)));
@@ -44,6 +44,14 @@ const userSchema = new mongoose.Schema(
             type: Number,
             default: 1000,
         },
+        isMod: {
+            type: Boolean,
+            default: false,
+        },
+        isBanned: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true },
 );
@@ -62,7 +70,6 @@ connectDB().then(async () => {
 // --- GAME CONSTANTS (MUST MATCH CLIENT) ---
 // --- GAME CONSTANTS (MUST MATCH CLIENT) ---
 const PORT = process.env.PORT || 5000;
-
 /* Around line 238 in index.html */
 const TILE_SIZE = 20;
 const TILES_X = 45; // (45 * 20 = 900px width)
@@ -91,14 +98,24 @@ const REGEN_AMOUNT = 1 / 60;
 const MAPS = [
     // Map 1: Original — center barrier + top/bottom enclosures
     [
-        [0, 0, 45, 1], [0, 29, 45, 1], [0, 0, 1, 30], [44, 0, 1, 30],
+        [0, 0, 45, 1],
+        [0, 29, 45, 1],
+        [0, 0, 1, 30],
+        [44, 0, 1, 30],
         [10, 13, 25, 3],
-        [18, 5, 9, 1], [18, 3, 1, 2], [26, 3, 1, 2],
-        [18, 24, 9, 1], [18, 25, 1, 2], [26, 25, 1, 2],
+        [18, 5, 9, 1],
+        [18, 3, 1, 2],
+        [26, 3, 1, 2],
+        [18, 24, 9, 1],
+        [18, 25, 1, 2],
+        [26, 25, 1, 2],
     ],
     // Map 2: Crossroads — open corridors through center, 4 corner rooms
     [
-        [0, 0, 45, 1], [0, 29, 45, 1], [0, 0, 1, 30], [44, 0, 1, 30],
+        [0, 0, 45, 1],
+        [0, 29, 45, 1],
+        [0, 0, 1, 30],
+        [44, 0, 1, 30],
         // Top-left block
         [2, 2, 16, 10],
         // Top-right block
@@ -110,15 +127,23 @@ const MAPS = [
     ],
     // Map 3: Open Arena — no internal barriers
     [
-        [0, 0, 45, 1], [0, 29, 45, 1], [0, 0, 1, 30], [44, 0, 1, 30],
+        [0, 0, 45, 1],
+        [0, 29, 45, 1],
+        [0, 0, 1, 30],
+        [44, 0, 1, 30],
     ],
     // Map 4: Channels — horizontal walls creating 3 lanes
     [
-        [0, 0, 45, 1], [0, 29, 45, 1], [0, 0, 1, 30], [44, 0, 1, 30],
+        [0, 0, 45, 1],
+        [0, 29, 45, 1],
+        [0, 0, 1, 30],
+        [44, 0, 1, 30],
         // Top channel wall (gap at x=20-24)
-        [1, 9, 19, 2], [25, 9, 19, 2],
+        [1, 9, 19, 2],
+        [25, 9, 19, 2],
         // Bottom channel wall (gap at x=20-24)
-        [1, 19, 19, 2], [25, 19, 19, 2],
+        [1, 19, 19, 2],
+        [25, 19, 19, 2],
         // Center blocker
         [20, 13, 5, 4],
     ],
@@ -126,12 +151,57 @@ const MAPS = [
 
 const MAP_BARRIERS = MAPS[0]; // default, overridden per room
 const ALL_ABILITIES = {
-    whiteBall: { name: "White Ball", damage: 10, projSpeed: 5, duration: 0, cooldown: 3000 },
-    fireBall: { name: "Fire Ball", damage: 20, projSpeed: 3, duration: 0, cooldown: 3000 },
-    knockback: { name: "Knockback", damage: 0, force: 150, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 3000 },
-    impulse:   { name: "Impulse",   damage: 0, force: 150, projSpeed: 3, ringRadius: 36, stopAfter: 650, duration: 0, cooldown: 3000 },
-    snowball: { name: "Snowball", damage: 10, projSpeed: 4, slowDuration: 1500, cooldown: 3000 },
-    landmine: { name: "Landmine", damage: 25, force: 0, ringRadius: 36, explosionDelay: 500, projSpeed: 0, duration: 0, cooldown: 3000 },
+    whiteBall: {
+        name: "White Ball",
+        damage: 10,
+        projSpeed: 5,
+        duration: 0,
+        cooldown: 3000,
+    },
+    fireBall: {
+        name: "Fire Ball",
+        damage: 20,
+        projSpeed: 3,
+        duration: 0,
+        cooldown: 3000,
+    },
+    knockback: {
+        name: "Knockback",
+        damage: 0,
+        force: 150,
+        projSpeed: 3,
+        ringRadius: 36,
+        stopAfter: 650,
+        duration: 0,
+        cooldown: 3000,
+    },
+    impulse: {
+        name: "Impulse",
+        damage: 0,
+        force: 150,
+        projSpeed: 3,
+        ringRadius: 36,
+        stopAfter: 650,
+        duration: 0,
+        cooldown: 3000,
+    },
+    snowball: {
+        name: "Snowball",
+        damage: 10,
+        projSpeed: 4,
+        slowDuration: 1500,
+        cooldown: 3000,
+    },
+    landmine: {
+        name: "Landmine",
+        damage: 25,
+        force: 0,
+        ringRadius: 36,
+        explosionDelay: 500,
+        projSpeed: 0,
+        duration: 0,
+        cooldown: 3000,
+    },
     dash: {
         name: "Dash",
         damage: 0,
@@ -148,8 +218,20 @@ const ALL_ABILITIES = {
         projSpeed: 0,
         cooldown: 3000,
     },
-    reflection: { name: "Reflection", damage: 0, projSpeed: 0, duration: 3000, cooldown: 15000 },
-    target: { name: "Target", damage: 50, projSpeed: 1, duration: 0, cooldown: 3000 },
+    reflection: {
+        name: "Reflection",
+        damage: 0,
+        projSpeed: 0,
+        duration: 3000,
+        cooldown: 15000,
+    },
+    target: {
+        name: "Target",
+        damage: 50,
+        projSpeed: 1,
+        duration: 0,
+        cooldown: 3000,
+    },
 };
 
 // --- GAME UTILITIES (SHARED) ---
@@ -202,16 +284,24 @@ let _activeBarriers = MAP_BARRIERS; // set per-room before each update tick
 
 function checkCollision(x, y, size) {
     const map = _activeBarriers;
-    if (x - size < 0 || x + size > CANVAS_WIDTH || y - size < 0 || y + size > CANVAS_HEIGHT)
+    if (
+        x - size < 0 ||
+        x + size > CANVAS_WIDTH ||
+        y - size < 0 ||
+        y + size > CANVAS_HEIGHT
+    )
         return true;
     for (const b of map) {
         const bRect = {
-            x: b[0] * TILE_SIZE, y: b[1] * TILE_SIZE,
-            w: b[2] * TILE_SIZE, h: b[3] * TILE_SIZE,
+            x: b[0] * TILE_SIZE,
+            y: b[1] * TILE_SIZE,
+            w: b[2] * TILE_SIZE,
+            h: b[3] * TILE_SIZE,
         };
         const closestX = Math.max(bRect.x, Math.min(x, bRect.x + bRect.w));
         const closestY = Math.max(bRect.y, Math.min(y, bRect.y + bRect.h));
-        const distX = x - closestX, distY = y - closestY;
+        const distX = x - closestX,
+            distY = y - closestY;
         if (distX * distX + distY * distY < size * size) return true;
     }
     return false;
@@ -244,7 +334,7 @@ class GameRoom {
         this.poisonGasCenter = { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 };
         this.poisonGasDamageInterval = 500; // Damage every 500ms
         this.lastPoisonGasDamageTime = 0;
-        
+
         // Track if a player left early (for ELO calculation)
         this.playerLeftEarly = false;
 
@@ -286,26 +376,30 @@ class GameRoom {
         // If game is in progress and player leaves EARLY (not from normal game end), they lose ELO
         // Check if there's still an opponent (meaning this is an early leave, not a normal game end)
         const hasOpponent = this.playerCount > 1;
-        
+
         if (this.gameStatus === "playing" && hasOpponent && player.ws) {
             const K = 32;
             const leaverElo = player.elo || 1000;
             // Penalty for leaving: lose 50% of K factor (16 ELO)
             const newLeaverElo = Math.round(leaverElo - K / 2);
-            
+
             // For registered players, update database
             if (player.ws.username) {
                 User.findOneAndUpdate(
                     { username: player.ws.username.toLowerCase() },
                     { $set: { elo: newLeaverElo } },
-                ).catch(err => console.error("Error updating leaver ELO:", err));
+                ).catch((err) =>
+                    console.error("Error updating leaver ELO:", err),
+                );
             }
-            
+
             // For guest players, update websocket ELO
             player.ws.guestElo = newLeaverElo;
-            
-            console.log(`Player ${player.name} left during game. ELO: ${leaverElo} → ${newLeaverElo} (-16)`);
-            
+
+            console.log(
+                `Player ${player.name} left during game. ELO: ${leaverElo} → ${newLeaverElo} (-16)`,
+            );
+
             // Update lastLoserElo so endGame uses the correct ELO
             this.lastLoserElo = newLeaverElo;
             this.lastLoserWs = player.ws;
@@ -372,7 +466,7 @@ class GameRoom {
             this.isStarting = true;
             this.countdown = 5; // 2s delay + 3s countdown
             this.gameStatus = "starting"; // Set room status to starting
-            
+
             // Start game loop immediately so players can move during countdown
             this.startGameLoop();
 
@@ -437,22 +531,35 @@ class GameRoom {
                 roomId: this.id,
                 wins: p.wins || 0,
             })),
-            projectiles: this.projectiles.map((p) => ({ ...p, abilityType: p.type })),
+            projectiles: this.projectiles.map((p) => ({
+                ...p,
+                abilityType: p.type,
+            })),
             mines: this.mines,
-            healingFields: this.healingFields.map((f) => ({ x: f.x, y: f.y, radius: f.radius, color: f.color })),
+            healingFields: this.healingFields.map((f) => ({
+                x: f.x,
+                y: f.y,
+                radius: f.radius,
+                color: f.color,
+            })),
             status: this.gameStatus,
             mapIndex: this.mapIndex,
-            poisonGas: this.poisonGasActive ? {
-                active: true,
-                centerX: this.poisonGasCenter.x,
-                centerY: this.poisonGasCenter.y,
-                radius: this.poisonGasRadius,
-            } : { active: false },
+            poisonGas: this.poisonGasActive
+                ? {
+                      active: true,
+                      centerX: this.poisonGasCenter.x,
+                      centerY: this.poisonGasCenter.y,
+                      radius: this.poisonGasRadius,
+                  }
+                : { active: false },
             // Send numeric state for client (2 = InProgress, 3 = Gas)
             state: this.poisonGasActive ? 3 : 2,
-            timeLeft: this.poisonGasActive ? Math.max(0, this.poisonGasRadius) : null,
+            timeLeft: this.poisonGasActive
+                ? Math.max(0, this.poisonGasRadius)
+                : null,
         });
-        if (targetWs && targetWs.readyState === ws.OPEN) targetWs.send(stateMessage);
+        if (targetWs && targetWs.readyState === ws.OPEN)
+            targetWs.send(stateMessage);
     }
 
     broadcastState() {
@@ -488,17 +595,38 @@ class GameRoom {
             })),
             status: this.gameStatus,
             mapIndex: this.mapIndex,
-            poisonGas: this.poisonGasActive ? {
-                active: true,
-                centerX: this.poisonGasCenter.x,
-                centerY: this.poisonGasCenter.y,
-                radius: this.poisonGasRadius,
-            } : { active: false },
+            poisonGas: this.poisonGasActive
+                ? {
+                      active: true,
+                      centerX: this.poisonGasCenter.x,
+                      centerY: this.poisonGasCenter.y,
+                      radius: this.poisonGasRadius,
+                  }
+                : { active: false },
             // Send numeric state for client (2 = InProgress, 3 = Gas)
             state: this.poisonGasActive ? 3 : 2,
-            timeLeft: this.poisonGasActive ? Math.max(0, this.poisonGasRadius) : null,
+            timeLeft: this.poisonGasActive
+                ? Math.max(0, this.poisonGasRadius)
+                : null,
         };
         this.broadcast(stateMessage);
+        // Push state to any spectating mods — use a separate type so client can distinguish
+        if (wss) {
+            const spectateMsg = {
+                ...stateMessage,
+                type: "modSpectateState",
+                roomId: this.id,
+            };
+            const spectateMsgStr = JSON.stringify(spectateMsg);
+            wss.clients.forEach((client) => {
+                if (
+                    client.modSpectatingRoom === this.id &&
+                    client.readyState === ws.OPEN
+                ) {
+                    client.send(spectateMsgStr);
+                }
+            });
+        }
     }
 
     // --- GAME LOGIC METHODS (OPERATING ON THIS.STATE) ---
@@ -562,7 +690,8 @@ class GameRoom {
 
     updateProjectiles() {
         const projectilesToRemove = [];
-        const playerList = this._cachedPlayerList || Object.values(this.players);
+        const playerList =
+            this._cachedPlayerList || Object.values(this.players);
         const now = Date.now();
 
         this.projectiles.forEach((p, index) => {
@@ -573,7 +702,9 @@ class GameRoom {
                     return;
                 }
                 // Travel until stopAfter ms OR until a player is inside — then freeze in place
-                const hasStopped = p.stopped || (p.stopAfter && (now - p.createdAt > p.stopAfter));
+                const hasStopped =
+                    p.stopped ||
+                    (p.stopAfter && now - p.createdAt > p.stopAfter);
                 if (!hasStopped) {
                     p.x += p.dx;
                     p.y += p.dy;
@@ -590,17 +721,31 @@ class GameRoom {
                     let impulseHit = false;
                     playerList.forEach((target) => {
                         if (target.id === p.ownerId || impulseHit) return;
-                        const distSq = (p.x - target.x) ** 2 + (p.y - target.y) ** 2;
+                        const distSq =
+                            (p.x - target.x) ** 2 + (p.y - target.y) ** 2;
                         if (distSq < p.ringRadius ** 2) {
-                            const angle = Math.atan2(target.y - p.y, target.x - p.x);
+                            const angle = Math.atan2(
+                                target.y - p.y,
+                                target.x - p.x,
+                            );
                             const dist = Math.sqrt(distSq);
                             const pullAmount = Math.min(dist, 60);
-                            const newX = target.x + Math.cos(angle) * -pullAmount;
-                            const newY = target.y + Math.sin(angle) * -pullAmount;
-                            if (!checkCollision(newX, target.y, PLAYER_SIZE)) target.x = newX;
-                            if (!checkCollision(target.x, newY, PLAYER_SIZE)) target.y = newY;
-                            target.x = Math.max(PLAYER_SIZE, Math.min(CANVAS_WIDTH - PLAYER_SIZE, target.x));
-                            target.y = Math.max(PLAYER_SIZE, Math.min(CANVAS_HEIGHT - PLAYER_SIZE, target.y));
+                            const newX =
+                                target.x + Math.cos(angle) * -pullAmount;
+                            const newY =
+                                target.y + Math.sin(angle) * -pullAmount;
+                            if (!checkCollision(newX, target.y, PLAYER_SIZE))
+                                target.x = newX;
+                            if (!checkCollision(target.x, newY, PLAYER_SIZE))
+                                target.y = newY;
+                            target.x = Math.max(
+                                PLAYER_SIZE,
+                                Math.min(CANVAS_WIDTH - PLAYER_SIZE, target.x),
+                            );
+                            target.y = Math.max(
+                                PLAYER_SIZE,
+                                Math.min(CANVAS_HEIGHT - PLAYER_SIZE, target.y),
+                            );
                             target.lastDamageTime = now;
                             impulseHit = true;
                         }
@@ -610,15 +755,39 @@ class GameRoom {
                     let knockbackHit = false;
                     playerList.forEach((target) => {
                         if (target.id === p.ownerId || knockbackHit) return;
-                        const distSq = (p.x - target.x) ** 2 + (p.y - target.y) ** 2;
+                        const distSq =
+                            (p.x - target.x) ** 2 + (p.y - target.y) ** 2;
                         if (distSq < p.ringRadius ** 2) {
-                            const angle = Math.atan2(target.y - p.y, target.x - p.x);
-                            const newX = p.x + Math.cos(angle) * (p.ringRadius + PLAYER_SIZE);
-                            const newY = p.y + Math.sin(angle) * (p.ringRadius + PLAYER_SIZE);
-                            if (!checkCollision(newX, target.y, PLAYER_SIZE)) target.x = newX;
-                            else target.x = Math.max(PLAYER_SIZE, Math.min(CANVAS_WIDTH - PLAYER_SIZE, target.x));
-                            if (!checkCollision(target.x, newY, PLAYER_SIZE)) target.y = newY;
-                            else target.y = Math.max(PLAYER_SIZE, Math.min(CANVAS_HEIGHT - PLAYER_SIZE, target.y));
+                            const angle = Math.atan2(
+                                target.y - p.y,
+                                target.x - p.x,
+                            );
+                            const newX =
+                                p.x +
+                                Math.cos(angle) * (p.ringRadius + PLAYER_SIZE);
+                            const newY =
+                                p.y +
+                                Math.sin(angle) * (p.ringRadius + PLAYER_SIZE);
+                            if (!checkCollision(newX, target.y, PLAYER_SIZE))
+                                target.x = newX;
+                            else
+                                target.x = Math.max(
+                                    PLAYER_SIZE,
+                                    Math.min(
+                                        CANVAS_WIDTH - PLAYER_SIZE,
+                                        target.x,
+                                    ),
+                                );
+                            if (!checkCollision(target.x, newY, PLAYER_SIZE))
+                                target.y = newY;
+                            else
+                                target.y = Math.max(
+                                    PLAYER_SIZE,
+                                    Math.min(
+                                        CANVAS_HEIGHT - PLAYER_SIZE,
+                                        target.y,
+                                    ),
+                                );
                             target.lastDamageTime = now;
                             knockbackHit = true;
                         }
@@ -633,7 +802,10 @@ class GameRoom {
 
             if (p.isTracking) {
                 const target = playerList.find((pl) => pl.id !== p.ownerId);
-                const speed = p.type === 'target' ? 1.5 : ALL_ABILITIES.whiteBall.projSpeed;
+                const speed =
+                    p.type === "target"
+                        ? 1.5
+                        : ALL_ABILITIES.whiteBall.projSpeed;
                 if (target) {
                     const angle = Math.atan2(target.y - p.y, target.x - p.x);
                     p.dx = Math.cos(angle) * speed;
@@ -673,7 +845,8 @@ class GameRoom {
                         // Apply slow effect if this is a snowball
                         if (p.isStun) {
                             target.isSlowed = true;
-                            target.slowEndTime = now + ALL_ABILITIES.snowball.slowDuration;
+                            target.slowEndTime =
+                                now + ALL_ABILITIES.snowball.slowDuration;
                         }
 
                         // Apply damage/heal
@@ -705,7 +878,8 @@ class GameRoom {
 
     updateMines() {
         const minesToRemove = [];
-        const playerList = this._cachedPlayerList || Object.values(this.players);
+        const playerList =
+            this._cachedPlayerList || Object.values(this.players);
         const now = Date.now();
 
         this.mines.forEach((m, index) => {
@@ -726,9 +900,10 @@ class GameRoom {
 
                 // Check if any enemy player enters the ring to arm it
                 if (!m.armed) {
-                    const triggered = playerList.some(target => {
+                    const triggered = playerList.some((target) => {
                         if (target.id === m.ownerId) return false;
-                        const distSq = (m.x - target.x) ** 2 + (m.y - target.y) ** 2;
+                        const distSq =
+                            (m.x - target.x) ** 2 + (m.y - target.y) ** 2;
                         return distSq < m.ringRadius ** 2;
                     });
                     if (triggered) {
@@ -742,12 +917,20 @@ class GameRoom {
                 if (age >= m.explosionDelay) {
                     // Explode
                     playerList.forEach((target) => {
-                        const distSq = (m.x - target.x) ** 2 + (m.y - target.y) ** 2;
+                        const distSq =
+                            (m.x - target.x) ** 2 + (m.y - target.y) ** 2;
                         if (distSq < m.ringRadius ** 2) {
                             if (m.damage > 0) {
-                                target.health = Math.max(0, target.health - m.damage);
+                                target.health = Math.max(
+                                    0,
+                                    target.health - m.damage,
+                                );
                                 target.lastDamageTime = now;
-                                if (target.health <= 0) this.handleElimination(target.id, m.ownerId);
+                                if (target.health <= 0)
+                                    this.handleElimination(
+                                        target.id,
+                                        m.ownerId,
+                                    );
                             }
                         }
                     });
@@ -780,7 +963,8 @@ class GameRoom {
 
     updateHealingFields() {
         const fieldsToRemove = [];
-        const playerList = this._cachedPlayerList || Object.values(this.players);
+        const playerList =
+            this._cachedPlayerList || Object.values(this.players);
         const now = Date.now();
         const HEAL_PER_TICK =
             ALL_ABILITIES.heal.totalHeal /
@@ -878,26 +1062,48 @@ class GameRoom {
         if (winner) {
             const winnerUsername = winner.ws.username || null;
             const loserUsername = this.lastLoserUsername || null;
-            
+
             // Only call updateElo if a player didn't leave early
             // If a player left early, the ELO penalty was already applied in removePlayer
             if (!this.playerLeftEarly) {
                 // Update ELO first (async), then send gameOver after a short delay so eloUpdate arrives first
-                updateElo(winnerUsername, loserUsername, winner.ws, this.lastLoserWs, winner.elo || 1000, this.lastLoserElo || 1000).then(() => {
+                updateElo(
+                    winnerUsername,
+                    loserUsername,
+                    winner.ws,
+                    this.lastLoserWs,
+                    winner.elo || 1000,
+                    this.lastLoserElo || 1000,
+                ).then(() => {
                     if (winner.ws && winner.ws.readyState === 1)
-                        winner.ws.send(JSON.stringify({ type: "gameOver", winnerName: winnerName }));
+                        winner.ws.send(
+                            JSON.stringify({
+                                type: "gameOver",
+                                winnerName: winnerName,
+                            }),
+                        );
                 });
             } else {
                 // Player left early, just send gameOver without updating ELO
                 if (winner.ws && winner.ws.readyState === 1)
-                    winner.ws.send(JSON.stringify({ type: "gameOver", winnerName: winnerName }));
+                    winner.ws.send(
+                        JSON.stringify({
+                            type: "gameOver",
+                            winnerName: winnerName,
+                        }),
+                    );
             }
-            
+
             // Also send gameOver to loser (they already got playerEliminated, but need gameOver for winnerName)
             if (this.lastLoserWs && this.lastLoserWs.readyState === 1)
                 setTimeout(() => {
                     if (this.lastLoserWs.readyState === 1)
-                        this.lastLoserWs.send(JSON.stringify({ type: "gameOver", winnerName: winnerName }));
+                        this.lastLoserWs.send(
+                            JSON.stringify({
+                                type: "gameOver",
+                                winnerName: winnerName,
+                            }),
+                        );
                 }, 100);
         }
 
@@ -914,18 +1120,23 @@ class GameRoom {
         if (this.gameStatus === "lobby") return;
         _activeBarriers = this.barriers;
         const now = Date.now();
-        
+
         // Check if poison gas should activate (after 2 minutes = 120000ms)
-        if (this.matchStartTime && !this.poisonGasActive && now - this.matchStartTime > 120000) {
+        if (
+            this.matchStartTime &&
+            !this.poisonGasActive &&
+            now - this.matchStartTime > 120000
+        ) {
             this.poisonGasActive = true;
             this.broadcast({
                 type: "status",
                 message: "Poison gas is closing in!",
             });
         }
-        
+
         // Cache playerList once per tick — avoid repeated Object.values() allocations
-        const playerList = this._cachedPlayerList || (this._cachedPlayerList = []);
+        const playerList =
+            this._cachedPlayerList || (this._cachedPlayerList = []);
         playerList.length = 0;
         for (const id in this.players) playerList.push(this.players[id]);
 
@@ -934,31 +1145,41 @@ class GameRoom {
             const player = playerList[i];
             this.updatePlayerPosition(player);
             if (now > player.lastDamageTime + REGEN_DELAY) {
-                player.health = Math.min(MAX_HEALTH, player.health + REGEN_AMOUNT);
+                player.health = Math.min(
+                    MAX_HEALTH,
+                    player.health + REGEN_AMOUNT,
+                );
             }
         }
 
         // 2. Handle poison gas damage
         if (this.poisonGasActive) {
-            if (now - this.lastPoisonGasDamageTime > this.poisonGasDamageInterval) {
+            if (
+                now - this.lastPoisonGasDamageTime >
+                this.poisonGasDamageInterval
+            ) {
                 this.lastPoisonGasDamageTime = now;
-                
+
                 // Shrink poison gas radius over time (takes 60 seconds to reach center)
                 const timeSincePoisonStart = now - this.matchStartTime - 120000;
                 const shrinkRate = this.poisonGasRadius / 60000; // Full radius to 0 in 60 seconds
-                this.poisonGasRadius = Math.max(50, this.poisonGasRadius - shrinkRate * this.poisonGasDamageInterval);
-                
+                this.poisonGasRadius = Math.max(
+                    50,
+                    this.poisonGasRadius -
+                        shrinkRate * this.poisonGasDamageInterval,
+                );
+
                 // Apply damage to players in poison gas
                 for (let i = 0; i < playerList.length; i++) {
                     const player = playerList[i];
                     const dx = player.x - this.poisonGasCenter.x;
                     const dy = player.y - this.poisonGasCenter.y;
                     const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
-                    
+
                     if (distanceFromCenter > this.poisonGasRadius) {
                         player.health -= 5; // 5 damage per tick (every 500ms = 10 damage per second)
                         player.lastDamageTime = now;
-                        
+
                         if (player.health <= 0) {
                             this.handleElimination(player.id, null); // null killer = poison gas
                         }
@@ -993,31 +1214,51 @@ const http = require("http").createServer(app);
 // Serve static files (CSS, JS, HTML)
 app.use(express.static(path.join(__dirname), { maxAge: "1h" }));
 
-// Serve index.html for root path
+// Serve index.html for root path — no-cache so browsers always get the latest version
 app.get("/", (req, res) => {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Serve success.html for successful purchases
-app.get("/success", (req, res) => {
-    res.sendFile(path.join(__dirname, "success.html"));
+// Service worker must be served with no-cache so browsers always check for updates
+app.get("/service-worker.js", (req, res) => {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Content-Type", "application/javascript");
+    res.sendFile(path.join(__dirname, "service-worker.js"));
 });
-
 
 /**
  * Updates ELO for winner and loser using standard K=32 formula.
  */
-async function updateElo(winnerUsername, loserUsername, winnerWs, loserWs, winnerCurrentElo, loserCurrentElo) {
+async function updateElo(
+    winnerUsername,
+    loserUsername,
+    winnerWs,
+    loserWs,
+    winnerCurrentElo,
+    loserCurrentElo,
+) {
     const K = 32;
     try {
         const [winnerDoc, loserDoc] = await Promise.all([
-            winnerUsername ? User.findOne({ username: winnerUsername.toLowerCase() }) : null,
-            loserUsername ? User.findOne({ username: loserUsername.toLowerCase() }) : null,
+            winnerUsername
+                ? User.findOne({ username: winnerUsername.toLowerCase() })
+                : null,
+            loserUsername
+                ? User.findOne({ username: loserUsername.toLowerCase() })
+                : null,
         ]);
         // Use DB elo if available, fall back to passed-in current elo, then 1000
-        const winnerElo = winnerDoc ? (winnerDoc.elo || 1000) : (winnerCurrentElo || 1000);
-        const loserElo = loserDoc ? (loserDoc.elo || 1000) : (loserCurrentElo || 1000);
-        const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
+        const winnerElo = winnerDoc
+            ? winnerDoc.elo || 1000
+            : winnerCurrentElo || 1000;
+        const loserElo = loserDoc
+            ? loserDoc.elo || 1000
+            : loserCurrentElo || 1000;
+        const expectedWinner =
+            1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
         const expectedLoser = 1 - expectedWinner;
         const newWinnerElo = Math.round(winnerElo + K * (1 - expectedWinner));
         const newLoserElo = Math.round(loserElo + K * (0 - expectedLoser));
@@ -1033,7 +1274,7 @@ async function updateElo(winnerUsername, loserUsername, winnerWs, loserWs, winne
             // For guest players, store ELO on the websocket object
             winnerWs.guestElo = newWinnerElo;
         }
-        
+
         if (loserDoc) {
             await User.findOneAndUpdate(
                 { username: loserUsername.toLowerCase() },
@@ -1045,11 +1286,25 @@ async function updateElo(winnerUsername, loserUsername, winnerWs, loserWs, winne
         }
 
         if (winnerWs && winnerWs.readyState === 1)
-            winnerWs.send(JSON.stringify({ type: "eloUpdate", elo: newWinnerElo, delta: winnerDelta }));
+            winnerWs.send(
+                JSON.stringify({
+                    type: "eloUpdate",
+                    elo: newWinnerElo,
+                    delta: winnerDelta,
+                }),
+            );
         if (loserWs && loserWs.readyState === 1)
-            loserWs.send(JSON.stringify({ type: "eloUpdate", elo: newLoserElo, delta: loserDelta }));
+            loserWs.send(
+                JSON.stringify({
+                    type: "eloUpdate",
+                    elo: newLoserElo,
+                    delta: loserDelta,
+                }),
+            );
 
-        console.log(`ELO: ${winnerUsername||"guest"} ${winnerElo}→${newWinnerElo} (+${winnerDelta}), ${loserUsername||"guest"} ${loserElo}→${newLoserElo} (${loserDelta})`);
+        console.log(
+            `ELO: ${winnerUsername || "guest"} ${winnerElo}→${newWinnerElo} (+${winnerDelta}), ${loserUsername || "guest"} ${loserElo}→${newLoserElo} (${loserDelta})`,
+        );
     } catch (error) {
         console.error("Error updating ELO:", error);
     }
@@ -1085,38 +1340,54 @@ function broadcastOnlineCount() {
  * Training room — player vs bot. Bot difficulty scales with player ELO.
  */
 class TrainingRoom extends GameRoom {
-    constructor(id, playerElo) {
+    constructor(id, playerElo, mapIndex) {
         super(id);
         this.isTraining = true;
         this.botId = -1;
         this.playerElo = playerElo || 1000;
+        // Use the same map as the real room the player is waiting in
+        this.mapIndex =
+            mapIndex !== undefined && mapIndex !== null
+                ? mapIndex
+                : Math.floor(Math.random() * MAPS.length);
+        this.barriers = MAPS[this.mapIndex];
         // Difficulty tiers based on ELO
         if (playerElo >= 1200) this.difficulty = "hard";
         else if (playerElo >= 1050) this.difficulty = "medium";
         else this.difficulty = "easy";
     }
 
-    addBot() {
+    addBot(playerLoadout) {
         const bot = {
             id: this.botId,
             name: "BOT",
             x: CANVAS_WIDTH / 2,
             y: 27 * TILE_SIZE,
-            dx: 0, dy: 0,
-            facingAngle: 0,
+            dx: 0,
+            dy: 0,
+            facingAngle: Math.PI, // face upward toward player spawn
             health: MAX_HEALTH,
-            color: "#F7C574",
-            isProtected: false, isReflecting: false,
-            isDashing: false, dashEndTime: 0,
-            isStunned: false, stunEndTime: 0,
-            isSlowed: false, slowEndTime: 0,
-            isImpulsed: false, impulseEndTime: 0,
+            color: "#F7C574", // same default color as real players
+            isProtected: false,
+            isReflecting: false,
+            protectionEndTime: 0,
+            isDashing: false,
+            dashEndTime: 0,
+            isStunned: false,
+            stunEndTime: 0,
+            isSlowed: false,
+            slowEndTime: 0,
+            isImpulsed: false,
+            impulseEndTime: 0,
             lastDamageTime: Date.now(),
-            loadout: ["fireBall", "whiteBall", "knockback", "dash", "heal"],
+            loadout:
+                playerLoadout && playerLoadout.length === 5
+                    ? [...playerLoadout] // mirror the player's loadout
+                    : ["fireBall", "whiteBall", "knockback", "dash", "heal"],
             lastAbilityTime: Array(5).fill(0),
             input: { dx: 0, dy: 0 },
             wins: 0,
-            ws: { readyState: -1, send: () => {}, username: null }, // fake ws
+            ws: { readyState: -1, send: () => {}, username: null },
             lastActivityTime: Date.now(),
             isBot: true,
         };
@@ -1127,75 +1398,204 @@ class TrainingRoom extends GameRoom {
     updateBot() {
         const bot = this.players[this.botId];
         if (!bot) return;
-        const realPlayer = Object.values(this.players).find(p => !p.isBot);
+        const realPlayer = Object.values(this.players).find((p) => !p.isBot);
         if (!realPlayer) return;
 
         const now = Date.now();
         const dx = realPlayer.x - bot.x;
         const dy = realPlayer.y - bot.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const angle = Math.atan2(dy, dx);
-        bot.facingAngle = angle;
+        const angleToPlayer = Math.atan2(dy, dx);
 
-        // Movement — chase player, keep some distance
-        const { easy: easyDist, medium: medDist, hard: hardDist } = { easy: 120, medium: 80, hard: 50 };
-        const preferredDist = this.difficulty === "hard" ? hardDist : this.difficulty === "medium" ? medDist : easyDist;
-        const speed = this.difficulty === "hard" ? 1.8 : this.difficulty === "medium" ? 1.4 : 1.0;
+        // --- AIMING: snap facing angle directly toward player ---
+        bot.facingAngle = angleToPlayer;
+
+        // --- MOVEMENT: WASD-style discrete inputs (8 directions) ---
+        const preferredDist =
+            this.difficulty === "hard"
+                ? 80
+                : this.difficulty === "medium"
+                  ? 110
+                  : 150;
+
+        let moveX = 0,
+            moveY = 0;
 
         if (dist > preferredDist + 20) {
-            bot.input.dx = (dx / dist) * speed;
-            bot.input.dy = (dy / dist) * speed;
+            // Chase: pick the dominant axis toward player, allow diagonals
+            moveX = dx > 10 ? 1 : dx < -10 ? -1 : 0;
+            moveY = dy > 10 ? 1 : dy < -10 ? -1 : 0;
         } else if (dist < preferredDist - 20) {
-            bot.input.dx = -(dx / dist) * speed;
-            bot.input.dy = -(dy / dist) * speed;
+            // Back off
+            moveX = dx > 10 ? -1 : dx < -10 ? 1 : 0;
+            moveY = dy > 10 ? -1 : dy < -10 ? 1 : 0;
         } else {
-            // Strafe sideways
-            bot.input.dx = -dy / dist * speed * 0.5;
-            bot.input.dy = dx / dist * speed * 0.5;
+            // Strafe perpendicular, flip every ~1.5s
+            const strafeDir = Math.sin(now * 0.0012) > 0 ? 1 : -1;
+            // Perpendicular to player direction: swap dx/dy and negate one
+            moveX = dy > 0 ? -strafeDir : strafeDir;
+            moveY = dx > 0 ? strafeDir : -strafeDir;
         }
 
-        // Shooting — fire abilities based on difficulty
-        const cooldowns = { easy: 2500, medium: 1500, hard: 800 };
+        // Wall sliding: test each axis independently before committing
+        const testDist = PLAYER_SIZE + 4;
+        const canMoveX =
+            moveX !== 0 &&
+            !checkCollision(bot.x + moveX * testDist, bot.y, PLAYER_SIZE);
+        const canMoveY =
+            moveY !== 0 &&
+            !checkCollision(bot.x, bot.y + moveY * testDist, PLAYER_SIZE);
+
+        if (moveX !== 0 && moveY !== 0 && !canMoveX && !canMoveY) {
+            // Fully blocked — strafe to escape
+            const strafeDir = Math.sin(now * 0.003) > 0 ? 1 : -1;
+            moveX = dy > 0 ? -strafeDir : strafeDir;
+            moveY = dx > 0 ? strafeDir : -strafeDir;
+        } else {
+            if (!canMoveX) moveX = 0;
+            if (!canMoveY) moveY = 0;
+        }
+
+        bot.input.dx = moveX;
+        bot.input.dy = moveY;
+
+        // --- ABILITIES: cycle through full loadout like a real player ---
+        const aimAngle = bot.facingAngle; // aim where facing (at player)
+        const cooldowns = { easy: 2800, medium: 1600, hard: 900 };
         const cd = cooldowns[this.difficulty];
-        const abilityKeys = ["fireBall", "whiteBall", "knockback"];
-        abilityKeys.forEach((key, i) => {
-            if (now - (bot.lastAbilityTime[i] || 0) > cd && dist < 400) {
-                const ability = ALL_ABILITIES[key];
-                if (!ability) return;
-                bot.lastAbilityTime[i] = now;
-                if (key === "knockback") {
-                    this.projectiles.push({
-                        id: nextPlayerId++, ownerId: bot.id,
-                        x: bot.x, y: bot.y,
-                        dx: Math.cos(angle) * ability.projSpeed,
-                        dy: Math.sin(angle) * ability.projSpeed,
-                        damage: ability.damage, type: "knockback",
-                        isRing: true, ringRadius: ability.ringRadius,
-                        stopped: false, stopAfter: ability.stopAfter,
-                        createdAt: now, lifetime: 2000,
-                    });
-                } else {
-                    this.projectiles.push({
-                        id: nextPlayerId++, ownerId: bot.id,
-                        x: bot.x, y: bot.y,
-                        dx: Math.cos(angle) * ability.projSpeed,
-                        dy: Math.sin(angle) * ability.projSpeed,
-                        damage: ability.damage, type: key,
-                    });
+
+        bot.loadout.forEach((key, slotIndex) => {
+            const ability = ALL_ABILITIES[key];
+            if (!ability) return;
+            const abilityCd = ability.cooldown || cd;
+            if (now - (bot.lastAbilityTime[slotIndex] || 0) < abilityCd) return;
+
+            // Range check — don't fire if too far for most abilities
+            const fireRange =
+                key === "heal" ? Infinity : key === "dash" ? Infinity : 380;
+            if (dist > fireRange) return;
+
+            // Don't use heal unless low health
+            if (key === "heal" && bot.health > 100) return;
+
+            // Don't dash unless player is very close
+            if (key === "dash" && dist > 120) return;
+
+            bot.lastAbilityTime[slotIndex] = now;
+
+            if (key === "knockback" || key === "impulse") {
+                this.projectiles.push({
+                    id: nextPlayerId++,
+                    ownerId: bot.id,
+                    x: bot.x,
+                    y: bot.y,
+                    dx: Math.cos(aimAngle) * ability.projSpeed,
+                    dy: Math.sin(aimAngle) * ability.projSpeed,
+                    damage: 0,
+                    type: key,
+                    isRing: true,
+                    ringRadius: ability.ringRadius,
+                    stopped: false,
+                    stopAfter: ability.stopAfter,
+                    createdAt: now,
+                    lifetime: 3500,
+                });
+            } else if (key === "landmine") {
+                this.mines.push({
+                    ownerId: bot.id,
+                    x: bot.x,
+                    y: bot.y,
+                    dx: Math.cos(aimAngle) * 3,
+                    dy: Math.sin(aimAngle) * 3,
+                    isRing: true,
+                    isMoving: true,
+                    armed: false,
+                    damage: ability.damage,
+                    ringRadius: ability.ringRadius,
+                    placedTime: null,
+                    explosionDelay: ability.explosionDelay,
+                });
+            } else if (key === "dash") {
+                const dashAngle = bot.facingAngle;
+                const dashDistance = ability.dashDistance;
+                const dashStep = 5;
+                const steps = Math.floor(dashDistance / dashStep);
+                for (let i = 1; i <= steps; i++) {
+                    const tx = bot.x + Math.cos(dashAngle) * dashStep * i;
+                    const ty = bot.y + Math.sin(dashAngle) * dashStep * i;
+                    if (checkCollision(tx, ty, PLAYER_SIZE)) break;
+                    bot.x = tx;
+                    bot.y = ty;
                 }
+                bot.isDashing = true;
+                bot.dashEndTime = now + 200;
+            } else if (key === "heal") {
+                this.healingFields.push({
+                    ownerId: bot.id,
+                    x: bot.x,
+                    y: bot.y,
+                    radius: ability.radius,
+                    startTime: now,
+                    duration: ability.duration,
+                    color: bot.color,
+                });
+            } else if (key === "reflection") {
+                bot.isProtected = true;
+                bot.isReflecting = true;
+                bot.protectionEndTime = now + ability.duration;
+            } else if (key === "whiteBall") {
+                // 5-spread like real player
+                const spreads = [-0.56, -0.28, 0, 0.28, 0.56];
+                spreads.forEach((offset) => {
+                    this.projectiles.push({
+                        id: nextPlayerId++,
+                        ownerId: bot.id,
+                        x:
+                            bot.x +
+                            Math.cos(aimAngle + offset) *
+                                (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
+                        y:
+                            bot.y +
+                            Math.sin(aimAngle + offset) *
+                                (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
+                        dx: Math.cos(aimAngle + offset) * ability.projSpeed,
+                        dy: Math.sin(aimAngle + offset) * ability.projSpeed,
+                        damage: ability.damage,
+                        type: key,
+                        color: "#ffffff",
+                        isTracking: false,
+                        lifetime: 3000,
+                    });
+                });
+            } else {
+                // fireBall, snowball, target
+                this.projectiles.push({
+                    id: nextPlayerId++,
+                    ownerId: bot.id,
+                    x:
+                        bot.x +
+                        Math.cos(aimAngle) *
+                            (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
+                    y:
+                        bot.y +
+                        Math.sin(aimAngle) *
+                            (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
+                    dx: Math.cos(aimAngle) * ability.projSpeed,
+                    dy: Math.sin(aimAngle) * ability.projSpeed,
+                    damage: ability.damage,
+                    type: key,
+                    color:
+                        key === "fireBall"
+                            ? "#FF4500"
+                            : key === "snowball"
+                              ? "#add8e6"
+                              : "#ff0000",
+                    isTracking: key === "target",
+                    isStun: key === "snowball",
+                    lifetime: key === "target" ? 10000 : 3000,
+                });
             }
         });
-
-        // Heal when low (medium/hard only)
-        if (this.difficulty !== "easy" && bot.health < 80 && now - (bot.lastAbilityTime[4] || 0) > 5000) {
-            bot.lastAbilityTime[4] = now;
-            this.healingFields.push({
-                ownerId: bot.id, x: bot.x, y: bot.y,
-                radius: ALL_ABILITIES.heal.radius,
-                startTime: now, duration: ALL_ABILITIES.heal.duration,
-                color: bot.color,
-            });
-        }
     }
 
     updateGameState() {
@@ -1205,10 +1605,13 @@ class TrainingRoom extends GameRoom {
         const playerList = Object.values(this.players);
 
         this.updateBot(); // Set bot input before position update
-        playerList.forEach(player => {
+        playerList.forEach((player) => {
             this.updatePlayerPosition(player);
             if (now > player.lastDamageTime + REGEN_DELAY)
-                player.health = Math.min(MAX_HEALTH, player.health + REGEN_AMOUNT);
+                player.health = Math.min(
+                    MAX_HEALTH,
+                    player.health + REGEN_AMOUNT,
+                );
         });
 
         this.updateProjectiles();
@@ -1244,30 +1647,68 @@ class TrainingRoom extends GameRoom {
         const bot = this.players[this.botId];
         const stateMsg = {
             type: "state",
-            players: Object.values(this.players).filter(p => !p.isBot).map(p => ({
-                id: p.id, name: p.name, x: p.x, y: p.y,
-                facingAngle: p.facingAngle, health: p.health, color: p.color,
-                isProtected: p.isProtected, isReflecting: p.isReflecting,
-                isDashing: p.isDashing, isStunned: p.isStunned,
-                isImpulsed: p.isImpulsed, lastAbilityTime: p.lastAbilityTime,
-                roomId: this.id, wins: p.wins || 0,
-            })).concat(bot ? [{
-                id: bot.id, name: bot.name, x: bot.x, y: bot.y,
-                facingAngle: bot.facingAngle, health: bot.health, color: bot.color,
-                isProtected: false, isReflecting: false, isDashing: false,
-                isStunned: false, isImpulsed: false, lastAbilityTime: bot.lastAbilityTime,
-                roomId: this.id, wins: 0,
-            }] : []),
-            projectiles: this.projectiles.map(p => ({ ...p, abilityType: p.type })),
+            players: Object.values(this.players)
+                .filter((p) => !p.isBot)
+                .map((p) => ({
+                    id: p.id,
+                    name: p.name,
+                    x: p.x,
+                    y: p.y,
+                    facingAngle: p.facingAngle,
+                    health: p.health,
+                    color: p.color,
+                    isProtected: p.isProtected,
+                    isReflecting: p.isReflecting,
+                    isDashing: p.isDashing,
+                    isStunned: p.isStunned,
+                    isImpulsed: p.isImpulsed,
+                    lastAbilityTime: p.lastAbilityTime,
+                    roomId: this.id,
+                    wins: p.wins || 0,
+                }))
+                .concat(
+                    bot
+                        ? [
+                              {
+                                  id: bot.id,
+                                  name: bot.name,
+                                  x: bot.x,
+                                  y: bot.y,
+                                  facingAngle: bot.facingAngle,
+                                  health: bot.health,
+                                  color: bot.color,
+                                  isProtected: false,
+                                  isReflecting: false,
+                                  isDashing: false,
+                                  isStunned: false,
+                                  isImpulsed: false,
+                                  lastAbilityTime: bot.lastAbilityTime,
+                                  roomId: this.id,
+                                  wins: 0,
+                              },
+                          ]
+                        : [],
+                ),
+            projectiles: this.projectiles.map((p) => ({
+                ...p,
+                abilityType: p.type,
+            })),
             mines: this.mines,
-            healingFields: this.healingFields.map(f => ({ x: f.x, y: f.y, radius: f.radius, color: f.color })),
+            healingFields: this.healingFields.map((f) => ({
+                x: f.x,
+                y: f.y,
+                radius: f.radius,
+                color: f.color,
+            })),
             status: this.gameStatus,
             mapIndex: this.mapIndex,
         };
-        Object.values(this.players).filter(p => !p.isBot).forEach(p => {
-            if (p.ws && p.ws.readyState === ws.OPEN)
-                p.ws.send(JSON.stringify(stateMsg));
-        });
+        Object.values(this.players)
+            .filter((p) => !p.isBot)
+            .forEach((p) => {
+                if (p.ws && p.ws.readyState === ws.OPEN)
+                    p.ws.send(JSON.stringify(stateMsg));
+            });
     }
 }
 
@@ -1282,17 +1723,28 @@ function startTraining(playerWs, playerName, loadout, playerElo) {
         delete trainingRooms[playerWs.trainingRoomId];
     }
 
-    const room = new TrainingRoom(nextRoomId++, playerElo);
+    // Use the same map as the real room the player is waiting in
+    const realRoom = playerWs.roomId ? gameRooms[playerWs.roomId] : null;
+    const mapIndex = realRoom
+        ? realRoom.mapIndex
+        : Math.floor(Math.random() * MAPS.length);
+
+    const room = new TrainingRoom(nextRoomId++, playerElo, mapIndex);
     trainingRooms[room.id] = room;
     playerWs.trainingRoomId = room.id;
 
-    const player = createPlayer(playerWs.playerId, playerName, loadout, playerWs);
+    const player = createPlayer(
+        playerWs.playerId,
+        playerName,
+        loadout,
+        playerWs,
+    );
     player.x = CANVAS_WIDTH / 2;
     player.y = 2 * TILE_SIZE;
     player.color = "#F7C574";
     room.players[player.id] = player;
     room.playerCount++;
-    room.addBot();
+    room.addBot(loadout); // pass player's loadout so bot mirrors it
     room.gameStatus = "playing";
     room.startGameLoop();
 
@@ -1318,7 +1770,12 @@ function endTraining(playerWs) {
             { x: CANVAS_WIDTH / 2, y: 2 * TILE_SIZE },
             { x: CANVAS_WIDTH / 2, y: 27 * TILE_SIZE },
         ];
-        const pos = spawns[(Object.keys(realRoom.players).indexOf(String(playerWs.playerId))) % spawns.length];
+        const pos =
+            spawns[
+                Object.keys(realRoom.players).indexOf(
+                    String(playerWs.playerId),
+                ) % spawns.length
+            ];
         player.x = pos.x;
         player.y = pos.y;
         player.health = MAX_HEALTH;
@@ -1328,18 +1785,19 @@ function endTraining(playerWs) {
         realRoom.broadcastStateTo(playerWs);
     } else if (playerWs.readyState === ws.OPEN) {
         // No real room yet — send empty clean state
-        playerWs.send(JSON.stringify({
-            type: "state",
-            players: [],
-            projectiles: [],
-            mines: [],
-            healingFields: [],
-            status: "starting",
-            mapIndex: 0,
-        }));
+        playerWs.send(
+            JSON.stringify({
+                type: "state",
+                players: [],
+                projectiles: [],
+                mines: [],
+                healingFields: [],
+                status: "starting",
+                mapIndex: 0,
+            }),
+        );
     }
 }
-
 
 function findOrCreateRoom() {
     // Look for an existing room that needs 1 more player, and is not currently starting
@@ -1421,12 +1879,27 @@ async function handleAuthRequest(data, ws) {
                 username: data.username.toLowerCase(),
             });
             if (user && (await bcrypt.compare(data.password, user.password))) {
+                if (user.isBanned) {
+                    ws.send(
+                        JSON.stringify({
+                            type: "authFailure",
+                            message: "This account has been banned.",
+                        }),
+                    );
+                    return;
+                }
+                // Set ws.username to the DB-stored (lowercase) username
+                ws.username = user.username;
+                // Hardcode paper[dev] as mod
+                const isMod =
+                    user.username.toLowerCase() === "paper[dev]" || user.isMod;
                 ws.send(
                     JSON.stringify({
                         type: "authSuccess",
                         name: user.username,
                         loadout: user.loadout,
                         elo: user.elo || 1000,
+                        isMod: isMod,
                     }),
                 );
             } else {
@@ -1532,9 +2005,57 @@ wss.on("connection", (ws) => {
         let room = ws.roomId ? gameRooms[ws.roomId] : null;
 
         if (data.type === "login" || data.type === "register") {
-            handleAuthRequest(data, ws).then((authSuccess) => {
-                if (authSuccess) ws.username = data.username;
-            });
+            handleAuthRequest(data, ws);
+            return;
+        }
+
+        if (data.type === "restoreSession") {
+            // Restore user session from stored username
+            User.findOne({ username: data.username.toLowerCase() })
+                .then((user) => {
+                    if (user) {
+                        if (user.isBanned) {
+                            ws.send(
+                                JSON.stringify({
+                                    type: "authFailure",
+                                    message: "This account has been banned.",
+                                }),
+                            );
+                            return;
+                        }
+                        ws.username = user.username;
+                        const isMod =
+                            user.username.toLowerCase() === "paper[dev]" ||
+                            user.isMod;
+                        ws.send(
+                            JSON.stringify({
+                                type: "restoreSession",
+                                name: user.username,
+                                elo: user.elo,
+                                loadout: user.loadout,
+                                isMod: isMod,
+                            }),
+                        );
+                    } else {
+                        // User not found, clear session
+                        ws.send(
+                            JSON.stringify({
+                                type: "authFailure",
+                                message:
+                                    "Session expired. Please sign in again.",
+                            }),
+                        );
+                    }
+                })
+                .catch((error) => {
+                    console.error("Session restore error:", error);
+                    ws.send(
+                        JSON.stringify({
+                            type: "authFailure",
+                            message: "Failed to restore session.",
+                        }),
+                    );
+                });
             return;
         }
 
@@ -1547,7 +2068,9 @@ wss.on("connection", (ws) => {
 
         if (data.type === "getOnlineCount") {
             const onlineCount = wss.clients.size;
-            ws.send(JSON.stringify({ type: "onlineCount", count: onlineCount }));
+            ws.send(
+                JSON.stringify({ type: "onlineCount", count: onlineCount }),
+            );
             return;
         }
 
@@ -1581,12 +2104,17 @@ wss.on("connection", (ws) => {
                 return;
             }
 
+            // Clear any active spectate session when joining a real game
+            ws.modSpectatingRoom = null;
+
             // Player attempts to join a game
             room = findOrCreateRoom();
             ws.roomId = room.id;
 
-            // Set authenticated username if available
-            ws.username = data.isAuth ? data.name : null;
+            // Set authenticated username if available — don't overwrite if already set from login
+            if (!ws.username) {
+                ws.username = data.isAuth ? data.name : null;
+            }
 
             // Create player object with validated name
             const newPlayer = createPlayer(
@@ -1605,12 +2133,16 @@ wss.on("connection", (ws) => {
                             newPlayer.elo = user.elo || 1000;
                         }
                         room.addPlayer(newPlayer);
-                        console.log(`Player ${playerName} joined Room ${room.id}.`);
+                        console.log(
+                            `Player ${playerName} joined Room ${room.id}.`,
+                        );
                     })
                     .catch((err) => {
                         console.error("Error fetching wins:", err);
                         room.addPlayer(newPlayer);
-                        console.log(`Player ${playerName} joined Room ${room.id}.`);
+                        console.log(
+                            `Player ${playerName} joined Room ${room.id}.`,
+                        );
                     });
             } else {
                 // For guest players, use the ELO sent by the client
@@ -1623,8 +2155,12 @@ wss.on("connection", (ws) => {
 
             // If this room now has 2 players, notify any training player to return
             if (room.playerCount === 2) {
-                Object.values(room.players).forEach(p => {
-                    if (p.ws && p.ws.trainingRoomId && p.ws.readyState === ws.OPEN) {
+                Object.values(room.players).forEach((p) => {
+                    if (
+                        p.ws &&
+                        p.ws.trainingRoomId &&
+                        p.ws.readyState === ws.OPEN
+                    ) {
                         endTraining(p.ws);
                         p.ws.send(JSON.stringify({ type: "matchFound" }));
                     }
@@ -1646,6 +2182,136 @@ wss.on("connection", (ws) => {
         }
 
         if (!room && ws.roomId) room = gameRooms[ws.roomId];
+
+        // --- MOD ACTIONS (no room required) ---
+        if (data.type === "modGetRooms") {
+            if (ws.username?.toLowerCase() !== "paper[dev]") return;
+            const rooms = Object.values(gameRooms).map((r) => ({
+                id: r.id,
+                status: r.gameStatus,
+                players: Object.values(r.players).map((p) => ({
+                    id: p.id,
+                    name: p.name,
+                    elo: p.elo,
+                    username: p.ws.username || null,
+                })),
+            }));
+            ws.send(JSON.stringify({ type: "modRoomList", rooms }));
+            return;
+        }
+
+        if (data.type === "modSpectate") {
+            if (ws.username?.toLowerCase() !== "paper[dev]") return;
+            const targetRoom = gameRooms[data.roomId];
+            if (!targetRoom) {
+                ws.send(
+                    JSON.stringify({
+                        type: "modError",
+                        message: "Room not found.",
+                    }),
+                );
+                return;
+            }
+            // Send modSpectateStart FIRST so client sets modSpectating=true before state arrives
+            ws.modSpectatingRoom = data.roomId;
+            ws.send(
+                JSON.stringify({
+                    type: "modSpectateStart",
+                    roomId: data.roomId,
+                }),
+            );
+            // Then send initial state
+            const initState = {
+                type: "modSpectateState",
+                roomId: data.roomId,
+                players: Object.values(targetRoom.players).map((p) => ({
+                    id: p.id,
+                    name: p.name,
+                    x: p.x,
+                    y: p.y,
+                    facingAngle: p.facingAngle,
+                    health: p.health,
+                    color: p.color,
+                    isProtected: p.isReflecting,
+                    isReflecting: p.isReflecting,
+                    isDashing: p.isDashing,
+                    isStunned: p.isStunned,
+                    isImpulsed: p.isImpulsed,
+                    lastAbilityTime: p.lastAbilityTime,
+                    wins: p.wins || 0,
+                })),
+                projectiles: targetRoom.projectiles.map((p) => ({
+                    ...p,
+                    abilityType: p.type,
+                })),
+                mines: targetRoom.mines,
+                healingFields: targetRoom.healingFields.map((f) => ({
+                    x: f.x,
+                    y: f.y,
+                    radius: f.radius,
+                    color: f.color,
+                })),
+                status: targetRoom.gameStatus,
+                mapIndex: targetRoom.mapIndex,
+                poisonGas: targetRoom.poisonGasActive
+                    ? {
+                          active: true,
+                          centerX: targetRoom.poisonGasCenter.x,
+                          centerY: targetRoom.poisonGasCenter.y,
+                          radius: targetRoom.poisonGasRadius,
+                      }
+                    : { active: false },
+            };
+            ws.send(JSON.stringify(initState));
+            return;
+        }
+
+        if (data.type === "modStopSpectate") {
+            ws.modSpectatingRoom = null;
+            return;
+        }
+
+        if (data.type === "modBan") {
+            if (ws.username?.toLowerCase() !== "paper[dev]") return;
+            const targetUsername = data.username?.toLowerCase();
+            if (!targetUsername) return;
+            User.findOneAndUpdate(
+                { username: targetUsername },
+                { $set: { isBanned: true } },
+            )
+                .then(() => {
+                    wss.clients.forEach((client) => {
+                        if (client.username?.toLowerCase() === targetUsername) {
+                            client.send(
+                                JSON.stringify({
+                                    type: "banned",
+                                    message:
+                                        "You have been banned by a moderator.",
+                                }),
+                            );
+                            client.close();
+                        }
+                    });
+                    ws.send(
+                        JSON.stringify({
+                            type: "modBanSuccess",
+                            username: targetUsername,
+                        }),
+                    );
+                    console.log(
+                        `[MOD] ${ws.username} banned ${targetUsername}`,
+                    );
+                })
+                .catch((err) =>
+                    ws.send(
+                        JSON.stringify({
+                            type: "modError",
+                            message: err.message,
+                        }),
+                    ),
+                );
+            return;
+        }
 
         if (!room || !room.players[playerId]) return;
 
@@ -1696,10 +2362,7 @@ wss.on("connection", (ws) => {
                 const abilityKey = player.loadout[slotIndex];
                 const ability = ALL_ABILITIES[abilityKey];
                 const cooldown = ability?.cooldown || ABILITY_COOLDOWN;
-                if (
-                    Date.now() <
-                    player.lastAbilityTime[slotIndex] + cooldown
-                )
+                if (Date.now() < player.lastAbilityTime[slotIndex] + cooldown)
                     return;
 
                 if (!ability) return;
@@ -1729,8 +2392,14 @@ wss.on("connection", (ws) => {
 
                     // Configure spread based on ability type
                     let spreadAngles = [];
-                    const fireColors = ["#FFD700", "#FFA500", "#ff4500", "#FF6347", "#FF8C00"];
-                    
+                    const fireColors = [
+                        "#FFD700",
+                        "#FFA500",
+                        "#ff4500",
+                        "#FF6347",
+                        "#FF8C00",
+                    ];
+
                     if (abilityKey === "whiteBall") {
                         // 5 projectiles spread wide
                         spreadAngles = [
@@ -1738,13 +2407,11 @@ wss.on("connection", (ws) => {
                             { angle: angle - 0.28, colorIdx: 0 },
                             { angle: angle, colorIdx: 0 },
                             { angle: angle + 0.28, colorIdx: 0 },
-                            { angle: angle + 0.56, colorIdx: 0 }
+                            { angle: angle + 0.56, colorIdx: 0 },
                         ];
                     } else if (abilityKey === "fireBall") {
                         // 1 fireball straight ahead with fiery color
-                        spreadAngles = [
-                            { angle: angle, colorIdx: 0 }
-                        ];
+                        spreadAngles = [{ angle: angle, colorIdx: 0 }];
                     } else {
                         // Snowball: single projectile
                         spreadAngles = [{ angle: angle, colorIdx: 0 }];
@@ -1752,19 +2419,25 @@ wss.on("connection", (ws) => {
 
                     spreadAngles.forEach((angleData) => {
                         const shootAngle = angleData.angle;
-                        const speedVariation = abilityKey === "fireBall" 
-                            ? speed * (0.7 + Math.random() * 0.6) // Vary speed for organic feel
-                            : speed;
-                        
-                        const fireColor = abilityKey === "fireBall" 
-                            ? "#FF4500" 
-                            : projColor;
+                        const speedVariation =
+                            abilityKey === "fireBall"
+                                ? speed * (0.7 + Math.random() * 0.6) // Vary speed for organic feel
+                                : speed;
+
+                        const fireColor =
+                            abilityKey === "fireBall" ? "#FF4500" : projColor;
 
                         room.projectiles.push({
                             ownerId: playerId,
                             type: abilityKey,
-                            x: player.x + Math.cos(shootAngle) * (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
-                            y: player.y + Math.sin(shootAngle) * (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
+                            x:
+                                player.x +
+                                Math.cos(shootAngle) *
+                                    (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
+                            y:
+                                player.y +
+                                Math.sin(shootAngle) *
+                                    (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
                             dx: Math.cos(shootAngle) * speedVariation,
                             dy: Math.sin(shootAngle) * speedVariation,
                             damage: ability.damage,
@@ -1777,7 +2450,10 @@ wss.on("connection", (ws) => {
                     });
                 }
                 // --- RING PROJECTILES (Knockback, Impulse) ---
-                else if (abilityKey === "knockback" || abilityKey === "impulse") {
+                else if (
+                    abilityKey === "knockback" ||
+                    abilityKey === "impulse"
+                ) {
                     room.projectiles.push({
                         x: player.x,
                         y: player.y,
@@ -1855,8 +2531,14 @@ wss.on("connection", (ws) => {
                     room.projectiles.push({
                         ownerId: playerId,
                         type: abilityKey,
-                        x: player.x + Math.cos(aimAngle) * (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
-                        y: player.y + Math.sin(aimAngle) * (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
+                        x:
+                            player.x +
+                            Math.cos(aimAngle) *
+                                (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
+                        y:
+                            player.y +
+                            Math.sin(aimAngle) *
+                                (PLAYER_SIZE + PROJECTILE_RADIUS + 1),
                         dx: Math.cos(aimAngle) * ability.projSpeed,
                         dy: Math.sin(aimAngle) * ability.projSpeed,
                         damage: ability.damage,
